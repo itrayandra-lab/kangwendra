@@ -70,7 +70,8 @@ class Posts extends Model
 
     public static function getTrending($limit)
     {
-        $posts = self::select('title', 'image', 'slug', 'counter')
+        $posts = self::select('title', 'image', 'slug', 'counter', 'category_id')
+            ->with('category')
             ->where('status', 'active')
             ->whereNotNull('published_at')
             ->where('published_at', '<=', Carbon::now())

@@ -1,206 +1,165 @@
-@if ($menu->count() > 0) 
-<header class="w-full bg-white sticky top-0 z-[9999] shadow-sm font-sans"> 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
-        <div class="flex justify-between items-center h-16">
-
-            <div class="flex-shrink-0 flex items-center">
-                <a href="{{ url('/') }}" class="text-3xl font-black italic tracking-tighter text-gray-900 font-serif">
-                    <img src="{{ $meta->logo }}" alt="" width="35">
-                </a>
-            </div>
-
-            <nav class="hidden md:flex space-x-8 items-center">
-                @php
-                    $parents = $menu->where('type_1', 'parent');
-                    $menuItems = $menu->groupBy('parent_id');
-                @endphp
-
-                @foreach ($parents as $parent)
-                    @php
-                        $submenus = $menuItems[$parent->id] ?? collect();
-                        $hasSubmenus = $submenus->count() > 0;
-                    @endphp
-
-                    <a href="{{ $parent->type_2 == 'page' ? url('page/' . $parent->slug) : url($parent->slug) }}"
-                        data-target="dropdown{{ $parent->id }}"
-                        class="dropdown-btn group inline-flex items-center text-sm font-semibold text-gray-700 hover:text-black transition-colors {{ $hasSubmenus ? 'parent-link' : '' }}">
-                        <span>{{ $parent->name }}</span>
-                        @if ($hasSubmenus)
-                            <svg class="ml-1 h-4 w-4 text-gray-400 group-hover:text-black transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        @endif
-                    </a>
-                @endforeach
-            </nav>
-
-            <div class="hidden md:flex items-center">
-                @auth
-                    <a href="/portal/login" class="inline-flex items-center justify-center px-5 py-2 border border-transparent text-sm font-medium rounded-full transition-all">
-                        {{ auth()->user()->name }}
-                        <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-user-icon lucide-circle-user ml-1"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>
-                    </a>
-                @else
-                    <a href="/portal/login" class="inline-flex items-center justify-center px-5 py-2 border border-transparent text-sm font-medium rounded-full transition-all">
-                        Sign in
-                        <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1 lucide lucide-log-in-icon lucide-log-in"><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></svg>
-                    </a>
-                @endauth
-            </div>
-
-            <div class="flex md:hidden items-center">
-                <button id="mobile-menu-btn" type="button" class="text-gray-700 hover:text-black focus:outline-none p-2">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 absolute w-full left-0 shadow-lg h-screen overflow-y-auto pb-20">
-        <div class="px-4 pt-2 pb-6 space-y-1">
-            @foreach ($parents as $parent)
-                @php
-                    $submenus = $menuItems[$parent->id] ?? collect();
-                    $hasSubmenus = $submenus->count() > 0;
-                @endphp
-
-                @if ($hasSubmenus)
-                    <div class="border-b border-gray-50 last:border-0">
-                        <div class="flex items-center justify-between pr-2">
-                            <a href="{{ $parent->type_2 == 'page' ? url('page/' . $parent->slug) : url($parent->slug) }}" 
-                               class="flex-1 block px-3 py-3 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-l-md">
-                                {{ $parent->name }}
-                            </a>
-                            <button type="button" 
-                                    data-target="mobile-sub-{{ $parent->id }}"
-                                    class="mobile-submenu-toggle p-3 text-gray-500 hover:text-black hover:bg-gray-50 rounded-r-md focus:outline-none">
-                                <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
+<header class="main-header">
+    <div class="top-header">
+        <div class="container">
+            <div class="top-header-inner">
+                <div class="top-left">
+                    <div class="ticker-wrap">
+                        <div class="ticker-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
+                                <path d="M420.001-143.082v-276.919H307.694v-439.998H653.46l-73.461 255.768h158.076L420.001-143.082Z" />
+                            </svg><span>Trending:</span>
                         </div>
-                        <div id="mobile-sub-{{ $parent->id }}" class="hidden bg-gray-50 rounded-md mb-2 ml-3">
-                            @foreach ($submenus as $submenu)
-                                <a href="{{ $submenu->type_2 == 'page' ? url('page/' . $submenu->slug) : url($submenu->slug) }}"
-                                   class="block pl-4 pr-3 py-2.5 text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-100 rounded-md">
-                                    {{ $submenu->name }}
-                                </a>
-                            @endforeach
+                        <div class="ticker-slide-wrap">
+                            <div class="swiper ticker-slider">
+                                <div class="swiper-wrapper">
+                                    @php $trendingPosts = App\Models\Posts::getTrending(5); @endphp
+                                    @if($trendingPosts->count() > 0)
+                                        @foreach($trendingPosts as $trending)
+                                        <div class="swiper-slide">
+                                            <a href="/{{ $trending->category?->slug ?? 'news' }}/{{ $trending->slug }}">{{ $trending->title }}</a>
+                                        </div>
+                                        @endforeach
+                                    @else
+                                        <div class="swiper-slide">
+                                            <a href="#">No trending news available</a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
-                @else
-                    <a href="{{ $parent->type_2 == 'page' ? url('page/' . $parent->slug) : url($parent->slug) }}" 
-                       class="block px-3 py-3 text-base font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-md border-b border-gray-50 last:border-0">
-                        {{ $parent->name }}
-                    </a>
-                @endif
-            @endforeach
-
-            <div class="pt-4 mt-4 border-t border-gray-100">
-                <a href="/portal/login" class="flex items-center justify-center w-full px-4 py-3 text-base font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800">
-                    @auth
-                        Dashboard
-                    @else
-                        Sign in
-                    @endauth
-                </a>
+                </div>
+                <div class="top-right">
+                    <ul class="top-right-info">
+                        @if(!empty($meta->email))
+                        <li><a href="mailto:{{ $meta->email }}">{{ $meta->email }}</a></li>
+                        @endif
+                        @if(!empty($meta->phone))
+                        <li><a href="tel:{{ $meta->phone }}">{{ $meta->phone }}</a></li>
+                        @endif
+                    </ul>
+                    <ul class="header-social">
+                        @if(!empty($meta->facebook_link) && $meta->facebook_link !== '#')
+                        <li>
+                            <a href="{{ $meta->facebook_link }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
+                                    <path d="M80 299.3V512H196V299.3h86.5l18-97.8H196V166.9c0-51.7 20.3-71.5 72.7-71.5c16.3 0 29.4 .4 37 1.2V7.9C291.4 4 256.4 0 236.2 0C129.3 0 80 50.5 80 159.4v42.1H14v97.8H80z" />
+                                </svg>
+                            </a>
+                        </li>
+                        @endif
+                        @if(!empty($meta->twitter_link) && $meta->twitter_link !== '#')
+                        <li>
+                            <a href="{{ $meta->twitter_link }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                    <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z" />
+                                </svg>
+                            </a>
+                        </li>
+                        @endif
+                        @if(!empty($meta->youtube_link) && $meta->youtube_link !== '#')
+                        <li>
+                            <a href="{{ $meta->youtube_link }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+                                    <path d="M549.7 124.1c-6.3-23.7-24.8-42.3-48.3-48.6C458.8 64 288 64 288 64S117.2 64 74.6 75.5c-23.5 6.3-42 24.9-48.3 48.6-11.4 42.9-11.4 132.3-11.4 132.3s0 89.4 11.4 132.3c6.3 23.7 24.8 41.5 48.3 47.8C117.2 448 288 448 288 448s170.8 0 213.4-11.5c23.5-6.3 42-24.2 48.3-47.8 11.4-42.9 11.4-132.3 11.4-132.3s0-89.4-11.4-132.3zm-317.5 213.5V175.2l142.7 81.2-142.7 81.2z" />
+                                </svg>
+                            </a>
+                        </li>
+                        @endif
+                        @if(!empty($meta->instagram_link) && $meta->instagram_link !== '#')
+                        <li>
+                            <a href="{{ $meta->instagram_link }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                                    <path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z" />
+                                </svg>
+                            </a>
+                        </li>
+                        @endif
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
+    <div class="bottom-header">
+        <div class="container">
+            <div class="main-header-wapper">
+                <div class="site-logo">
+                    <a href="{{ url('/') }}"><span class="site-title">{{ $meta->web_name ?? 'Portal' }}</span></a>
+                </div>
+                <div class="main-header-info">
+                    <div class="header-menu-wrap">
+                        <ul class="nav-menu">
+                            @if($menu->count() > 0)
+                                @php
+                                    $parents = $menu->where('type_1', 'parent');
+                                    $menuItems = $menu->groupBy('parent_id');
+                                @endphp
 
-    @foreach ($parents as $parent)
-        @php
-            $submenus = $menuItems[$parent->id] ?? collect();
-        @endphp
-
-        @if ($submenus->count())
-            <div id="dropdown{{ $parent->id }}" class="hidden absolute bg-white shadow rounded w-56 z-50 border border-gray-100 mt-2 py-2">
-                @foreach ($submenus as $submenu)
-                    <a href="{{ $submenu->type_2 == 'page' ? url('page/' . $submenu->slug) : url($submenu->slug) }}"
-                        class="block px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-black transition-colors">
-                        {{ $submenu->name }} 
-                    </a>
-                @endforeach
+                                @foreach($parents as $parent)
+                                    @php
+                                        $submenus = $menuItems[$parent->id] ?? collect();
+                                        $hasSubmenus = $submenus->count() > 0;
+                                    @endphp
+                                    
+                                    <li>
+                                        <a href="{{ $parent->type_2 == 'page' ? url('page/' . $parent->slug) : url($parent->slug) }}" data-text="{{ $parent->name }}">{{ $parent->name }}</a>
+                                        @if($hasSubmenus)
+                                        <ul>
+                                            @foreach($submenus as $submenu)
+                                            <li><a href="{{ $submenu->type_2 == 'page' ? url('page/' . $submenu->slug) : url($submenu->slug) }}">{{ $submenu->name }}</a></li>
+                                            @endforeach
+                                        </ul>
+                                        @endif
+                                    </li>
+                                @endforeach
+                            @endif
+                        </ul>
+                    </div>
+                    <div class="menu-right-item">
+                        <button class="menu-search">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14.811 14.811">
+                                <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" transform="translate(-2.25 -2.25)">
+                                    <circle cx="5.5" cy="5.5" r="5.5" data-name="Ellipse 7" transform="translate(3 3)"></circle>
+                                    <path d="m16 16-3.142-3.142"></path>
+                                </g>
+                            </svg>
+                        </button>
+                        <button class="mobile-menu-action">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
+                        @auth
+                            <a href="/portal/login" class="default-btn text-anim" data-text="{{ auth()->user()->name }}">{{ auth()->user()->name }}</a>
+                        @else
+                            <a href="/portal/login" class="default-btn text-anim" data-text="Login">Login</a>
+                        @endauth
+                    </div>
+                </div>
             </div>
-        @endif
-    @endforeach
+        </div>
+    </div>
 </header>
 
-@push('scripts')
-    <script>
-        const dropdownButtons = document.querySelectorAll('.dropdown-btn');
-        const dropdownMenus = document.querySelectorAll('[id^="dropdown"]');
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const mobileSubmenuToggles = document.querySelectorAll('.mobile-submenu-toggle');
+<div id="popup-search-box">
+    <div class="box-inner-wrap d-flex align-items-center">
+        <form id="form" action="/search" method="get" role="search">
+            <input id="popup-search" type="text" name="qr" placeholder="Type keywords here..." value="{{ request('qr') }}">
+            <button id="popup-search-button" type="submit" name="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14.811 14.811">
+                    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" transform="translate(-2.25 -2.25)">
+                        <circle cx="5.5" cy="5.5" r="5.5" data-name="Ellipse 7" transform="translate(3 3)"></circle>
+                        <path d="m16 16-3.142-3.142"></path>
+                    </g>
+                </svg>
+            </button>
+        </form>
+        <div class="search-close">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+                <path d="M256-213.847 213.847-256l224-224-224-224L256-746.153l224 224 224-224L746.153-704l-224 224 224 224L704-213.847l-224-224-224 224Z" />
+            </svg>
+        </div>
+    </div>
+</div>
 
-        if(mobileMenuBtn){
-            mobileMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-            });
-        }
-
-        mobileSubmenuToggles.forEach(toggle => {
-            toggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetId = toggle.getAttribute('data-target');
-                const targetEl = document.getElementById(targetId);
-                const icon = toggle.querySelector('svg');
-                
-                if(targetEl) {
-                    targetEl.classList.toggle('hidden');
-                    icon.classList.toggle('rotate-180');
-                }
-            });
-        });
-
-        dropdownButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const target = button.getAttribute('data-target');
-
-                dropdownMenus.forEach(menu => {
-                    if (menu.id === target) {
-                        menu.classList.toggle('hidden');
-                        const rect = button.getBoundingClientRect();
-                        menu.style.left = rect.left + 'px'; 
-                    } else {
-                        menu.classList.add('hidden');
-                    }
-                });
-            });
-        });
-
-        window.addEventListener('click', () => {
-            dropdownMenus.forEach(menu => menu.classList.add('hidden'));
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const parentLinks = document.querySelectorAll('.parent-link');
-
-            parentLinks.forEach(link => {
-                let clickCount = 0;
-                let timeout;
-
-                link.addEventListener('click', function(e) {
-                    clickCount++;
-
-                    if (clickCount === 1) {
-                        e.preventDefault();
-                        timeout = setTimeout(() => {
-                            clickCount = 0;
-                        }, 300);
-                    } else if (clickCount === 2) {
-                        e.preventDefault();
-                        clearTimeout(timeout);
-                        clickCount = 0;
-                        window.location.href = this.getAttribute('href');
-                    }
-                });
-            });
-        });
-    </script>
-@endpush
-@endif
+<div id="searchbox-overlay"></div>

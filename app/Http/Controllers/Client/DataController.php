@@ -17,7 +17,7 @@ use Illuminate\Support\Carbon;
 class DataController extends Controller
 {
     /**
-     * 1. Berita Terbaru yang sudah dipublikasikan dan statusnya active (random output)
+     * 1. Artikel Terbaru yang sudah dipublikasikan dan statusnya active (random output)
      */
     public static function latestPublished($limit)
     {

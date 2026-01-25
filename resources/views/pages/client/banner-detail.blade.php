@@ -1,124 +1,199 @@
 @extends('layouts.client.app')
 
 @section('content')
-    <div class="relative isolate -mt-8 overflow-hidden bg-white px-2 py-10 lg:py-20 lg:overflow-visible lg:px-0">
-        <div class="absolute inset-0 -z-10 overflow-hidden">
-            <svg class="absolute top-0 left-[max(50%,25rem)] h-[64rem] w-[128rem] -translate-x-1/2 stroke-gray-200 [mask-image:radial-gradient(64rem_64rem_at_top,white,transparent)]"
-                aria-hidden="true">
-                <defs>
-                    <pattern id="e813992c-7d03-4cc4-a2bd-151760b470a0" width="200" height="200" x="50%" y="-1"
-                        patternUnits="userSpaceOnUse">
-                        <path d="M100 200V.5M.5 .5H200" fill="none" />
-                    </pattern>
-                </defs>
-                <svg x="50%" y="-1" class="overflow-visible fill-gray-50">
-                    <path
-                        d="M-100.5 0h201v201h-201Z M699.5 0h201v201h-201Z M499.5 400h201v201h-201Z M-300.5 600h201v201h-201Z"
-                        stroke-width="0" />
-                </svg>
-                <rect width="100%" height="100%" stroke-width="0" fill="url(#e813992c-7d03-4cc4-a2bd-151760b470a0)" />
-            </svg>
-        </div>
-        <div
-            class="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-y-10">
-            <div
-                class="lg:col-span-2 mb-3 lg:col-start-1 lg:row-start-1 lg:mx-auto lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 lg:px-8">
-                <div class="lg:pr-4">
-                    <div class="lg:max-w-lg border-b-2 border-dashed border-gray-200 pb-3">
-                        <a class="text-base/7 font-semibold text-blue-600">
-                            Banner Informasi
-                        </a>
-                        <h1 class="mt-2 text-xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-3xl">
-                            {{ $banner->title }}
-                        </h1>
-                        <div class="flex items-center justify-between mt-2 text-gray-600 text-sm">
-                            <div class="flex items-center gap-2">
-                                <img src="{{ $banner->createdBy->image ? getFile($banner->createdBy->image) : asset('dist/images/users/avatar-1.jpg') }}"
-                                    alt="" class="w-8 h-8 rounded-full">
-                                <a class="hover:text-blue-600">{{ $banner->createdBy->name }}</a>
-                            </div>
-                            <p>
-                                {{ \Carbon\Carbon::parse($banner->created_at)->locale('id')->translatedFormat('l, d M Y') }}
-                            </p>
+    <section class="single-page no-sidebar padding-bottom">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 offset-lg-2">
+                    @if($banner->image)
+                        <div class="single-post-thumb">
+                            <img src="{{ getFile($banner->image) }}" alt="{{ $banner->title }}">
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <div
-                class="lg:-mt-1 -mt-15 lg:-ml-12 lg:p-3 lg:top-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:overflow-hidden image-container">
-                <img class="w-full rounded-sm bg-gray-900 ring-1 shadow-lg ring-gray-400/10 sm:w-[57rem] post-image"
-                    src="{{ getFile($banner->image) }}" alt="">
-            </div>
-
-            <div
-                class="lg:col-span-2 -mt-10 lg:col-start-1 lg:row-start-2 lg:mx-auto lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 lg:px-8 post-content">
-                <div class="lg:pr-4">
-                    <div class="max-w-xl text-base/7 text-gray-700 lg:max-w-lg">
+                    @endif
+                    <header class="entry-header">
+                        <ul class="post-meta">
+                            <li><a href="/banners">Banner</a></li>
+                            <li class="sep"></li>
+                            <li><a href="/banners" class="date">{{ $banner->created_at ? \Carbon\Carbon::parse($banner->created_at)->format('d.m.Y') : date('d.m.Y') }}</a></li>
+                        </ul>
+                        <h2 class="post-title">{{ $banner->title }}</h2>
+                        <div class="post-author-meta">
+                            <div class="author-thumb">
+                                <a href="/author/{{ $banner->createdBy?->slug ?? '#' }}">
+                                    <img src="{{ $banner->createdBy?->image ? getFile($banner->createdBy->image) : asset('client/assets/img/author-1.jpg') }}" alt="author">
+                                </a>
+                            </div>
+                            <div class="author-info">
+                                <span>Oleh <a href="/author/{{ $banner->createdBy?->slug ?? '#' }}">{{ $banner->createdBy?->name ?? 'Admin' }}</a></span>
+                                <span>{{ $banner->created_at ? \Carbon\Carbon::parse($banner->created_at)->locale('id')->translatedFormat('l, d M Y') : date('d M Y') }} • {{ $banner->counter ?? 0 }} views</span>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="single-post-content">
                         {!! $content !!}
                     </div>
+                    
+                    <footer class="entry-footer">
+                        <ul class="post-social-share">
+                            <li class="facebook">
+                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(request()->fullUrl()) }}" target="_blank">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+                                        <path d="M512 256C512 114.6 397.4 0 256 0S0 114.6 0 256C0 376 82.7 476.8 194.2 504.5V334.2H141.4V256h52.8V222.3c0-87.1 39.4-127.5 125-127.5c16.2 0 44.2 3.2 55.7 6.4V172c-6-.6-16.5-1-29.6-1c-42 0-58.2 15.9-58.2 57.2V256h83.6l-14.4 78.2H287V510.1C413.8 494.8 512 386.9 512 256h0z"></path>
+                                    </svg>
+                                </a>
+                            </li>
+                            <li class="twitter">
+                                <a href="https://twitter.com/intent/tweet?url={{ urlencode(request()->fullUrl()) }}&text={{ urlencode($banner->title) }}" target="_blank">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+                                        <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
+                                    </svg>
+                                </a>
+                            </li>
+                            <li class="whatsapp">
+                                <a href="https://wa.me/?text={{ urlencode($banner->title . ' — ' . request()->fullUrl()) }}" target="_blank">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 71 72" fill="none">
+                                        <path d="M12.5762 56.8405L15.8608 44.6381C13.2118 39.8847 12.3702 34.3378 13.4904 29.0154C14.6106 23.693 17.6176 18.952 21.9594 15.6624C26.3012 12.3729 31.6867 10.7554 37.1276 11.1068C42.5685 11.4582 47.6999 13.755 51.5802 17.5756C55.4604 21.3962 57.8292 26.4844 58.2519 31.9065C58.6746 37.3286 57.1228 42.7208 53.8813 47.0938C50.6399 51.4668 45.9261 54.5271 40.605 55.7133C35.284 56.8994 29.7125 56.1318 24.9131 53.5513L12.5762 56.8405Z" fill="#00D95F"/>
+                                    </svg>
+                                </a>
+                            </li>
+                            <li class="copy">
+                                <a href="#" onclick="copyToClipboard(); return false;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </a>
+                            </li>
+                        </ul>
+                    </footer>
+                    
+                    @if($banners->count() > 0)
+                        <div class="single-post-item">
+                            <h3>Banner Lainnya</h3>
+                            <div class="related-post-wrap">
+                                @php $bannerCount = 0; @endphp
+                                @foreach($banners as $item)
+                                    @if($item->id != $banner->id && $bannerCount < 3)
+                                        @php $bannerCount++; @endphp
+                                        <article>
+                                            <div class="post-card horizontal-card img-hover-move">
+                                                <div class="post-thumb media">
+                                                    <a href="/banner/{{ $item->slug }}">
+                                                        <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}">
+                                                    </a>
+                                                </div>
+                                                <div class="post-content">
+                                                    <ul class="post-meta">
+                                                        <li><a href="/banners">Banner</a></li>
+                                                        <li class="sep"></li>
+                                                        <li><a href="/banners" class="date">{{ $item->created_at ? \Carbon\Carbon::parse($item->created_at)->format('d.m.Y') : date('d.m.Y') }}</a></li>
+                                                    </ul>
+                                                    <h3><a href="/banner/{{ $item->slug }}" class="text-hover">{{ $item->title }}</a></h3>
+                                                    <ul class="post-card-footer">
+                                                        <li><a href="/banner/{{ $item->slug }}" class="read-more">Lihat Detail</a></li>
+                                                        <li>
+                                                            <a href="#" class="views">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                                                                    <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
+                                                                </svg>
+                                                                <span>{{ $item->counter ?? 0 }}</span>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="col-span-12 lg:p-3">
-        @include('widget.client.header-title', ['title' => 'Informasi Lainnya'])
-        <div class="space-y-2">
-            <div class="grid grid-cols-12 lg:gap-4 py-2">
-                @forelse ($banners as $item)
-                    <div class="col-span-12 lg:col-span-6">
-                        <div class="mx-auto w-full rounded mb-2 relative group">
-                            <div class="flex space-x-4">
-                                <div class="w-full h-30 lg:h-50 rounded bg-gray-200 relative overflow-hidden">
-                                    <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}"
-                                        class="w-full h-full object-cover rounded transition-opacity duration-300 group-hover:opacity-80">
-                                    <div
-                                        class="absolute inset-0 flex items-center justify-center bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300">
-                                        <a href="/banner/{{ $item->slug }}" title="detail banner"
-                                            class="text-white bg-gray-700 p-1 rounded-full mr-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </a>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col-span-12">
-                        @include('widget.client.no-data-search')
-                    </div>
-                @endforelse
-            </div>
-        </div>
-    </div>
+    </section>
 @endsection
 
 @push('styles')
-    <style>
-        @media (min-width: 1024px) {
-            .image-container {
-                position: sticky;
-                top: 1rem;
-                transition: all 0.3s ease;
-            }
+<style>
+    .post-author-meta {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin: 20px 0;
+        padding: 15px 0;
+        border-top: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .post-author-meta .author-thumb img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .post-author-meta .author-info {
+        flex: 1;
+    }
+    
+    .post-author-meta .author-info span {
+        display: block;
+        font-size: 14px;
+    }
+    
+    .post-author-meta .author-info span:first-child {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .post-author-meta .author-info span:last-child {
+        color: #666;
+    }
+    
+    .post-author-meta .author-info a {
+        color: #333;
+        text-decoration: none;
+    }
+    
+    .post-author-meta .author-info a:hover {
+        text-decoration: underline;
+    }
+    
+    .post-social-share .copy a {
+        background: #6c757d;
+    }
+    
+    .post-social-share .copy a:hover {
+        background: #5a6268;
+    }
+    
+    .post-social-share .whatsapp a {
+        background: #25d366;
+    }
+    
+    .post-social-share .whatsapp a:hover {
+        background: #128c7e;
+    }
+</style>
+@endpush
 
-            .post-image {
-                max-height: calc(100vh - 2rem);
-                object-fit: cover;
-            }
-
-            body:has(.most-popular:target) .image-container {
-                position: relative;
-                top: 0;
-            }
-        }
-    </style>
+@push('scripts')
+<script>
+    function copyToClipboard() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link berhasil disalin ke clipboard!');
+        }).catch(() => {
+            // Fallback untuk browser lama
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Link berhasil disalin ke clipboard!');
+        });
+    }
+</script>
 @endpush

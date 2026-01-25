@@ -220,10 +220,14 @@ class InterfaceController extends Controller
             abort(404);
         }
 
-        $query = Posts::where('status', 'active')
+        $query = Posts::with(['category', 'createdBy'])
+            ->where('status', 'active')
             ->whereNotNull('published_at')
             ->where('published_at', '<=', Carbon::now())
-            ->whereJsonContains('tags', (string) $tag->id)
+            ->where(function($q) use ($tag) {
+                $q->whereJsonContains('tags', $tag->id)
+                  ->orWhereJsonContains('tags', (string) $tag->id);
+            })
             ->latest('published_at');
 
         $searchQuery = request()->input('qr');
@@ -234,6 +238,9 @@ class InterfaceController extends Controller
         }
 
         $posts = $query->paginate(10);
+
+        // Debug: Log jumlah posts yang ditemukan
+        \Log::info("Tag: {$tag->name}, Posts found: " . $posts->count());
 
         $data = [
             'banner_1'     => $this->datas->information('banner', 1),

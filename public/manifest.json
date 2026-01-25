@@ -1,0 +1,27 @@
+{
+    "name": "Portal Berita",
+    "short_name": "Portal",
+    "description": "Portal berita terpercaya dengan informasi terkini dan akurat",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/assets/img/logo_2.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/assets/img/kuliit.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable any"
+        }
+    ],
+    "categories": ["news", "information", "media"],
+    "lang": "id",
+    "dir": "ltr"
+}

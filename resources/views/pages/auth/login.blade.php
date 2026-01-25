@@ -2,7 +2,7 @@
 @section('content')
     <div class="panel-body">
         <h3 class="text-center m-t-0 m-b-30">
-            <span class=""><img src="{{ getFile($meta->og_image) }}" alt="logo" height="50"></span>
+            <span class=""><img src="{{ getFile($meta->logo) }}" alt="logo" height="50"></span>
         </h3>
         <h4 class="text-muted text-center m-t-0"><b>Sign In Portal</b></h4>
         @include('components.alert-basic')
