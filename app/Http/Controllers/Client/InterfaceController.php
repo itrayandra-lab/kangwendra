@@ -13,6 +13,7 @@ use App\Models\Page;
 use App\Models\PostTags;
 use App\Models\User;
 use App\Models\Video;
+use Illuminate\Support\Facades\Log;
 
 class InterfaceController extends Controller
 {
@@ -28,16 +29,20 @@ class InterfaceController extends Controller
     {
         $data = [
             'slide'        => $this->datas->latestPublished(3), 
-            'latestNews'   => $this->datas->latestNews(4),
-            'mostPopular'  => $this->datas->mostPopular(6),
+            'latestNews'   => $this->datas->latestNews(3), 
+            'hikmahPosts'  => $this->datas->postsCategory(2, 'Hikmah'), 
+            'amazingPosts' => $this->datas->postsCategory(2, 'AmAzing'), 
+            'brandingPosts'=> $this->datas->postsCategory(2, 'Branding'), 
+            'marketingPosts'=> $this->datas->postsCategory(2, 'Marketing'), 
+            'featuredPosts'=> $this->datas->latestPublished(3), 
+            'randomNews'   => $this->datas->latestNews(4), 
+            'mostPopular'  => $this->datas->mostPopular(2),
             'banner_1'     => $this->datas->information('banner', 1),
             'banner_2'     => $this->datas->information('banner', 1, true),
-            'information'  => $this->datas->information('text', 6),
+            'information'  => $this->datas->information('text', 4),
             'recommended'  => $this->datas->recommended(6),
-            'videos'       => $this->datas->videos(10),
-            'photos'       => $this->datas->photo(8),
             'tags'         => $this->datas->tags(9),
-            'categories'   => $this->datas->category(8),
+            'categories'   => $this->datas->category(4),
             'ads'         => $this->datas->ads(1, ['image','gif']),
         ];
 
@@ -240,7 +245,7 @@ class InterfaceController extends Controller
         $posts = $query->paginate(10);
 
         // Debug: Log jumlah posts yang ditemukan
-        \Log::info("Tag: {$tag->name}, Posts found: " . $posts->count());
+        Log::info("Tag: {$tag->name}, Posts found: " . $posts->count());
 
         $data = [
             'banner_1'     => $this->datas->information('banner', 1),
@@ -254,7 +259,7 @@ class InterfaceController extends Controller
     }
 
     #videos
-    public function videos(Request $request) {
+    public function videos() {
 
         $videos = Video::latest('created_at');
 

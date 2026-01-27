@@ -56,7 +56,6 @@
     <!-- Telegram -->
     <meta property="telegram:channel" content="{{ $meta->web_name ?? 'Portal Berita' }}">
     
-    <!-- Schema.org JSON-LD for AI and Search Engines -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -105,7 +104,6 @@
     }
     </script>
     
-    <!-- Website Schema -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -133,7 +131,6 @@
     }
     </script>
     
-    <!-- Breadcrumb Schema (will be overridden by specific pages) -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -181,15 +178,6 @@
     <meta name="article:publisher" content="{{ $meta->web_name ?? 'Portal Berita' }}">
     <meta name="article:author" content="{{ $meta->web_name ?? 'Portal Berita' }}">
     
-    <!-- Google Site Verification (add your verification code) -->
-    <!-- <meta name="google-site-verification" content="your-verification-code"> -->
-    
-    <!-- Bing Site Verification (add your verification code) -->
-    <!-- <meta name="msvalidate.01" content="your-verification-code"> -->
-    
-    <!-- Yandex Site Verification (add your verification code) -->
-    <!-- <meta name="yandex-verification" content="your-verification-code"> -->
-
     <link rel="stylesheet" href="{{ asset('client/assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('client/assets/css/venobox.min.css') }}">
     <link rel="stylesheet" href="{{ asset('client/assets/css/swiper.min.css') }}">

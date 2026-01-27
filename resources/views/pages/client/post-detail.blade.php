@@ -1,6 +1,7 @@
 @extends('layouts.client.app')
 
 @section('content')
+
     <section class="single-page no-sidebar padding-bottom">
         <div class="container">
             <div class="row">

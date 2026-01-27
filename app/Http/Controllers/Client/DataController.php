@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Client;
 
-use App\Http\Controllers\Admin\PostCategories;
 use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\AlbumPhoto;
@@ -11,7 +10,6 @@ use App\Models\PostCategory;
 use App\Models\Posts;
 use App\Models\PostTags;
 use App\Models\Video;
-use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 class DataController extends Controller
@@ -25,10 +23,10 @@ class DataController extends Controller
             ->whereNotNull('published_at')
             ->where('published_at', '<=', Carbon::now())
             ->latest('published_at')
-            ->limit($limit * 2) // Ambil lebih banyak data untuk dirandom
+            ->limit($limit * 2) 
             ->get()
-            ->shuffle() // Randomkan hasil
-            ->take($limit); // Ambil sesuai limit yang diminta
+            ->shuffle() 
+            ->take($limit); 
     }
 
     /**
@@ -188,4 +186,28 @@ class DataController extends Controller
         return $query->limit($limit)->get();
     }
 
+    /**
+     * 10. post by category
+     */
+
+    public static function postsCategory($limit, $identifier)
+    {
+        return Posts::where('status', 'active')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', Carbon::now())
+            ->whereHas('category', function($query) use ($identifier) {
+                if (is_numeric($identifier)) {
+                    $query->where('id', $identifier);
+                } else {
+                    $query->where(function($q) use ($identifier) {
+                        $q->where('slug', $identifier)
+                        ->orWhere('name', $identifier);
+                    });
+                }
+            })
+            ->with('category')
+            ->latest()
+            ->limit($limit)
+            ->get();
+    }
 }

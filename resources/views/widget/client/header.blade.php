@@ -16,7 +16,9 @@
                                     @if($trendingPosts->count() > 0)
                                         @foreach($trendingPosts as $trending)
                                         <div class="swiper-slide">
-                                            <a href="/{{ $trending->category?->slug ?? 'news' }}/{{ $trending->slug }}">{{ $trending->title }}</a>
+                                            <a href="/{{ $trending->category?->slug ?? 'news' }}/{{ $trending->slug }}">
+                                                {{ Str::words($trending->title, 5, '...') }}
+                                            </a>
                                         </div>
                                         @endforeach
                                     @else
