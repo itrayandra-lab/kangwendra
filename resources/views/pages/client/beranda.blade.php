@@ -135,82 +135,80 @@
     <div class="container">
         <div class="row gy-5 gy-lg-0 main-area">
             <div class="col-lg-8">
-                @if ($hikmahPosts->count() !== 0)
-
-                    <div class="main-post-wrap">
-                        {{-- Section Header --}}
-                        <div class="section-heading mb-4">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
-                                </svg>
-                                <span>Artikel Terbaru</span>
-                            </h3>
-                        </div>
-                        
-                        <div class="row gy-4">
-                            @foreach($latestNews->take(10) as $index => $article)
-                                <article class="col-lg-12 col-md-6">
-                                    <div class="post-card horizontal-card img-hover-move">
-                                        @if($article->image)
-                                            <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
-                                                </a>
-                                            </div>
-                                        @endif
-                                        <div class="post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ route('category', $article->category->slug) }}">{{ $article->category->name }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="#" class="date">{{ $article->published_at->format('d.m.Y') }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
-                                                <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
-                                            @endif
-                                            <ul class="post-card-footer">
-                                                <li>
-                                                    <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q74-137 194-218.5T480-800q146 0 266 81.5T920-500q-74 137-194 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
-                                                        <span>{{ $article->counter }}</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
-                                @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                    <div class="col-12">
-                                        <div class="advertisement-card">
-                                            <div class="ad-content">
-                                                @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                                @if($imageAd)
-                                                    <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
+                <div class="main-post-wrap">
+                    {{-- Section Header --}}
+                    <div class="section-heading mb-4">
+                        <h3>
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                                <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
+                            </svg>
+                            <span>Artikel Terbaru</span>
+                        </h3>
                     </div>
-
+                    
+                    <div class="row gy-4">
+                        @foreach($latestNews->take(10) as $index => $article)
+                            <article class="col-lg-12 col-md-6">
+                                <div class="post-card horizontal-card img-hover-move">
+                                    @if($article->image)
+                                        <div class="post-thumb media">
+                                            <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}">
+                                                <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
+                                            </a>
+                                        </div>
+                                    @endif
+                                    <div class="post-content">
+                                        <ul class="post-meta">
+                                            <li>
+                                                <a href="{{ route('category', $article->category->slug) }}">{{ $article->category->name }}</a>
+                                            </li>
+                                            <li class="sep"></li>
+                                            <li>
+                                                <a href="#" class="date">{{ $article->published_at->format('d.m.Y') }}</a>
+                                            </li>
+                                        </ul>
+                                        <h3>
+                                            <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                        </h3>
+                                        @if($article->content)
+                                            <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
+                                        @endif
+                                        <ul class="post-card-footer">
+                                            <li>
+                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
+                                            </li>
+                                            <li>
+                                                <a href="#" class="comment">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                                                        <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q74-137 194-218.5T480-800q146 0 266 81.5T920-500q-74 137-194 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
+                                                    </svg>
+                                                    <span>{{ $article->counter }}</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </article>
+                            
+                            {{-- Iklan setelah artikel ke-3 --}}
+                            @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
+                                <div class="col-12">
+                                    <div class="advertisement-card">
+                                        <div class="ad-content">
+                                            @php $imageAd = $ads->where('type', 'image')->first(); @endphp
+                                            @if($imageAd)
+                                                <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
+                                                    <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+                @if ($hikmahPosts->count() !== 0)
                     <div class="main-post-wrap">
                         {{-- Section Header --}}
                         <div class="section-heading mb-4">
