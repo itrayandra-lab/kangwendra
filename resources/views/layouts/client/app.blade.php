@@ -270,10 +270,7 @@
 </head>
 
 <body>
-    <div class="site-preloader">
-        <div class="loader-text" data-text="{{ $meta->web_name ?? 'Portal' }}">{{ $meta->web_name ?? 'Portal' }}</div>
-    </div>
-
+    
     @include('widget.client.header')
 
     <main>
