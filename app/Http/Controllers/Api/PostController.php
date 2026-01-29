@@ -67,6 +67,9 @@ class PostController extends Controller
             $imagePath = $this->saveBase64Image($request->image);
         } elseif ($request->filled('image') && filter_var($request->image, FILTER_VALIDATE_URL)) {
             $imagePath = $this->saveImageFromUrl($request->image, $slug);
+            if ($imagePath === '') {
+                $imagePath = null;
+            }
         }
 
         $categoryId = null;
@@ -154,13 +157,31 @@ class PostController extends Controller
     private function saveImageFromUrl($url, $slug)
     {
         try {
-            $content = Http::timeout(30)->get($url)->body();
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            
+            $content = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+            
+            if ($content === false || $httpCode !== 200 || !empty($error)) {
+                return '';
+            }
+            
             $ext = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
             $name = 'posts/' . $slug . '-' . time() . '.' . $ext;
             Storage::disk('public')->put($name, $content);
             return $name;
         } catch (\Exception $e) {
-            return null;
+            return '';
         }
     }
 }
