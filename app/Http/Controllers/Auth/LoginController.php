@@ -166,14 +166,14 @@ class LoginController extends Controller
     protected function validateAntiShell(Request $request)
     {
         $dangerousPatterns = [
-            '/(\||;|&|`|\$\(|\${|<|>|\\\|\/bin\/|\/usr\/bin\/|sh|bash|cmd|powershell|exec|system|passthru|shell_exec|eval|base64_decode|file_get_contents|fopen|fwrite|curl|wget|nc|netcat|telnet|ssh|ftp|python|perl|ruby|php|node|java|gcc|make|chmod|chown|rm|mv|cp|cat|echo|printf|awk|sed|grep|find|xargs|sudo|su|whoami|id|ps|kill|killall|mount|umount|fdisk|dd|tar|zip|unzip|gzip|gunzip|7z|rar|unrar)/',
+            '/(\||;|&|`|\$\(|\${|<|>|\\\\|\/bin\/|\/usr\/bin\/|sh |bash |cmd |powershell |exec\(|system\(|passthru\(|shell_exec\(|eval\(|base64_decode\(|file_get_contents\(|fopen\(|fwrite\(|curl |wget |nc |netcat |telnet |ssh |ftp |python |perl |ruby |php |node |java |gcc |make |chmod |chown |rm |mv |cp |cat |echo |printf |awk |sed |grep |find |xargs |sudo |su |whoami |id |ps |kill |killall |mount |umount |fdisk |dd |tar |zip |unzip |gzip |gunzip |7z |rar |unrar )/',
             '/(\x00|\x0a|\x0d|\x1a|\x09)/',
-            '/(union|select|insert|update|delete|drop|create|alter|exec|execute|sp_|xp_|cmdshell)/i',
-            '/(<script|<iframe|<object|<embed|<link|<meta|<style|javascript:|vbscript:|data:|about:)/i',
-            '/(onload|onerror|onclick|onmouseover|onfocus|onblur|onchange|onsubmit)=/i'
+            '/(union\s+select|insert\s+into|update\s+set|delete\s+from|drop\s+table|create\s+table|alter\s+table|exec\s+|execute\s+|sp_|xp_|cmdshell)/i',
+            '/(<script|<iframe|<object|<embed|<link|<meta|<style|javascript:|vbscript:|data:text\/html|about:)/i',
+            '/(onload\s*=|onerror\s*=|onclick\s*=|onmouseover\s*=|onfocus\s*=|onblur\s*=|onchange\s*=|onsubmit\s*=)/i'
         ];
 
-        $inputs = $request->all();
+        $inputs = $request->except(['_token', '_method']);
         
         foreach ($inputs as $key => $value) {
             if (is_string($value)) {
@@ -208,7 +208,7 @@ class LoginController extends Controller
         }
         
         $userAgent = $request->userAgent();
-        $suspiciousAgents = ['curl', 'wget', 'python', 'perl', 'ruby', 'java', 'go-http', 'libwww'];
+        $suspiciousAgents = ['curl/', 'wget/', 'python-', 'perl/', 'ruby/', 'java/', 'go-http', 'libwww'];
         
         foreach ($suspiciousAgents as $agent) {
             if (stripos($userAgent, $agent) !== false) {
