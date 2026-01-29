@@ -1,5 +1,73 @@
 @extends('layouts.client.app')
 
+@push('structured-data')
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "{{ $page->title }}",
+    "description": "{{ Str::limit(strip_tags($page->content), 160) }}",
+    "url": "{{ request()->url() }}",
+    "datePublished": "{{ $page->created_at->toISOString() }}",
+    "dateModified": "{{ $page->updated_at->toISOString() }}",
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ $meta->logo ? getFile($meta->logo) : '' }}"
+        }
+    },
+    "mainContentOfPage": {
+        "@type": "WebPageElement",
+        "text": "{{ Str::limit(strip_tags($page->content), 500) }}"
+    },
+    "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Beranda",
+                "item": "{{ url('/') }}"
+            },
+            {
+                "@type": "ListItem", 
+                "position": 2,
+                "name": "{{ $page->title }}",
+                "item": "{{ request()->url() }}"
+            }
+        ]
+    }
+}
+</script>
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "Apa isi dari halaman {{ $page->title }}?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "{{ Str::limit(strip_tags($page->content), 200) }}"
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Kapan halaman ini terakhir diperbarui?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Halaman ini terakhir diperbarui pada {{ $page->updated_at->format('d M Y') }} untuk memastikan informasi yang disajikan tetap akurat dan relevan."
+            }
+        }
+    ]
+}
+</script>
+@endpush
+
 @section('content')
 
     <section class="single-page no-sidebar padding-bottom">

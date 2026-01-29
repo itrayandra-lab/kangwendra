@@ -1,5 +1,95 @@
 @extends('layouts.client.app')
 
+@push('structured-data')
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
+    "description": "{{ $meta->meta_description ?? 'Portal berita terpercaya dengan informasi terkini dan terpercaya' }}",
+    "url": "{{ url('/') }}",
+    "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "{{ url('/search') }}?qr={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ $meta->logo ? getFile($meta->logo) : '' }}"
+        }
+    }
+}
+</script>
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Artikel Terbaru",
+    "description": "Kumpulan artikel berita terbaru dan terpercaya",
+    "itemListElement": [
+        @foreach($latestNews->take(5) as $index => $news)
+        {
+            "@type": "ListItem",
+            "position": {{ $index + 1 }},
+            "item": {
+                "@type": "Article",
+                "headline": "{{ $news->title }}",
+                "description": "{{ Str::limit(strip_tags($news->content), 160) }}",
+                "url": "{{ route('post_detail', [$news->category->slug, $news->slug]) }}",
+                "datePublished": "{{ $news->published_at ? $news->published_at->toISOString() : $news->created_at->toISOString() }}",
+                "author": {
+                    "@type": "Person",
+                    "name": "{{ $news->createdBy->name ?? 'Admin' }}"
+                },
+                "image": "{{ $news->image ? getFile($news->image) : '' }}"
+            }
+        }{{ !$loop->last ? ',' : '' }}
+        @endforeach
+    ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "Apa saja kategori berita yang tersedia?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Kami menyediakan berbagai kategori berita meliputi: {{ $categories->take(5)->pluck('name')->implode(', ') }} dan kategori lainnya untuk memberikan informasi yang komprehensif."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Bagaimana cara mencari artikel di website ini?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Anda dapat menggunakan fitur pencarian di bagian atas halaman atau menjelajahi artikel berdasarkan kategori yang tersedia. Semua artikel diorganisir dengan baik untuk memudahkan navigasi."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Seberapa sering konten diperbarui?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Konten kami diperbarui secara berkala dengan berita terbaru dan artikel informatif. Tim editorial kami bekerja untuk menyajikan informasi yang akurat dan terkini setiap hari."
+            }
+        }
+    ]
+}
+</script>
+@endpush
+
 @section('content')
 <div class="featured-post-grid">
     <div class="container">

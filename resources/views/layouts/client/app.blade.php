@@ -243,6 +243,30 @@
     </style>
 
     @stack('styles')
+    
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
+        "url": "{{ url('/') }}",
+        "logo": "{{ $meta->logo ? getFile($meta->logo) : '' }}",
+        "description": "{{ $meta->meta_description ?? 'Portal berita terpercaya dengan informasi terkini' }}",
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer service",
+            "email": "{{ $meta->email ?? '' }}"
+        },
+        "sameAs": [
+            "{{ $meta->facebook_link ?? '' }}",
+            "{{ $meta->twitter_link ?? '' }}",
+            "{{ $meta->instagram_link ?? '' }}",
+            "{{ $meta->youtube_link ?? '' }}"
+        ]
+    }
+    </script>
+    
+    @stack('structured-data')
 </head>
 
 <body>

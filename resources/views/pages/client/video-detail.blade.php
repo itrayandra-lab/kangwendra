@@ -1,5 +1,65 @@
 @extends('layouts.client.app')
 
+@push('structured-data')
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": "{{ $video->title }}",
+    "description": "{{ Str::limit(strip_tags($video->description), 160) }}",
+    "thumbnailUrl": "{{ $video->image ? getFile($video->image) : '' }}",
+    "uploadDate": "{{ $video->created_at->toISOString() }}",
+    "contentUrl": "{{ $video->link_yt }}",
+    "embedUrl": "{{ $video->link_yt }}",
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ $meta->logo ? getFile($meta->logo) : '' }}"
+        }
+    },
+    "author": {
+        "@type": "Person",
+        "name": "{{ $video->createdBy->name ?? 'Admin' }}"
+    }
+}
+</script>
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "Apa yang dibahas dalam video {{ $video->title }}?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "{{ Str::limit(strip_tags($video->description), 200) }}"
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Kapan video ini dipublikasikan?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Video ini dipublikasikan pada {{ $video->created_at->format('d M Y') }} dan dapat ditonton langsung melalui platform video kami."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Bagaimana cara menonton video ini?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Anda dapat menonton video ini langsung di halaman ini atau mengunjungi link video asli untuk pengalaman menonton yang optimal."
+            }
+        }
+    ]
+}
+</script>
+@endpush
+
 @section('content')
     <section class="single-video-page padding">
         <div class="container">

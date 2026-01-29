@@ -1,5 +1,75 @@
 @extends('layouts.client.app')
 
+@push('structured-data')
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "{{ $post->title }}",
+    "description": "{{ Str::limit(strip_tags($post->content), 160) }}",
+    "image": "{{ $post->image ? getFile($post->image) : '' }}",
+    "author": {
+        "@type": "Person",
+        "name": "{{ $post->createdBy->name ?? 'Admin' }}",
+        "url": "{{ $post->createdBy ? route('author', $post->createdBy->slug) : '' }}"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ $meta->logo ? getFile($meta->logo) : '' }}"
+        }
+    },
+    "datePublished": "{{ $post->published_at ? $post->published_at->toISOString() : $post->created_at->toISOString() }}",
+    "dateModified": "{{ $post->updated_at->toISOString() }}",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ request()->url() }}"
+    },
+    "articleSection": "{{ $post->category->name ?? 'Berita' }}",
+    "keywords": "{{ $post->tags ? collect(json_decode($post->tags))->map(function($tagId) { return App\Models\PostTags::find($tagId)?->name; })->filter()->implode(', ') : '' }}",
+    "wordCount": {{ str_word_count(strip_tags($post->content ?? '')) }},
+    "url": "{{ request()->url() }}"
+}
+</script>
+
+@if($relate->count() > 0)
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "Apa topik utama artikel {{ $post->title }}?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Artikel ini membahas {{ Str::limit(strip_tags($post->content), 200) }} dalam kategori {{ $post->category->name ?? 'berita' }}."
+            }
+        },
+        {
+            "@type": "Question", 
+            "name": "Siapa penulis artikel ini?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Artikel ini ditulis oleh {{ $post->createdBy->name ?? 'Tim Editorial' }} dan dipublikasikan pada {{ $post->published_at ? $post->published_at->format('d M Y') : $post->created_at->format('d M Y') }}."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Artikel terkait apa saja yang tersedia?",
+            "acceptedAnswer": {
+                "@type": "Answer", 
+                "text": "Beberapa artikel terkait yang mungkin menarik: {{ $relate->take(3)->pluck('title')->implode(', ') }}."
+            }
+        }
+    ]
+}
+</script>
+@endif
+@endpush
+
 @section('content')
 
     <section class="single-page no-sidebar padding-bottom">
