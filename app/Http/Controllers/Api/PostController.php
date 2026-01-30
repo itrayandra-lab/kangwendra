@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 
 class PostController extends Controller
 {
@@ -65,6 +66,9 @@ class PostController extends Controller
             $imagePath = $request->file('image')->store('posts', 'public');
         } elseif ($request->filled('image') && str_starts_with($request->image, 'data:image')) {
             $imagePath = $this->saveBase64Image($request->image);
+            if ($imagePath === '') {
+                $imagePath = null;
+            }
         } elseif ($request->filled('image') && filter_var($request->image, FILTER_VALIDATE_URL)) {
             $imagePath = $this->saveImageFromUrl($request->image, $slug);
             if ($imagePath === '') {
@@ -140,18 +144,79 @@ class PostController extends Controller
 
     private function saveBase64Image($base64Image)
     {
-        preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type);
-        if (!isset($type[1])) return null;
+        try {
+            preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type);
+            if (!isset($type[1])) {
+                return '';
+            }
 
-        $imageType = strtolower($type[1]);
-        $imageData = base64_decode(substr($base64Image, strpos($base64Image, ',') + 1));
+            $imageType = strtolower($type[1]);
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            
+            if (!in_array($imageType, $allowedExtensions)) {
+                return '';
+            }
 
-        if ($imageData === false) return null;
+            $imageData = base64_decode(substr($base64Image, strpos($base64Image, ',') + 1));
+            if ($imageData === false) {
+                return '';
+            }
 
-        $fileName = 'posts/' . uniqid() . '.' . $imageType;
-        Storage::disk('public')->put($fileName, $imageData);
+            $fileSize = strlen($imageData) / 1024 / 1024;
+            if ($fileSize > 3) {
+                return '';
+            }
 
-        return $fileName;
+            $tempFile = tempnam(sys_get_temp_dir(), 'img_base64');
+            file_put_contents($tempFile, $imageData);
+
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($tempFile);
+            
+            if (!in_array($mimeType, $allowedMimes)) {
+                unlink($tempFile);
+                return '';
+            }
+
+            if (!@getimagesize($tempFile)) {
+                unlink($tempFile);
+                return '';
+            }
+
+            $randomName = 'base64_' . Str::random(10) . '.' . $imageType;
+            
+            $folder = 'posts';
+            $path = public_path('assets/app/' . $folder);
+            
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0777, true, true);
+            }
+
+            $finalPath = $path . '/' . $randomName;
+            
+            if (copy($tempFile, $finalPath)) {
+                unlink($tempFile);
+                
+                Log::info('Base64 image saved', [
+                    'saved_path' => 'assets/app/' . $folder . '/' . $randomName,
+                    'size' => $fileSize . 'MB',
+                    'mime' => $mimeType,
+                    'type' => $imageType
+                ]);
+                
+                return 'assets/app/' . $folder . '/' . $randomName;
+            } else {
+                unlink($tempFile);
+                return '';
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to save base64 image', [
+                'error' => $e->getMessage()
+            ]);
+            return '';
+        }
     }
 
     private function saveImageFromUrl($url, $slug)
@@ -175,12 +240,72 @@ class PostController extends Controller
             if ($content === false || $httpCode !== 200 || !empty($error)) {
                 return '';
             }
+
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             
             $ext = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
-            $name = 'posts/' . $slug . '-' . time() . '.' . $ext;
-            Storage::disk('public')->put($name, $content);
-            return $name;
+            $ext = strtolower($ext);
+            
+            if (!in_array($ext, $allowedExtensions)) {
+                return '';
+            }
+
+            $tempFile = tempnam(sys_get_temp_dir(), 'img_download');
+            file_put_contents($tempFile, $content);
+
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($tempFile);
+            
+            if (!in_array($mimeType, $allowedMimes)) {
+                unlink($tempFile);
+                return '';
+            }
+
+            if (!@getimagesize($tempFile)) {
+                unlink($tempFile);
+                return '';
+            }
+
+            $fileSize = filesize($tempFile) / 1024 / 1024;
+            if ($fileSize > 3) {
+                unlink($tempFile);
+                return '';
+            }
+
+            $nameFile = strtolower(str_replace(' ', '_', $slug));
+            $randomName = $nameFile . '_' . Str::random(10) . '.' . $ext;
+            
+            $folder = 'posts';
+            $path = public_path('assets/app/' . $folder);
+            
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0777, true, true);
+            }
+
+            $finalPath = $path . '/' . $randomName;
+            
+            if (copy($tempFile, $finalPath)) {
+                unlink($tempFile);
+                
+                Log::info('Image downloaded from URL', [
+                    'url' => $url,
+                    'saved_path' => 'assets/app/' . $folder . '/' . $randomName,
+                    'size' => $fileSize . 'MB',
+                    'mime' => $mimeType
+                ]);
+                
+                return 'assets/app/' . $folder . '/' . $randomName;
+            } else {
+                unlink($tempFile);
+                return '';
+            }
+            
         } catch (\Exception $e) {
+            Log::error('Failed to download image from URL', [
+                'url' => $url,
+                'error' => $e->getMessage()
+            ]);
             return '';
         }
     }
