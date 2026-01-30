@@ -1,25 +1,15 @@
 <IfModule mod_rewrite.c>
-    Options -MultiViews -Indexes -ExecCGI
+    Options -MultiViews -Indexes
     RewriteEngine On
 
-    # Block PHP in uploads
-    <Directory "assets/">
-        <FilesMatch "\.php$">
-            Order allow,deny
-            Deny from all
-        </FilesMatch>
-    </Directory>
-
-    # Block dangerous patterns
-    RewriteCond %{QUERY_STRING} (exec|system|shell_exec) [NC]
+    # Block PHP in uploads directory only
+    RewriteCond %{REQUEST_URI} ^/assets/uploads/
+    RewriteCond %{REQUEST_URI} \.php$
     RewriteRule ^(.*)$ - [F,L]
 
-    # Block file extensions
-    <FilesMatch "\.(php|phtml|php3|php4|php5|pl|py|jsp|asp|sh|cgi)$">
-        <RequireAll>
-            Require all denied
-        </RequireAll>
-    </FilesMatch>
+    # Block dangerous patterns in query string only
+    RewriteCond %{QUERY_STRING} (exec\(|system\(|shell_exec\() [NC]
+    RewriteRule ^(.*)$ - [F,L]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
@@ -41,5 +31,4 @@
     Header always set X-Content-Type-Options nosniff
     Header always set X-Frame-Options SAMEORIGIN
     Header always set X-XSS-Protection "1; mode=block"
-    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>

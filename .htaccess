@@ -7,30 +7,31 @@ RewriteEngine On
     Deny from all
 </FilesMatch>
 
-# Block directory traversal
-RewriteCond %{QUERY_STRING} \.\./ [NC]
+# Block directory traversal - only in query string
+RewriteCond %{QUERY_STRING} \.\./
 RewriteRule ^(.*)$ - [F,L]
 
-# Block shell injection
-RewriteCond %{QUERY_STRING} (exec|system|shell_exec|passthru|eval) [NC]
+# Block shell injection - only dangerous combinations
+RewriteCond %{QUERY_STRING} (exec\(|system\(|shell_exec\(|passthru\(|eval\() [NC]
 RewriteRule ^(.*)$ - [F,L]
 
-# Block SQL injection patterns
-RewriteCond %{QUERY_STRING} (union.*select|insert.*into|delete.*from) [NC]
+# Block SQL injection - only dangerous patterns
+RewriteCond %{QUERY_STRING} (union\s+select|insert\s+into|delete\s+from) [NC]
 RewriteRule ^(.*)$ - [F,L]
 
-# Block XSS attempts
-RewriteCond %{QUERY_STRING} (<script|<iframe|javascript:) [NC]
+# Block XSS - only script tags
+RewriteCond %{QUERY_STRING} <script [NC]
 RewriteRule ^(.*)$ - [F,L]
 
+# Redirect to public folder
+RewriteCond %{REQUEST_URI} !^/public/
 RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
 
 # Security headers
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options nosniff
-    Header always set X-Frame-Options DENY
+    Header always set X-Frame-Options SAMEORIGIN
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 </IfModule>
