@@ -1,4 +1,36 @@
 <IfModule mod_rewrite.c>
 RewriteEngine On
+
+# Block sensitive files
+<FilesMatch "\.(env|log|sql|bak|backup)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block directory traversal
+RewriteCond %{QUERY_STRING} \.\./ [NC]
+RewriteRule ^(.*)$ - [F,L]
+
+# Block shell injection
+RewriteCond %{QUERY_STRING} (exec|system|shell_exec|passthru|eval) [NC]
+RewriteRule ^(.*)$ - [F,L]
+
+# Block SQL injection patterns
+RewriteCond %{QUERY_STRING} (union.*select|insert.*into|delete.*from) [NC]
+RewriteRule ^(.*)$ - [F,L]
+
+# Block XSS attempts
+RewriteCond %{QUERY_STRING} (<script|<iframe|javascript:) [NC]
+RewriteRule ^(.*)$ - [F,L]
+
 RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 </IfModule>

@@ -34,8 +34,8 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
 
     # Image Handler
     Route::group(['prefix' => 'image', 'controller' => UploadImageEditor::class], function () {
-        Route::post('upload-image', 'uploadImage')->name('uploadImage');
-        Route::post('delete-image', 'deleteImage')->name('deleteImage');
+        Route::post('upload-image', 'uploadImage')->name('uploadImage')->middleware('throttle:20,1');
+        Route::post('delete-image', 'deleteImage')->name('deleteImage')->middleware('throttle:10,1');
     });
 
     # User management

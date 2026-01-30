@@ -17,6 +17,15 @@ return Application::configure(basePath: dirname(__DIR__))
        $middleware->alias([
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
+            'security' => \App\Http\Middleware\SecurityMiddleware::class,
+       ]);
+
+       $middleware->web(append: [
+           \App\Http\Middleware\SecurityMiddleware::class,
+       ]);
+
+       $middleware->api(append: [
+           \App\Http\Middleware\SecurityMiddleware::class,
        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

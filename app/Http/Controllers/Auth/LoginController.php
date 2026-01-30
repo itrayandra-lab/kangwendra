@@ -34,6 +34,7 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
+        $this->preventShellInjection($request);
         $this->validateAntiShell($request);
 
         Log::channel('auth')->info('Login attempt started', [
@@ -218,6 +219,32 @@ class LoginController extends Controller
                     'timestamp' => now(),
                 ]);
                 break;
+            }
+        }
+    }
+
+    protected function preventShellInjection(Request $request)
+    {
+        $patterns = [
+            '/\b(exec|system|shell_exec|passthru|eval)\s*\(/i',
+            '/;\s*(rm|del|format|exec)/i',
+            '/\|\s*(rm|del|format|exec)/i',
+            '/`[^`]*`/i'
+        ];
+
+        $inputs = ['email' => $request->input('email', ''), 'password' => $request->input('password', '')];
+
+        foreach ($inputs as $field => $value) {
+            if (is_string($value)) {
+                foreach ($patterns as $pattern) {
+                    if (preg_match($pattern, $value)) {
+                        Log::channel('auth')->critical('Shell injection in login', [
+                            'field' => $field, 'ip' => $request->ip()
+                        ]);
+                        RateLimiter::hit($this->throttleKey($request), 3600);
+                        abort(403, 'Forbidden');
+                    }
+                }
             }
         }
     }
