@@ -1,37 +1,30 @@
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
-# Block sensitive files
-<FilesMatch "\.(env|log|sql|bak|backup)$">
+# Block access to sensitive files
+<FilesMatch "\.(env|log|sql|bak|backup|old|tmp|temp|cache)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
 
-# Block directory traversal - only in query string
+# Block access to PHP files in uploads directory
+<FilesMatch "\.php$">
+    <If "%{REQUEST_URI} =~ m#^/public/assets/#">
+        Order allow,deny
+        Deny from all
+    </If>
+</FilesMatch>
+
+# Block directory traversal attempts
 RewriteCond %{QUERY_STRING} \.\./
 RewriteRule ^(.*)$ - [F,L]
 
-# Block shell injection - only dangerous combinations
-RewriteCond %{QUERY_STRING} (exec\(|system\(|shell_exec\(|passthru\(|eval\() [NC]
+RewriteCond %{QUERY_STRING} \.\.\%2F
 RewriteRule ^(.*)$ - [F,L]
 
-# Block SQL injection - only dangerous patterns
-RewriteCond %{QUERY_STRING} (union\s+select|insert\s+into|delete\s+from) [NC]
+# Block shell injection attempts
+RewriteCond %{QUERY_STRING} (exec|system|shell_exec|passthru|eval|base64_decode) [NC]
 RewriteRule ^(.*)$ - [F,L]
 
-# Block XSS - only script tags
-RewriteCond %{QUERY_STRING} <script [NC]
-RewriteRule ^(.*)$ - [F,L]
-
-# Redirect to public folder
-RewriteCond %{REQUEST_URI} !^/public/
 RewriteRule ^(.*)$ public/$1 [L]
-</IfModule>
-
-# Security headers
-<IfModule mod_headers.c>
-    Header always set X-Content-Type-Options nosniff
-    Header always set X-Frame-Options SAMEORIGIN
-    Header always set X-XSS-Protection "1; mode=block"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
