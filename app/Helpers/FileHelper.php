@@ -107,7 +107,6 @@ class FileHelper
 
             Log::info('File diunggah.', $log);
 
-            // path baru ke public/assets/app/{folder}
             $path = public_path('assets/app/' . $folder);
             if (!File::exists($path)) {
                 File::makeDirectory($path, 0777, true, true);
