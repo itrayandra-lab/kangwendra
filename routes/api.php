@@ -8,6 +8,4 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/posts', [PostController::class, 'index']);
-Route::post('/posts', [PostController::class, 'store'])
-    ->middleware('throttle:10,1');
+Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:10,1');

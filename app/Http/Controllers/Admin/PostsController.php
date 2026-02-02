@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\ShareDomain;
 use App\Models\WebIdentity;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 use Yajra\DataTables\Facades\DataTables;
 
@@ -99,18 +97,9 @@ class PostsController extends Controller
 
     public function store(Request $request)
     {
-        // Debug logging
-        Log::info('Store request received', [
-            'has_featured_image' => $request->hasFile('featured_image'),
-            'featured_image_info' => $request->hasFile('featured_image') ? [
-                'name' => $request->file('featured_image')->getClientOriginalName(),
-                'size' => $request->file('featured_image')->getSize(),
-                'mime' => $request->file('featured_image')->getMimeType()
-            ] : null,
-            'title' => $request->title
-        ]);
+        Log::info("Memulai proses simpan post: " . $request->title);
 
-        $validated = $request->validate([
+        $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
             'category_id' => 'nullable|exists:post_categories,id',
@@ -124,86 +113,82 @@ class PostsController extends Controller
             'image.*' => 'nullable|image|max:2048',
         ]);
 
-        $mainImagePath = null;
-        if ($request->hasFile('featured_image')) {
-            Log::info('Processing featured image upload');
-            try {
+        try {
+            $mainImagePath = null;
+            if ($request->hasFile('featured_image')) {
                 $mainImagePath = FileHelper::saveFile($request->file('featured_image'), 'posts', Str::slug($request->title) . '-' . time());
-                Log::info('Featured image saved successfully', ['path' => $mainImagePath]);
-            } catch (\Exception $e) {
-                Log::error('Failed to save featured image', ['error' => $e->getMessage()]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Gagal menyimpan gambar utama: ' . $e->getMessage(),
-                ], 422);
             }
-        } else {
-            Log::info('No featured image uploaded');
-        }
 
-        $post = Posts::create([
-            'title' => $request->title,
-            'slug' => Str::slug($request->title),
-            'content' => $request->content,
-            'image' => $mainImagePath,
-            'category_id' => $request->category_id,
-            'tags' => $request->tags ? json_encode($request->tags) : null,
-            'status' => $request->status,
-            'published_at' => $request->published_at,
-            'created_by' => Auth::check() ? Auth::user()->id : 1,
-            'counter' => 0,
-        ]);
+            $post = Posts::create([
+                'title' => $request->title,
+                'slug' => Str::slug($request->title),
+                'content' => $request->content,
+                'image' => $mainImagePath,
+                'category_id' => $request->category_id,
+                'tags' => $request->tags ? json_encode($request->tags) : null,
+                'status' => $request->status,
+                'published_at' => $request->published_at,
+                'created_by' => Auth::check() ? Auth::user()->id : 1,
+                'counter' => 0,
+            ]);
 
-        Log::info('Post created successfully', [
-            'post_id' => $post->id,
-            'image_path' => $post->image
-        ]);
+            Log::info("Post berhasil disimpan ke database dengan ID: {$post->id}");
 
-        $domainConfig = ShareDomain::where('status', 'active')
-            ->get()
-            ->keyBy('domain_name');
+            $domainConfig = ShareDomain::where('status', 'active')
+                ->get()
+                ->keyBy('domain_name');
 
-        if ($request->has('domains') && is_array($request->domains)) {
-            $categoryName = $request->category_id ? PostCategory::find($request->category_id)->name : null;
-            
-            foreach ($request->domains as $domainName) {
-                if (!isset($domainConfig[$domainName])) {
-                    continue;
+            if ($request->has('domains') && is_array($request->domains)) {
+                $categoryName = $request->category_id ? PostCategory::find($request->category_id)->name : null;
+                $distributeCount = 0;
+
+                foreach ($request->domains as $domainName) {
+                    if (!isset($domainConfig[$domainName])) {
+                        continue;
+                    }
+
+                    $config = $domainConfig[$domainName];
+                    $webhookUrl = $config->webhook_url;
+                    $apiKey = $config->api_key;
+                    $domainKey = str_replace('.', '_', $domainName);
+                    $finalImageUrl = $mainImagePath ? asset($mainImagePath) : null;
+
+                    if ($request->hasFile("image.{$domainKey}")) {
+                        $customImage = FileHelper::saveFile($request->file("image.{$domainKey}"), 'posts/domains', Str::slug($request->title) . '-' . $domainKey);
+                        $finalImageUrl = asset($customImage);
+                    }
+
+                    $domainPublishedAt = $request->input("domain_published_at.{$domainKey}") ?? $request->published_at;
+
+                    $metaData = [
+                        'session_id' => 'sess-' . $post->id . '-' . Str::random(6),
+                        'original_title' => $request->title,
+                        'original_content' => $request->content,
+                        'image' => $finalImageUrl,
+                        'tags' => $request->tags ?? [],
+                        'category' => $categoryName,
+                        'published_at' => $domainPublishedAt
+                    ];
+
+                    DistributePostJob::dispatch($webhookUrl, $domainName, $apiKey, $metaData);
+                    $distributeCount++;
                 }
 
-                $config = $domainConfig[$domainName];
-                $webhookUrl = $config->webhook_url;
-                $apiKey = $config->api_key;
-
-                $domainKey = str_replace('.', '_', $domainName);
-                
-                $finalImageUrl = $mainImagePath ? asset($mainImagePath) : null;
-
-                if ($request->hasFile("image.{$domainKey}")) {
-                    $customImage = FileHelper::saveFile($request->file("image.{$domainKey}"), 'posts/domains', Str::slug($request->title) . '-' . $domainKey);
-                    $finalImageUrl = asset($customImage);
-                }
-
-                $domainPublishedAt = $request->input("domain_published_at.{$domainKey}") ?? $request->published_at;
-
-                $metaData = [
-                    'session_id' => 'sess-' . $post->id . '-' . Str::random(6),
-                    'original_title' => $request->title,
-                    'original_content' => $request->content,
-                    'image' => $finalImageUrl,
-                    'tags' => $request->tags ?? [],
-                    'category' => $categoryName,
-                    'published_at' => $domainPublishedAt
-                ];
-
-                DistributePostJob::dispatch($webhookUrl, $domainName, $apiKey, $metaData);
+                Log::info("Berhasil mengirim {$distributeCount} post ke antrean distribusi domain.");
             }
-        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Post saved and processing started.',
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Post saved and processing started.',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Kegagalan sistem pada store post: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function edit($id)
