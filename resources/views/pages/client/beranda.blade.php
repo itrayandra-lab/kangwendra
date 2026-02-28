@@ -91,15 +91,49 @@
 @endpush
 
 @section('content')
+
+@if(isset($banner_1) && $banner_1->count() > 0)
+<section class="hero-banner-slider">
+    <div class="swiper hero-banner-swiper">
+        <div class="swiper-wrapper">
+            @foreach($banner_1 as $banner)
+                <div class="swiper-slide">
+                    <div class="banner-item">
+                        @if($banner->image)
+                            <a href="{{ $banner->link ?? '#' }}" class="banner-link">
+                                <img src="{{ getFile($banner->image) }}" alt="{{ $banner->title ?? 'Banner' }}" class="banner-image">
+                                @if($banner->title || $banner->description)
+                                    <div class="banner-content">
+                                        <div class="banner-content-inner">
+                                            @if($banner->title)
+                                                <h2 class="banner-title">{{ $banner->title }}</h2>
+                                            @endif
+                                            @if($banner->description)
+                                                <p class="banner-description">{!!  Str::limit(strip_tags($banner->description), 150)  !!}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        <div class="swiper-pagination"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+    </div>
+</section>
+@endif
+
 <div class="featured-post-grid">
     <div class="container">
         <div class="post-layout-2">
             @foreach ($featuredPosts->take(3) as $index => $post)
                 <article class="post-layout-item img-hover-move">
                     <a href="{{ route('post_detail', [$post->category->slug, $post->slug]) }}" class="post-thumb media">
-                        @if($post->image)
-                            <img src="{{ getFile($post->image) }}" alt="{{ $post->title }}">
-                        @endif
+                        <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
                     </a>
                     <div class="post-content">
                         <ul class="post-meta">
@@ -187,9 +221,7 @@
                             <div class="swiper-slide">
                                 <article class="horizontal-post-card img-hover-move">
                                     <a href="{{ route('post_detail', [$post->category->slug, $post->slug]) }}" class="post-thumb media">
-                                        @if($post->image)
-                                            <img src="{{ getFile($post->image) }}" alt="{{ $post->title }}">
-                                        @endif
+                                        <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
                                     </a>
                                     <div class="post-content">
                                         <ul class="post-meta">
@@ -749,6 +781,196 @@
 
 @push('styles')
 <style>
+    .hero-banner-slider {
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        margin-bottom: 40px;
+        position: relative;
+    }
+
+    .hero-banner-swiper {
+        width: 100%;
+        height: 85vh;
+    }
+
+    @media (max-width: 1200px) {
+        .hero-banner-swiper {
+            height: 70vh;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-banner-swiper {
+            height: 60vh;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .hero-banner-swiper {
+            height: 50vh;
+        }
+    }
+
+    .banner-item {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .banner-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 30%, rgba(0,0,0,0.3) 60%, transparent 100%);
+        z-index: 1;
+    }
+
+    .banner-link {
+        display: block;
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    .banner-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .banner-content {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        transform: translateY(-50%);
+        padding: 60px 0;
+        color: white;
+        z-index: 2;
+    }
+
+    .banner-content-inner {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+        text-align: left;
+    }
+
+    .banner-title {
+        font-size: 56px;
+        font-weight: 700;
+        margin: 0 0 20px 0;
+        color: white;
+        text-shadow: 3px 3px 12px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.8);
+        line-height: 1.2;
+        max-width: 900px;
+        word-wrap: break-word;
+    }
+
+    .banner-description {
+        font-size: 20px;
+        margin: 0;
+        color: white;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.8);
+        line-height: 1.6;
+        max-width: 800px;
+        word-wrap: break-word;
+    }
+    }
+
+    @media (max-width: 1200px) {
+        .banner-title {
+            font-size: 48px;
+        }
+        .banner-description {
+            font-size: 18px;
+        }
+        .banner-content {
+            padding: 50px 0;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .banner-title {
+            font-size: 36px;
+        }
+        .banner-description {
+            font-size: 16px;
+        }
+        .banner-content {
+            padding: 40px 0;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .banner-title {
+            font-size: 28px;
+        }
+        .banner-description {
+            font-size: 15px;
+        }
+        .banner-content {
+            padding: 30px 0;
+        }
+    }
+
+    .hero-banner-swiper .swiper-button-next,
+    .hero-banner-swiper .swiper-button-prev {
+        color: white;
+        background: rgba(0,0,0,0.5);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .hero-banner-swiper .swiper-button-next:after,
+    .hero-banner-swiper .swiper-button-prev:after {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .hero-banner-swiper .swiper-button-next:hover,
+    .hero-banner-swiper .swiper-button-prev:hover {
+        background: rgba(0,0,0,0.8);
+        transform: scale(1.1);
+    }
+
+    @media (max-width: 768px) {
+        .hero-banner-swiper .swiper-button-next,
+        .hero-banner-swiper .swiper-button-prev {
+            width: 40px;
+            height: 40px;
+        }
+        .hero-banner-swiper .swiper-button-next:after,
+        .hero-banner-swiper .swiper-button-prev:after {
+            font-size: 18px;
+        }
+    }
+
+    .hero-banner-swiper .swiper-pagination {
+        bottom: 20px;
+    }
+
+    .hero-banner-swiper .swiper-pagination-bullet {
+        width: 10px;
+        height: 10px;
+        background: white;
+        opacity: 0.6;
+        transition: all 0.3s ease;
+    }
+
+    .hero-banner-swiper .swiper-pagination-bullet-active {
+        opacity: 1;
+        background: white;
+        transform: scale(1.2);
+    }
+
     .widget-tags .tag-list {
         display: flex;
         flex-wrap: wrap;
@@ -813,6 +1035,28 @@
 
 @push('scripts')
 <script>
+    var heroBannerSwiper = new Swiper('.hero-banner-swiper', {
+        slidesPerView: 1,
+        spaceBetween: 0,
+        loop: true,
+        autoplay: {
+            delay: 5000,
+            disableOnInteraction: false,
+        },
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        effect: 'fade',
+        fadeEffect: {
+            crossFade: true
+        },
+    });
+
     var verticalSwiper = new Swiper('.vartical-post-carousel', {
         direction: 'vertical',
         slidesPerView: 3,

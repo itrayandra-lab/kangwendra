@@ -37,7 +37,7 @@ class InterfaceController extends Controller
             'featuredPosts'=> $this->datas->latestPublished(3), 
             'randomNews'   => $this->datas->latestNews(4), 
             'mostPopular'  => $this->datas->mostPopular(2),
-            'banner_1'     => $this->datas->information('banner', 1),
+            'banner_1'     => $this->datas->information('banner', 5),
             'banner_2'     => $this->datas->information('banner', 1, true),
             'information'  => $this->datas->information('text', 4),
             'recommended'  => $this->datas->recommended(6),

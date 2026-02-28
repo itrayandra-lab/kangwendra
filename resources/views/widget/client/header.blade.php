@@ -86,7 +86,7 @@
         <div class="container">
             <div class="main-header-wapper">
                 <div class="site-logo">
-                    <a href="{{ url('/') }}"><span class="site-title">{{ $meta->web_name ?? 'Portal' }}</span></a>
+                    <img src="{{ getFile($meta->logo) }}" alt="{{ $meta->web_name ?? 'Portal' }}" height="40">
                 </div>
                 <div class="main-header-info">
                     <div class="header-menu-wrap">
