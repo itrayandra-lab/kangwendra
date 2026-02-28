@@ -58,7 +58,7 @@ class VideosController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'link_yt' => 'required|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:4096',
             'description' => 'nullable|string',
         ]);
 
@@ -92,7 +92,7 @@ class VideosController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'link_yt' => 'required|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:4096',
             'description' => 'nullable|string',
         ]);
 

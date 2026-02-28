@@ -10,8 +10,8 @@
     "image": "{{ $post->image ? getFile($post->image) : '' }}",
     "author": {
         "@type": "Person",
-        "name": "{{ $post->createdBy->name ?? 'Admin' }}",
-        "url": "{{ $post->createdBy ? route('author', $post->createdBy->slug) : '' }}"
+        "name": "{{ $post->createdBy?->name ?? 'Unknown' ?? 'Admin' }}",
+        "url": "{{ $post->createdBy ? route('author', $post->createdBy?->slug ?? '#') : '' }}"
     },
     "publisher": {
         "@type": "Organization",
@@ -27,7 +27,7 @@
         "@type": "WebPage",
         "@id": "{{ request()->url() }}"
     },
-    "articleSection": "{{ $post->category->name ?? 'Berita' }}",
+    "articleSection": "{{ $post->category?->name ?? 'Uncategorized' ?? 'Berita' }}",
     "keywords": "{{ $post->tags ? collect(json_decode($post->tags))->map(function($tagId) { return App\Models\PostTags::find($tagId)?->name; })->filter()->implode(', ') : '' }}",
     "wordCount": {{ str_word_count(strip_tags($post->content ?? '')) }},
     "url": "{{ request()->url() }}"
@@ -45,7 +45,7 @@
             "name": "Apa topik utama artikel {{ $post->title }}?",
             "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Artikel ini membahas {{ Str::limit(strip_tags($post->content), 200) }} dalam kategori {{ $post->category->name ?? 'berita' }}."
+                "text": "Artikel ini membahas {{ Str::limit(strip_tags($post->content), 200) }} dalam kategori {{ $post->category?->name ?? 'Uncategorized' ?? 'berita' }}."
             }
         },
         {
@@ -53,7 +53,7 @@
             "name": "Siapa penulis artikel ini?",
             "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Artikel ini ditulis oleh {{ $post->createdBy->name ?? 'Tim Editorial' }} dan dipublikasikan pada {{ $post->published_at ? $post->published_at->format('d M Y') : $post->created_at->format('d M Y') }}."
+                "text": "Artikel ini ditulis oleh {{ $post->createdBy?->name ?? 'Unknown' ?? 'Tim Editorial' }} dan dipublikasikan pada {{ $post->published_at ? $post->published_at?->format('d M Y') : $post->created_at->format('d M Y') }}."
             }
         },
         {
@@ -193,13 +193,13 @@
                         <div class="single-post-item">
                             <div class="single-post-author">
                                 <div class="author-thumb">
-                                    <a href="/author/{{ $post->createdBy->slug }}">
+                                    <a href="/author/{{ $post->createdBy?->slug ?? '#' }}">
                                         <img src="{{ $post->createdBy->image ? getFile($post->createdBy->image) : asset('client/assets/img/author-widget.jpg') }}" alt="author">
                                     </a>
                                 </div>
                                 <div class="author-info">
                                     <h3>
-                                        <a href="/author/{{ $post->createdBy->slug }}">{{ $post->createdBy->name }}</a> 
+                                        <a href="/author/{{ $post->createdBy?->slug ?? '#' }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a> 
                                         <span>Penulis</span>
                                     </h3>
                                     <p>{{ $post->createdBy->bio ?? 'Penulis yang berpengalaman dalam dunia jurnalistik dan penulisan artikel.' }}</p>
@@ -426,3 +426,5 @@
     }
 </script>
 @endpush
+
+

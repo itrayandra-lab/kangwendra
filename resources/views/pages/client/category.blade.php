@@ -166,7 +166,7 @@
                                 <div class="widget-content">
                                     <div class="tag-list">
                                         @foreach($tags as $tag)
-                                            <a href="/tag/{{ $tag->slug }}" class="tag-item">{{ $tag->name }}</a>
+                                            <a href="/tag/{{ $tag?->slug ?? '#' }}" class="tag-item">{{ $tag?->name ?? 'Tag' }}</a>
                                         @endforeach
                                     </div>
                                 </div>
@@ -593,3 +593,6 @@
     }
 </style>
 @endpush
+
+
+

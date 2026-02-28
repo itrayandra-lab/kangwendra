@@ -286,7 +286,7 @@
                         <div class="widget-about">
                             <div class="footer-logo">
                                 <a href="{{ url('/') }}">
-                                    <img src="{{ getFile($meta->logo) }}" alt="{{ $meta->web_name ?? 'Portal' }}" height="40">
+                                    <img src="{{ getFile($meta->logo) }}" alt="{{ $meta->web_name ?? 'Portal' }}" height="80"> <br>
                                 </a>
                             </div>
                             <p>{{ App\Models\WebIdentity::orderBy('id', 'desc')->first()?->meta_description ?? 'Portal berita terpercaya dengan informasi terkini dan akurat.' }}</p>
@@ -417,3 +417,5 @@
 
 </body>
 </html>
+
+

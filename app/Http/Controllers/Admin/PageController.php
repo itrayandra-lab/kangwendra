@@ -20,9 +20,9 @@ class PageController extends Controller
             return DataTables::of($pages)
                 ->addIndexColumn()
                 ->addColumn('link', fn($page) => '<a href="/page/'.$page->slug.'" target="_blank"><i class="fa fa-external-link"></i> Lihat</a>')
-                ->editColumn('status', fn($page) => $page->status === 'published' 
-                    ? '<span class="label label-success">Published</span>' 
-                    : '<span class="label label-warning">Draft</span>')
+                ->editColumn('status', fn($page) => $page->status === 'active' 
+                    ? '<span class="label label-success">Active</span>' 
+                    : '<span class="label label-warning">Inactive</span>')
                 ->addColumn('creator', fn($page) => $page->creator?->name ?? '-')
                 ->addColumn('action', function ($page) {
                     $edit = auth()->user()->can('edit pages')

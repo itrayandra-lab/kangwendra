@@ -102,15 +102,15 @@ class PostsController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
-            'category_id' => 'nullable|exists:post_categories,id',
+            'category_id' => 'required|exists:post_categories,id',
             'tags' => 'nullable|array',
             'status' => 'required|in:active,inactive',
             'domains' => 'nullable|array',
             'domains.*' => 'string',
-            'featured_image' => 'nullable|image|max:2048',
+            'featured_image' => 'nullable|image|max:4096',
             'published_at' => 'required|date',
             'domain_published_at' => 'nullable|array',
-            'image.*' => 'nullable|image|max:2048',
+            'image.*' => 'nullable|image|max:4096',
         ]);
 
         try {
@@ -209,7 +209,7 @@ class PostsController extends Controller
     {
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:4096',
             'content' => 'nullable|string',
             'status' => 'required|in:active,inactive',
             'category_id' => 'nullable|exists:post_categories,id',

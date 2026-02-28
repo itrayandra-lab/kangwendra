@@ -200,7 +200,7 @@
                             <select name="tags[]" id="tags" class="form-control select2" multiple="multiple" required>
                                 @foreach ($tags as $tag)
                                     <option value="{{ $tag->id }}" {{ in_array($tag->id, old('tags', [])) ? 'selected' : '' }}>
-                                        {{ $tag->name }}
+                                        {{ $tag?->name ?? 'Tag' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -228,7 +228,7 @@
                     </div>
                     <div class="setting-content" id="content-category">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <select name="category_id" class="form-control input-sm">
+                            <select name="category_id" class="form-control input-sm" required>
                                 <option value="">Pilih Kategori</option>
                                 @foreach ($categories as $category)
                                     <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
@@ -251,7 +251,7 @@
                                 @forelse($domains as $index => $domain)
                                     @php
                                         $domain_key = str_replace('.', '_', $domain->domain_name);
-                                        $is_checked = ($old_domains_checked === null) ? true : in_array($domain->domain_name, $old_domains_checked);
+                                        $is_checked = ($old_domains_checked !== null) ? in_array($domain->domain_name, $old_domains_checked) : false;
                                     @endphp
                                     
                                     <div class="domain-card {{ $is_checked ? 'checked' : '' }}" id="domain-card-{{ $domain_key }}">
@@ -445,3 +445,4 @@ $(document).ready(function() {
 });
 </script>
 @endpush
+

@@ -86,7 +86,7 @@
         <div class="container">
             <div class="main-header-wapper">
                 <div class="site-logo">
-                    <img src="{{ getFile($meta->logo) }}" alt="{{ $meta->web_name ?? 'Portal' }}" height="40">
+                    <img src="{{ getFile($meta->logo) }}" alt="{{ $meta->web_name ?? 'Portal' }}" height="60">
                 </div>
                 <div class="main-header-info">
                     <div class="header-menu-wrap">
@@ -101,14 +101,35 @@
                                     @php
                                         $submenus = $menuItems[$parent->id] ?? collect();
                                         $hasSubmenus = $submenus->count() > 0;
+                                        
+                                        if ($parent->type_2 == 'page') {
+                                            $parentUrl = (str_starts_with($parent->slug, 'http://') || str_starts_with($parent->slug, 'https://')) 
+                                                ? $parent->slug 
+                                                : url('page/' . $parent->slug);
+                                        } else {
+                                            $parentUrl = (str_starts_with($parent->slug, 'http://') || str_starts_with($parent->slug, 'https://')) 
+                                                ? $parent->slug 
+                                                : url($parent->slug);
+                                        }
                                     @endphp
                                     
                                     <li>
-                                        <a href="{{ $parent->type_2 == 'page' ? url('page/' . $parent->slug) : url($parent->slug) }}" data-text="{{ $parent->name }}">{{ $parent->name }}</a>
+                                        <a href="{{ $parentUrl }}" data-text="{{ $parent->name }}" @if(str_starts_with($parent->slug, 'http://') || str_starts_with($parent->slug, 'https://')) target="_blank" @endif>{{ $parent->name }}</a>
                                         @if($hasSubmenus)
                                         <ul>
                                             @foreach($submenus as $submenu)
-                                            <li><a href="{{ $submenu->type_2 == 'page' ? url('page/' . $submenu->slug) : url($submenu->slug) }}">{{ $submenu->name }}</a></li>
+                                                @php
+                                                    if ($submenu->type_2 == 'page') {
+                                                        $submenuUrl = (str_starts_with($submenu->slug, 'http://') || str_starts_with($submenu->slug, 'https://')) 
+                                                            ? $submenu->slug 
+                                                            : url('page/' . $submenu->slug);
+                                                    } else {
+                                                        $submenuUrl = (str_starts_with($submenu->slug, 'http://') || str_starts_with($submenu->slug, 'https://')) 
+                                                            ? $submenu->slug 
+                                                            : url($submenu->slug);
+                                                    }
+                                                @endphp
+                                                <li><a href="{{ $submenuUrl }}" @if(str_starts_with($submenu->slug, 'http://') || str_starts_with($submenu->slug, 'https://')) target="_blank" @endif>{{ $submenu->name }}</a></li>
                                             @endforeach
                                         </ul>
                                         @endif
@@ -165,3 +186,4 @@
 </div>
 
 <div id="searchbox-overlay"></div>
+

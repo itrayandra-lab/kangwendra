@@ -75,7 +75,7 @@
                             <select name="tags[]" id="tags" class="form-control select2" multiple="multiple" required>
                                 @foreach ($tags as $tag)
                                     <option value="{{ $tag->id }}" {{ in_array($tag->id, old('tags', $post->tags ? json_decode($post->tags, true) : [])) ? 'selected' : '' }}>
-                                        {{ $tag->name }}
+                                        {{ $tag?->name ?? 'Tag' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -97,7 +97,7 @@
 
                         <div class="form-group">
                             <label for="published_at">Tanggal Publikasi</label>
-                            <input type="datetime-local" required name="published_at" id="published_at" class="form-control" value="{{ old('published_at', $post->published_at ? $post->published_at->format('Y-m-d\TH:i') : '') }}">
+                            <input type="datetime-local" required name="published_at" id="published_at" class="form-control" value="{{ old('published_at', $post->published_at ? $post->published_at?->format('Y-m-d\TH:i') : '') }}">
                             @error('published_at')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -242,3 +242,4 @@
         });
     </script>
 @endpush
+

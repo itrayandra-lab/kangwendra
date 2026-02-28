@@ -64,7 +64,7 @@ class AlbumController extends Controller
             'name' => 'required|string|max:255|unique:albums,name',
             'description' => 'nullable|string',
             'photos' => 'nullable|array',
-            'photos.*' => 'image|max:2048',
+            'photos.*' => 'image|max:4096',
         ]);
 
         $validatedData['slug'] = Str::slug($request->name);
@@ -125,7 +125,7 @@ class AlbumController extends Controller
             'name' => 'required|string|max:255|unique:albums,name,' . $id,
             'description' => 'nullable|string',
             'photos' => 'nullable|array',
-            'photos.*' => 'image|max:2048',
+            'photos.*' => 'image|max:4096',
         ]);
 
         $validatedData['slug'] = Str::slug($request->name);

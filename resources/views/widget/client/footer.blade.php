@@ -1,7 +1,7 @@
 
 <div class="text-center bg-white shadow-inner py-3">
     <a href="#" class="flex items-center justify-center mb-5 text-2xl font-semibold text-gray-900">
-        <img src="{{ $meta->logo }}" class="h-12 mr-3 sm:h-9" alt="Logo">
+        <img src="{{ $meta->logo }}" class="h-12 mr-3" alt="Logo" width="100">
     </a>
 
     <span class="block text-sm text-center text-gray-500">
@@ -124,3 +124,5 @@
         @endif
     </ul>
 </div>
+
+

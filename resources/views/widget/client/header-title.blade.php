@@ -17,3 +17,5 @@
         <a href="{{ $link }}" class="text-sm text-gray-500 hover:underline">Lihat Semua</a>
     @endif
 </div>
+
+

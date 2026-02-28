@@ -3,3 +3,5 @@
         <div class="w-full h-30 lg:h-50 rounded bg-gray-200"></div>
     </div>
 </div>
+
+

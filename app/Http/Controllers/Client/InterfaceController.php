@@ -382,7 +382,7 @@ class InterfaceController extends Controller
 
     #page detail
     public function page_detail($slug) {
-        $page = Page::where('slug', $slug)->where('status', 'active')->latest('created_at')->first();
+        $page = Page::with('createdBy')->where('slug', $slug)->where('status', 'active')->latest('created_at')->first();
         if (!$page) {
             abort(404);
         }

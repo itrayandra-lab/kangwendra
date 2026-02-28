@@ -83,12 +83,18 @@
                         <h2 class="post-title">{{ $page->title }}</h2>
                         <div class="post-author-meta">
                             <div class="author-thumb">
-                                <a href="#">
-                                    <img src="{{ asset('client/assets/img/author-1.jpg') }}" alt="author">
+                                <a href="{{ route('author', $page->createdBy?->slug ?? '#') }}">
+                                    @if($page->createdBy?->image)
+                                        <img src="{{ getFile($page->createdBy->image) }}" alt="{{ $page->createdBy->name }}">
+                                    @else
+                                        <img src="{{ asset('assets/default.jpg') }}" alt="Author">
+                                    @endif
                                 </a>
                             </div>
                             <div class="author-info">
-                                <span>Halaman Resmi</span>
+                                <span>
+                                    <a href="{{ route('author', $page->createdBy?->slug ?? '#') }}">{{ $page->createdBy?->name ?? 'Admin' }}</a>
+                                </span>
                                 <span>{{ $page->created_at->locale('id')->translatedFormat('l, d M Y') }} • {{ $page->counter ?? 0 }} views</span>
                             </div>
                         </div>
@@ -219,3 +225,6 @@
     }
 </script>
 @endpush
+
+
+

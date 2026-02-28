@@ -132,7 +132,7 @@
         <div class="post-layout-2">
             @foreach ($featuredPosts->take(3) as $index => $post)
                 <article class="post-layout-item img-hover-move">
-                    <a href="{{ route('post_detail', [$post->category->slug, $post->slug]) }}" class="post-thumb media">
+                    <a href="{{ route('post_detail', [$post?->category?->slug, $post->slug]) }}" class="post-thumb media">
                         <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
                     </a>
                     <div class="post-content">
@@ -141,32 +141,32 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
                                     <path d="m618.924-298.924 42.152-42.152-151.077-151.087V-680h-59.998v212.154l168.923 168.922ZM480.067-100.001q-78.836 0-148.204-29.92-69.369-29.92-120.682-81.21-51.314-51.291-81.247-120.629-29.933-69.337-29.933-148.173t29.92-148.204q29.92-69.369 81.21-120.682 51.291-51.314 120.629-81.247 69.337-29.933 148.173-29.933t148.204 29.92q69.369 29.92 120.682 81.21 51.314 51.291 81.247 120.629 29.933 69.337 29.933 148.173t-29.92 148.204q-29.92 69.369-81.21 120.682-51.291 51.314-120.629 81.247-69.337 29.933-148.173 29.933ZM480-480Zm0 320q133 0 226.5-93.5T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160Z"></path>
                                 </svg>
-                                <span class="post-meta-text">{{ rand(5, 20) }} Minutes</span>
+                                <span class="post-meta-text">{{ $post->published_at ? $post->published_at->diffForHumans() : $post->created_at->diffForHumans() }}</span>
                             </li>
                             <li>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
                                     <path d="M488.768-117.847Q470.922-100.001 446-100.001t-42.768-17.846l-286-286q-17.231-17.231-17.038-42.653.192-25.422 17.807-43.037l352-352.616q8.317-8.179 19.658-13.012 11.341-4.834 23.726-4.834h286q24.537 0 42.268 17.731 17.73 17.73 17.73 42.268v286q0 12.826-4.961 24.143-4.962 11.318-13.654 20.01l-352 352Zm210.571-532.154q20.815 0 35.43-14.57 14.615-14.57 14.615-35.384t-14.57-35.429q-14.57-14.615-35.384-14.615t-35.429 14.57q-14.616 14.57-14.616 35.384t14.57 35.429q14.57 14.615 35.384 14.615ZM446.172-160l353.213-354v-286H513.212L160-446l286.172 286Zm353.213-640Z"></path>
                                 </svg>
-                                <a href="{{ route('category', $post->category->slug) }}" class="post-meta-text">{{ $post->category->name }}</a>
+                                <a href="{{ route('category', $post->category?->slug ?? 'uncategorized') }}" class="post-meta-text">{{ $post->category?->name ?? 'Uncategorized' }}</a>
                             </li>
                         </ul>
                         <h3>
-                            <a href="{{ route('post_detail', [$post->category->slug, $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 60) }}</a>
+                            <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 60) }}</a>
                         </h3>
                         @if($index == 2 && $post->content)
                             <p>{{ Str::limit(strip_tags($post->content), 150) }}</p>
                         @endif
                         <ul class="author-info">
                             <li>
-                                <a href="{{ route('author', $post->createdBy->slug) }}">
-                                    @if($post->createdBy->avatar)
-                                        <img src="{{ getFile($post->createdBy->avatar) }}" alt="{{ $post->createdBy->name }}">
+                                <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">
+                                    @if($post->createdBy?->image)
+                                        <img src="{{ getFile($post->createdBy?->image) }}" alt="{{ $post->createdBy?->name ?? 'Unknown' }}">
                                     @endif
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('author', $post->createdBy->slug) }}">{{ $post->createdBy->name }}</a>
-                                <a href="#">{{ $post->published_at->format('d.m.Y') }}</a>
+                                <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a>
+                                <a href="#">{{ $post->published_at?->format('d.m.Y') }}</a>
                             </li>
                             @if($index == 2)
                                 <li class="share-icon">
@@ -176,28 +176,28 @@
                                         </svg>
                                         <ul class="social-share">
                                             <li>
-                                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('post_detail', [$post->category->slug, $post->slug])) }}" target="_blank">
+                                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug])) }}" target="_blank">
                                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor">
                                                         <path d="M80 299.3V512H196V299.3h86.5l18-97.8H196V166.9c0-51.7 20.3-71.5 72.7-71.5c16.3 0 29.4 .4 37 1.2V7.9C291.4 4 256.4 0 236.2 0C129.3 0 80 50.5 80 159.4v42.1H14v97.8H80z"></path>
                                                     </svg>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="https://twitter.com/intent/tweet?url={{ urlencode(route('post_detail', [$post->category->slug, $post->slug])) }}&text={{ urlencode($post->title) }}" target="_blank">
+                                                <a href="https://twitter.com/intent/tweet?url={{ urlencode(route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug])) }}&text={{ urlencode($post->title) }}" target="_blank">
                                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
                                                         <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
                                                     </svg>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="https://pinterest.com/pin/create/button/?url={{ urlencode(route('post_detail', [$post->category->slug, $post->slug])) }}&description={{ urlencode($post->title) }}" target="_blank">
+                                                <a href="https://pinterest.com/pin/create/button/?url={{ urlencode(route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug])) }}&description={{ urlencode($post->title) }}" target="_blank">
                                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" fill="currentColor">
                                                         <path d="M496 256c0 137-111 248-248 248-25.6 0-50.2-3.9-73.4-11.1 10.1-16.5 25.2-43.5 30.8-65 3-11.6 15.4-59 15.4-59 8.1 15.4 31.7 28.5 56.8 28.5 74.8 0 128.7-68.8 128.7-154.3 0-81.9-66.9-143.2-152.9-143.2-107 0-163.9 71.8-163.9 150.1 0 36.4 19.4 81.7 50.3 96.1 4.7 2.2 7.2 1.2 8.3-3.3 .8-3.4 5-20.3 6.9-28.1 .6-2.5 .3-4.7-1.7-7.1-10.1-12.5-18.3-35.3-18.3-56.6 0-54.7 41.4-107.6 112-107.6 60.9 0 103.6 41.5 103.6 100.9 0 67.1-33.9 113.6-78 113.6-24.3 0-42.6-20.1-36.7-44.8 7-29.5 20.5-61.3 20.5-82.6 0-19-10.2-34.9-31.4-34.9-24.9 0-44.9 25.7-44.9 60.2 0 22 7.4 36.8 7.4 36.8s-24.5 103.8-29 123.2c-5 21.4-3 51.6-.9 71.2C65.4 450.9 0 361.1 0 256 0 119 111 8 248 8s248 111 248 248z"></path>
                                                     </svg>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(route('post_detail', [$post->category->slug, $post->slug])) }}" target="_blank">
+                                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug])) }}" target="_blank">
                                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor">
                                                         <path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"></path>
                                                     </svg>
@@ -220,7 +220,7 @@
                         @foreach ($randomNews as $post)
                             <div class="swiper-slide">
                                 <article class="horizontal-post-card img-hover-move">
-                                    <a href="{{ route('post_detail', [$post->category->slug, $post->slug]) }}" class="post-thumb media">
+                                    <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="post-thumb media">
                                         <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
                                     </a>
                                     <div class="post-content">
@@ -229,16 +229,16 @@
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
                                                     <path d="M488.768-117.847Q470.922-100.001 446-100.001t-42.768-17.846l-286-286q-17.231-17.231-17.038-42.653.192-25.422 17.807-43.037l352-352.616q8.317-8.179 19.658-13.012 11.341-4.834 23.726-4.834h286q24.537 0 42.268 17.731 17.73 17.73 17.73 42.268v286q0 12.826-4.961 24.143-4.962 11.318-13.654 20.01l-352 352Zm210.571-532.154q20.815 0 35.43-14.57 14.615-14.57 14.615-35.384t-14.57-35.429q-14.57-14.615-35.384-14.615t-35.429 14.57q-14.616 14.57-14.616 35.384t14.57 35.429q14.57 14.615 35.384 14.615ZM446.172-160l353.213-354v-286H513.212L160-446l286.172 286Zm353.213-640Z"></path>
                                                 </svg>
-                                                <a href="{{ route('category', $post->category->slug) }}" class="post-meta-text">{{ $post->category->name }}</a>
+                                                <a href="{{ route('category', $post->category?->slug ?? 'uncategorized') }}" class="post-meta-text">{{ $post->category?->name ?? 'Uncategorized' }}</a>
                                             </li>
                                         </ul>
                                         <h3>
-                                            <a href="{{ route('post_detail', [$post->category->slug, $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 50) }}</a>
+                                            <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 50) }}</a>
                                         </h3>
                                         <ul class="author-info">
                                             <li>
-                                                <a href="{{ route('author', $post->createdBy->slug) }}">{{ $post->createdBy->name }}</a>
-                                                <a href="#">{{ $post->published_at->format('d.m.Y') }}</a>
+                                                <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a>
+                                                <a href="#">{{ $post->published_at?->format('d.m.Y') }}</a>
                                             </li>
                                         </ul>
                                     </div>
@@ -274,7 +274,7 @@
                                 <div class="post-card horizontal-card img-hover-move">
                                     @if($article->image)
                                         <div class="post-thumb media">
-                                            <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}">
+                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
                                                 <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
                                             </a>
                                         </div>
@@ -282,22 +282,22 @@
                                     <div class="post-content">
                                         <ul class="post-meta">
                                             <li>
-                                                <a href="{{ route('category', $article->category->slug) }}">{{ $article->category->name }}</a>
+                                                <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
                                             </li>
                                             <li class="sep"></li>
                                             <li>
-                                                <a href="#" class="date">{{ $article->published_at->format('d.m.Y') }}</a>
+                                                <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                             </li>
                                         </ul>
                                         <h3>
-                                            <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
                                         </h3>
                                         @if($article->content)
                                             <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                         @endif
                                         <ul class="post-card-footer">
                                             <li>
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
                                             </li>
                                             <li>
                                                 <a href="#" class="comment">
@@ -347,7 +347,7 @@
                                     <div class="post-card horizontal-card img-hover-move">
                                         @if($article->image)
                                             <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}">
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
                                                     <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
                                                 </a>
                                             </div>
@@ -355,22 +355,22 @@
                                         <div class="post-content">
                                             <ul class="post-meta">
                                                 <li>
-                                                    <a href="{{ route('category', $article->category->slug) }}">{{ $article->category->name }}</a>
+                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
                                                 </li>
                                                 <li class="sep"></li>
                                                 <li>
-                                                    <a href="#" class="date">{{ $article->published_at->format('d.m.Y') }}</a>
+                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
                                             <h3>
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
                                             </h3>
                                             @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
                                                 <li>
-                                                    <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
+                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
                                                 </li>
                                                 <li>
                                                     <a href="#" class="comment">
@@ -422,7 +422,7 @@
                                     <div class="post-card horizontal-card img-hover-move">
                                         @if($article->image)
                                             <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}">
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
                                                     <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
                                                 </a>
                                             </div>
@@ -430,22 +430,22 @@
                                         <div class="post-content">
                                             <ul class="post-meta">
                                                 <li>
-                                                    <a href="{{ route('category', $article->category->slug) }}">{{ $article->category->name }}</a>
+                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
                                                 </li>
                                                 <li class="sep"></li>
                                                 <li>
-                                                    <a href="#" class="date">{{ $article->published_at->format('d.m.Y') }}</a>
+                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
                                             <h3>
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
                                             </h3>
                                             @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
                                                 <li>
-                                                    <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
+                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
                                                 </li>
                                                 <li>
                                                     <a href="#" class="comment">
@@ -497,7 +497,7 @@
                                     <div class="post-card horizontal-card img-hover-move">
                                         @if($article->image)
                                             <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}">
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
                                                     <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
                                                 </a>
                                             </div>
@@ -505,22 +505,22 @@
                                         <div class="post-content">
                                             <ul class="post-meta">
                                                 <li>
-                                                    <a href="{{ route('category', $article->category->slug) }}">{{ $article->category->name }}</a>
+                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
                                                 </li>
                                                 <li class="sep"></li>
                                                 <li>
-                                                    <a href="#" class="date">{{ $article->published_at->format('d.m.Y') }}</a>
+                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
                                             <h3>
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
                                             </h3>
                                             @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
                                                 <li>
-                                                    <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
+                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
                                                 </li>
                                                 <li>
                                                     <a href="#" class="comment">
@@ -572,7 +572,7 @@
                                     <div class="post-card horizontal-card img-hover-move">
                                         @if($article->image)
                                             <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}">
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
                                                     <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
                                                 </a>
                                             </div>
@@ -580,22 +580,22 @@
                                         <div class="post-content">
                                             <ul class="post-meta">
                                                 <li>
-                                                    <a href="{{ route('category', $article->category->slug) }}">{{ $article->category->name }}</a>
+                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
                                                 </li>
                                                 <li class="sep"></li>
                                                 <li>
-                                                    <a href="#" class="date">{{ $article->published_at->format('d.m.Y') }}</a>
+                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
                                             <h3>
-                                                <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
                                             </h3>
                                             @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
                                                 <li>
-                                                    <a href="{{ route('post_detail', [$article->category->slug, $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
+                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
                                                 </li>
                                                 <li>
                                                     <a href="#" class="comment">
@@ -648,8 +648,8 @@
                             <ul class="tag-list">
                                 @foreach($tags->take(10) as $tag)
                                     <li>
-                                        <a href="{{ route('tag', $tag->slug) }}" class="tag-item">
-                                            #{{ $tag->name }}
+                                        <a href="{{ route('tag', $tag?->slug ?? '#') }}" class="tag-item">
+                                            #{{ $tag?->name ?? 'Tag' }}
                                         </a>
                                     </li>
                                 @endforeach
@@ -1095,3 +1095,6 @@
     });
 </script>
 @endpush
+
+
+

@@ -70,7 +70,7 @@ class InformationController extends Controller
             'image' => [
                 'nullable',
                 'image',
-                'max:2048', // Max size in KB (2MB)
+                'max:4096',
                 function ($attribute, $value, $fail) use ($request) {
                     if ($request->type === 'banner' && $request->hasFile('image')) {
                         $image = $request->file('image');
@@ -117,7 +117,7 @@ class InformationController extends Controller
             'image' => [
                 'nullable',
                 'image',
-                'max:2048',
+                'max:4096',
                 function ($attribute, $value, $fail) use ($request) {
                     if ($request->type === 'banner' && $request->hasFile('image')) {
                         $image = $request->file('image');
