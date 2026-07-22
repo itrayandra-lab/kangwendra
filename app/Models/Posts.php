@@ -23,6 +23,7 @@ class Posts extends Model
         'category_id',
         'tags',
         'source',
+        'domain',
         'meta_data',
         'updated_by',
         'published_at',

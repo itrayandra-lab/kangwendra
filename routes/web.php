@@ -19,6 +19,8 @@ use App\Http\Controllers\Admin\DomainShareController;
 use App\Http\Controllers\Admin\InformationController;
 use App\Http\Controllers\Admin\WebIdentityController;
 use App\Http\Controllers\Admin\RolePermissionController;
+use App\Http\Controllers\Admin\RefArticleController;
+use App\Http\Controllers\Admin\RssController;
 
 # Auth
 Route::group(['prefix' => 'portal', 'controller' => LoginController::class], function () {
@@ -180,6 +182,23 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/{id}/edit', 'edit')->name('domain-share.edit')->middleware('permission:edit domain-share');
         Route::put('/{id}', 'update')->name('domain-share.update')->middleware('permission:edit domain-share');
         Route::delete('/{id}', 'destroy')->name('domain-share.destroy')->middleware('permission:delete domain-share');
+    });
+
+    # Menu RSS Yahoo AI
+    Route::group(['prefix' => 'rss-yahoo', 'controller' => RssController::class], function () {
+        Route::get('/', 'yahooIndex')->name('rss.yahoo.index');
+        Route::post('/fetch', 'fetchYahoo')->name('rss.fetch-yahoo');
+    });
+
+    # Artikel Referensi (scrape + AI generate)
+    Route::group(['prefix' => 'ref-articles', 'controller' => RefArticleController::class], function () {
+        Route::get('/', 'index')->name('ref-articles.index');
+        Route::get('/{refArticle}', 'show')->name('ref-articles.show');
+        Route::post('/scrape', 'scrape')->name('ref-articles.scrape');
+        Route::post('/generate-all', 'generateAll')->name('ref-articles.generate-all');
+        Route::post('/{refArticle}/generate', 'generateOne')->name('ref-articles.generate');
+        Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
+        Route::delete('/{refArticle}', 'destroy')->name('ref-articles.destroy');
     });
 
 });

@@ -134,6 +134,20 @@
                     </li>
                 @endif
 
+                <!-- Menu RSS Yahoo AI -->
+                <li>
+                    <a href="{{ route('rss.yahoo.index') }}" class="waves-effect {{ isActive($page, 'RSS Yahoo AI') }}">
+                        <i class="fa fa-yahoo"></i><span>RSS Yahoo AI</span>
+                    </a>
+                </li>
+
+                <!-- Menu Artikel Referensi & AI -->
+                <li>
+                    <a href="{{ route('ref-articles.index') }}" class="waves-effect {{ isActive($page, 'Artikel Referensi') }}">
+                        <i class="fa fa-magic"></i><span>Scrape & AI Generate</span>
+                    </a>
+                </li>
+
                 @if (auth()->user()->hasAnyPermission(['manage roles', 'manage permissions', 'view domain-share']))
                     <li class="has_sub">
                         <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Roles', 'Permissions', 'Domain Share']) }}">

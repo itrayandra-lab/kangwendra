@@ -70,7 +70,7 @@ class UserSeeder extends Seeder
         # Definisikan users utama
         $users = [
             'admin' => [
-                'email' => 'admin@kuliit.com',
+                'email' => 'admin@kangwendra.com',
                 'name' => 'Admin',
                 'slug' => 'admin',
             ],
