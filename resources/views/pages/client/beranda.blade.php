@@ -156,7 +156,7 @@
                         @if(is_array($post->tags) && count($post->tags))
                             <div class="article-tags">
                                 @foreach(array_slice($post->tags, 0, 3) as $tag)
-                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags a">#{{ $tag }}</a>
+                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
                                 @endforeach
                             </div>
                         @endif
@@ -245,7 +245,7 @@
                                         @if(is_array($post->tags) && count($post->tags))
                                             <div class="article-tags">
                                 @foreach(array_slice($post->tags, 0, 2) as $tag)
-                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags a">#{{ $tag }}</a>
+                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
                                 @endforeach
                                             </div>
                                         @endif
@@ -315,7 +315,7 @@
                                         @if(is_array($article->tags) && count($article->tags))
                                             <div class="article-tags">
                                                 @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags a">#{{ $tag }}</a>
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
                                                 @endforeach
                                             </div>
                                         @endif
@@ -395,7 +395,7 @@
                                         @if(is_array($article->tags) && count($article->tags))
                                             <div class="article-tags">
                                                 @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags a">#{{ $tag }}</a>
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
                                                 @endforeach
                                             </div>
                                         @endif
@@ -477,7 +477,7 @@
                                         @if(is_array($article->tags) && count($article->tags))
                                             <div class="article-tags">
                                                 @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags a">#{{ $tag }}</a>
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
                                                 @endforeach
                                             </div>
                                         @endif
@@ -559,7 +559,7 @@
                                         @if(is_array($article->tags) && count($article->tags))
                                             <div class="article-tags">
                                                 @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags a">#{{ $tag }}</a>
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
                                                 @endforeach
                                             </div>
                                         @endif
@@ -641,7 +641,7 @@
                                         @if(is_array($article->tags) && count($article->tags))
                                             <div class="article-tags">
                                                 @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags a">#{{ $tag }}</a>
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
                                                 @endforeach
                                             </div>
                                         @endif
@@ -771,7 +771,7 @@
                                         @if(is_array($popular->tags) && count($popular->tags))
                                             <div class="article-tags">
                                                 @foreach(array_slice($popular->tags, 0, 2) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags a">#{{ $tag }}</a>
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
                                                 @endforeach
                                             </div>
                                         @endif
