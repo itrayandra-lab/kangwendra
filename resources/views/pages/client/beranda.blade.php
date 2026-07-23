@@ -763,7 +763,6 @@
                                             </a>
                                         </div>
                                     @endif
-                                </div>
                                     <div class="widget-post-content">
                                         <h3>
                                             <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}" class="text-hover">{{ Str::limit($popular->title, 50) }}</a>
@@ -802,9 +801,8 @@
                             </div>
                             <div class="widget-post-items">
                                 @if ($information)
-                                    <div class="widget-post-item img-hover-move">
-                                        {{-- link information--}}
-                                        @foreach ($information as $data)
+                                    @foreach ($information as $data)
+                                        <div class="widget-post-item img-hover-move information-post">
                                             <div class="widget-post-content">
                                                 <ul class="post-meta">
                                                     <li>
@@ -816,14 +814,12 @@
                                                     </li>
                                                 </ul>
                                                 <h3>
-                                                    <a href="single.html" class="text-hover">{{ $data->title }}</a>
+                                                    <a href="{{ $data->slug }}" class="text-hover">{{ $data->title }}</a>
                                                 </h3>
                                             </div>
-                                        @endforeach
-                                        {{-- link information --}}
-                                    </div>
+                                        </div>
+                                    @endforeach
                                 @endif
-                               
                             </div>
                         </div>
                     

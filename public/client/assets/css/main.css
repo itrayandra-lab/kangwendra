@@ -1871,62 +1871,61 @@ body:not(.loaded){
     }
 }
 
-/* Varticle Post Carousel */
+/* Varticle Post Carousel - SIMPLIFIED: flex row */
 .post-layout-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
 }
-.vartical-post-carousel{
-    height: 405px;
-    overflow: visible;
+.vartical-post-carousel {
+    height: auto;
+    overflow: hidden;
 }
-@media (max-width: 767px){
+@media (max-width: 767px) {
     .post-layout-2 {
-        grid-template-columns: 1fr;
+        flex-direction: column;
     }
-    .post-layout-2 article.post-layout-item .post-thumb{
+    .post-layout-2 article.post-layout-item .post-thumb {
         height: 280px;
     }
-    .vartical-post-carousel{
-        height: 450px;
+    .vartical-post-carousel {
+        height: auto;
     }
 }
-@media (min-width: 1024px){
-    .post-layout-2 {
-        grid-template-columns: 1fr 1.5fr 1fr;
-        grid-template-rows: repeat(2, 1fr);
-        grid-column-gap: 30px;
-        grid-row-gap: 30px;
+@media (min-width: 768px) {
+    .post-layout-2 > .post-layout-item {
+        flex: 1 1 0;
+        min-width: 0;
     }
-
-    .post-layout-2 > .post-layout-item:nth-child(1) {
-        grid-area: 1 / 1 / 2 / 2;
+    .post-layout-2 > .post-layout-item:first-child {
+        flex: 2 1 0;
     }
-
-    .post-layout-2 > .post-layout-item:nth-child(2) {
-        grid-area: 2 / 1 / 3 / 2;
+    .vartical-post-carousel {
+        flex: 0 0 300px;
+        height: auto;
+        position: static;
+        overflow: hidden;
     }
-
-    .post-layout-2 > .post-layout-item:nth-child(3) {
-        grid-area: 1 / 2 / 3 / 3;
+}
+.post-layout-2 > .post-layout-item:nth-child(n) {
+    grid-column: auto;
+    grid-row: auto;
+}
+.post-layout-2 > .post-layout-item:nth-child(n) {
+    overflow: visible;
+}
+@media (min-width: 993px) {
+    .post-layout-2 .post-layout-item:nth-child(n) .post-thumb {
+        height: auto;
+        max-height: 280px;
+        overflow: hidden;
     }
-
-    .post-layout-2 > .post-layout-item:nth-child(4) {
-        grid-area: 1 / 3 / 3 / 4;
+    .post-layout-2 .post-layout-item:nth-child(n) .post-thumb img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
         position: relative;
     }
-    .vartical-post-carousel{
-        height: 613px;
-        width: 100%;
-        position: absolute;
-        left: 0;
-        top: 0;
-    }
-}
-
-.post-layout-2 > .post-layout-item:nth-child(4) {
-    overflow: hidden;
 }
 
 /* Horizontal Post Card */
@@ -1963,28 +1962,32 @@ body:not(.loaded){
     font-size: 18px;
 }
 
-@media (min-width:993px) {
-
-    .post-layout-item .author-info li a:nth-child(2) {
+@media (min-width: 993px) {
+    .post-layout-2 .post-layout-item .author-info a {
+        font-size: 12px;
         color: var(--dl-grey-color);
-        margin-top: 5px;
-        letter-spacing: 0;
     }
-
-    .post-layout-2 .post-layout-item:nth-child(3) .post-thumb,
-    .post-layout-1 .post-layout-item:nth-child(3) .post-thumb {
-        height: 370px;
+    .post-layout-2 .post-layout-item .post-thumb {
+        height: 240px;
+        overflow: hidden;
     }
-
-    .post-layout-2 .post-layout-item:nth-child(3) .post-content,
-    .post-layout-1 .post-layout-item:nth-child(3) .post-content {
-        padding: 30px;
+    .post-layout-2 .post-layout-item .post-thumb img {
+        width: 100%;
+        height: 240px;
+        object-fit: cover;
     }
-
-    .post-layout-2 .post-layout-item:nth-child(3) .post-content h3,
-    .post-layout-1 .post-layout-item:nth-child(3) .post-content h3 {
-        font-size: 28px;
-        line-height: 34px;
+    .post-layout-2 .post-layout-item .post-content {
+        padding: 15px 0;
+    }
+    .post-layout-2 .post-layout-item .post-content h3 {
+        font-size: 18px;
+        line-height: 1.4;
+    }
+    .post-layout-2 .post-layout-item:first-child .post-thumb img {
+        height: 320px;
+    }
+    .post-layout-2 .post-layout-item:first-child .post-content h3 {
+        font-size: 22px;
     }
 }
 
@@ -3406,6 +3409,19 @@ blockquote p span:before {
 
 .widget-post-item .widget-post-content .post-meta {
     margin: 0;
+}
+
+/* Information post - full width, no thumbnail */
+.information-post {
+    display: block !important;
+    grid-template-columns: none !important;
+}
+.information-post .widget-post-content {
+    width: 100% !important;
+}
+.information-post .widget-post-content h3 {
+    font-size: 15px;
+    line-height: 1.4;
 }
 
 /* Widget Subscribe */
