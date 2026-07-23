@@ -230,8 +230,8 @@ class InterfaceController extends Controller
             ->whereNotNull('published_at')
             ->where('published_at', '<=', Carbon::now())
             ->where(function($q) use ($tag) {
-                $q->whereJsonContains('tags', $tag->id)
-                  ->orWhereJsonContains('tags', (string) $tag->id);
+                $q->whereJsonContains('tags', $tag->name)
+                  ->orWhereJsonContains('tags', (string) $tag->name);
             })
             ->latest('published_at');
 
