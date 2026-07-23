@@ -153,6 +153,13 @@
                         <h3>
                             <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 60) }}</a>
                         </h3>
+                        @if(is_array($post->tags) && count($post->tags))
+                            <div class="article-tags" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+                                @foreach(array_slice($post->tags, 0, 3) as $tag)
+                                    <a href="{{ route('tag', Str::slug($tag)) }}" style="display:inline-block;padding:2px 8px;background:#e9ecef;color:#495057;border-radius:12px;font-size:0.75rem;text-decoration:none;font-weight:500;">#{{ $tag }}</a>
+                                @endforeach
+                            </div>
+                        @endif
                         @if($index == 2 && $post->content)
                             <p>{{ Str::limit(strip_tags($post->content), 150) }}</p>
                         @endif
@@ -235,6 +242,13 @@
                                         <h3>
                                             <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 50) }}</a>
                                         </h3>
+                                        @if(is_array($post->tags) && count($post->tags))
+                                            <div class="article-tags" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">
+                                                @foreach(array_slice($post->tags, 0, 2) as $tag)
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" style="display:inline-block;padding:1px 6px;background:#e9ecef;color:#495057;border-radius:10px;font-size:0.7rem;text-decoration:none;font-weight:500;">#{{ $tag }}</a>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                         <ul class="author-info">
                                             <li>
                                                 <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a>
@@ -298,6 +312,13 @@
                                         <h3>
                                             <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
                                         </h3>
+                                        @if(is_array($article->tags) && count($article->tags))
+                                            <div class="article-tags" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" style="display:inline-block;padding:2px 8px;background:#e9ecef;color:#495057;border-radius:12px;font-size:0.75rem;text-decoration:none;font-weight:500;">#{{ $tag }}</a>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                         @if($article->content)
                                             <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                         @endif
@@ -368,10 +389,17 @@
                                                     <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
+                                        <h3>
+                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                        </h3>
+                                        @if(is_array($article->tags) && count($article->tags))
+                                            <div class="article-tags" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" style="display:inline-block;padding:2px 8px;background:#e9ecef;color:#495057;border-radius:12px;font-size:0.75rem;text-decoration:none;font-weight:500;">#{{ $tag }}</a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
@@ -443,10 +471,17 @@
                                                     <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
+                                        <h3>
+                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                        </h3>
+                                        @if(is_array($article->tags) && count($article->tags))
+                                            <div class="article-tags" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" style="display:inline-block;padding:2px 8px;background:#e9ecef;color:#495057;border-radius:12px;font-size:0.75rem;text-decoration:none;font-weight:500;">#{{ $tag }}</a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
@@ -518,10 +553,17 @@
                                                     <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
+                                        <h3>
+                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                        </h3>
+                                        @if(is_array($article->tags) && count($article->tags))
+                                            <div class="article-tags" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" style="display:inline-block;padding:2px 8px;background:#e9ecef;color:#495057;border-radius:12px;font-size:0.75rem;text-decoration:none;font-weight:500;">#{{ $tag }}</a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
@@ -593,10 +635,17 @@
                                                     <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
+                                        <h3>
+                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                        </h3>
+                                        @if(is_array($article->tags) && count($article->tags))
+                                            <div class="article-tags" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" style="display:inline-block;padding:2px 8px;background:#e9ecef;color:#495057;border-radius:12px;font-size:0.75rem;text-decoration:none;font-weight:500;">#{{ $tag }}</a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
@@ -719,6 +768,13 @@
                                         <h3>
                                             <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}" class="text-hover">{{ Str::limit($popular->title, 50) }}</a>
                                         </h3>
+                                        @if(is_array($popular->tags) && count($popular->tags))
+                                            <div class="article-tags" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">
+                                                @foreach(array_slice($popular->tags, 0, 2) as $tag)
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" style="display:inline-block;padding:1px 6px;background:#e9ecef;color:#495057;border-radius:10px;font-size:0.7rem;text-decoration:none;font-weight:500;">#{{ $tag }}</a>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                         <ul class="post-meta">
                                             <li>
                                                 <a href="{{ route('category', $popular->category->slug) }}">{{ $popular->category->name }}</a>
