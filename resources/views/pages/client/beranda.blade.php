@@ -278,6 +278,12 @@
                                                 <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
                                             </a>
                                         </div>
+                                    @else
+                                        <div class="post-thumb media">
+                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
+                                                <img src="{{ asset('assets/default.jpg') }}" alt="{{ $article->title }}">
+                                            </a>
+                                        </div>
                                     @endif
                                     <div class="post-content">
                                         <ul class="post-meta">
@@ -701,7 +707,14 @@
                                                 <img src="{{ getFile($popular->image) }}" alt="{{ $popular->title }}">
                                             </a>
                                         </div>
+                                    @else
+                                        <div class="widget-post-thumb media">
+                                            <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}">
+                                                <img src="{{ asset('assets/default.jpg') }}" alt="{{ $popular->title }}">
+                                            </a>
+                                        </div>
                                     @endif
+                                </div>
                                     <div class="widget-post-content">
                                         <h3>
                                             <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}" class="text-hover">{{ Str::limit($popular->title, 50) }}</a>

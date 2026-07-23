@@ -195,6 +195,8 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/', 'index')->name('ref-articles.index');
         Route::get('/{refArticle}', 'show')->name('ref-articles.show');
         Route::post('/scrape', 'scrape')->name('ref-articles.scrape');
+        Route::post('/scrape-pharma', 'scrapePharma')->name('ref-articles.scrape-pharma');
+        Route::post('/scrape-all', 'scrapeAll')->name('ref-articles.scrape-all');
         Route::post('/generate-all', 'generateAll')->name('ref-articles.generate-all');
         Route::post('/{refArticle}/generate', 'generateOne')->name('ref-articles.generate');
         Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');

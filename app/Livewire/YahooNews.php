@@ -12,10 +12,9 @@ class YahooNews extends Component
 
     public function render()
     {
-        // Ambil postingan yang punya tag "Yahoo AI" atau dari sumber Yahoo
-        $posts = Posts::where('tags', 'like', '%Yahoo AI%')
-            ->orWhere('title', 'like', '%AI%')
-            ->orWhere('title', 'like', '%artificial intelligence%')
+        // Tampilkan posts yang di-generate dari Yahoo Tech scraper
+        // Ini adalah artikel AI yang sudah diproses dari tech.yahoo.com
+        $posts = Posts::where('source', 'like', '%tech.yahoo.com%')
             ->orderBy('published_at', 'desc')
             ->paginate(10);
 

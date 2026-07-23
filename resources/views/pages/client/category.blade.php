@@ -28,6 +28,12 @@
                                                     <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}">
                                                 </a>
                                             </div>
+                                        @else
+                                            <div class="post-thumb media">
+                                                <a href="/{{ $item->category?->slug ?? 'news' }}/{{ $item->slug }}">
+                                                    <img src="{{ asset('assets/default.jpg') }}" alt="{{ $item->title }}">
+                                                </a>
+                                            </div>
                                         @endif
                                         <div class="post-content">
                                             <ul class="post-meta">
@@ -119,6 +125,12 @@
                                                 <div class="post-thumb">
                                                     <a href="/{{ $item->category?->slug ?? 'news' }}/{{ $item->slug }}">
                                                         <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}">
+                                                    </a>
+                                                </div>
+                                            @else
+                                                <div class="post-thumb">
+                                                    <a href="/{{ $item->category?->slug ?? 'news' }}/{{ $item->slug }}">
+                                                        <img src="{{ asset('assets/default.jpg') }}" alt="{{ $item->title }}">
                                                     </a>
                                                 </div>
                                             @endif

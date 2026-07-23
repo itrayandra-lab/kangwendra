@@ -125,7 +125,7 @@ class DataController extends Controller
     {
          $thirtyDaysAgo = Carbon::now()->subDays(30);
          
-         $tags = json_decode($post->tags, true) ?? [];
+          $tags = is_array($post->tags) ? $post->tags : ($post->tags ? json_decode($post->tags, true) : []);
          
          return Posts::where('status', 'active')
              ->whereNotNull('published_at')

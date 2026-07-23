@@ -25,13 +25,8 @@
                                             {{ $post->domain ?: '-' }}
                                         </td>
                                         <td>
-                                            @php
-                                                $tags = is_array($post->tags)
-                                                    ? $post->tags
-                                                    : json_decode($post->tags, true);
-                                            @endphp
-                                            @if(!empty($tags))
-                                                @foreach($tags as $tag)
+                                            @if(!empty($post->tags))
+                                                @foreach($post->tags as $tag)
                                                     <span class="badge badge-info mr-1">{{ $tag }}</span>
                                                 @endforeach
                                             @else

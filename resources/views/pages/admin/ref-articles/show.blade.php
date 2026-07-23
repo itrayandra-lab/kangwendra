@@ -159,11 +159,7 @@
                                             <th>Tags</th>
                                             <td>
                                                 @php
-                                                    $postTags = is_array($post->tags)
-                                                        ? $post->tags
-                                                        : json_decode($post->tags, true);
-                                                @endphp
-                                                @foreach(($postTags ?? []) as $tag)
+                                                    @foreach(($post->tags ?? []) as $tag)
                                                     <span class="badge badge-info">{{ $tag }}</span>
                                                 @endforeach
                                             </td>

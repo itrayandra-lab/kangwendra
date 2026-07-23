@@ -10,7 +10,7 @@ class RssController extends Controller
 {
     public function yahooIndex()
     {
-        $page = 'RSS Yahoo AI';
+        $page = 'RSS Tech & AI Feeds';
         return view('pages.admin.rss.yahoo-index', compact('page'));
     }
 
@@ -19,13 +19,13 @@ class RssController extends Controller
         try {
             $newsService = new NewsService();
             $date = $request->input('date');
-            
+
             $newsItems = $newsService->fetchFromYahooAiRss($date);
             $count = $newsService->saveNewsToDatabase($newsItems);
-            
-            return back()->with('success', "RSS Yahoo AI berhasil diambil! Berhasil menyimpan {$count} artikel.");
+
+            return back()->with('success', "RSS berhasil diambil! {$count} artikel disimpan dari berbagai sumber.");
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengambil RSS Yahoo: ' . $e->getMessage());
+            return back()->with('error', 'Gagal mengambil RSS: ' . $e->getMessage());
         }
     }
 }

@@ -49,7 +49,7 @@ class PostsController extends Controller
                 ->addColumn('category', fn($post) => $post->category?->name ?? '-')
                 ->addColumn('tags', function ($post) {
                     if (!$post->tags) return '<span class="text-muted">Tidak ada</span>';
-                    $tagIds = json_decode($post->tags, true);
+                    $tagIds = is_array($post->tags) ? $post->tags : ($post->tags ? json_decode($post->tags, true) : []);
                     if (empty($tagIds)) return '<span class="text-muted">Tidak ada</span>';
 
                     $tagNames = PostTags::whereIn('id', $tagIds)->pluck('name')->take(5)->implode(', ');

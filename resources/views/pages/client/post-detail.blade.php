@@ -28,7 +28,7 @@
         "@id": "{{ request()->url() }}"
     },
     "articleSection": "{{ $post->category?->name ?? 'Uncategorized' ?? 'Berita' }}",
-    "keywords": "{{ $post->tags ? collect(json_decode($post->tags))->map(function($tagId) { return App\Models\PostTags::find($tagId)?->name; })->filter()->implode(', ') : '' }}",
+    "keywords": "{{ $post->tags ? implode(', ', $post->tags) : '' }}",
     "wordCount": {{ str_word_count(strip_tags($post->content ?? '')) }},
     "url": "{{ request()->url() }}"
 }
@@ -107,9 +107,8 @@
                     <footer class="entry-footer">
                         @if ($post->tags)
                             <ul class="tag-list">
-                                @foreach (json_decode($post->tags) as $tag)
-                                    @php $tags = App\Models\PostTags::tagById($tag) @endphp
-                                    <li><a href="/tag/{{ $tags->slug }}">#{{ $tags->name }}</a></li>
+                                @foreach ($post->tags ?? [] as $tag)
+                                    <li><a href="/tag/{{ Str::slug($tag) }}">#{{ $tag }}</a></li>
                                 @endforeach
                             </ul>
                         @endif

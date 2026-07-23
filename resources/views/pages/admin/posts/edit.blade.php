@@ -74,7 +74,7 @@
                             <label for="tags">Tags</label>
                             <select name="tags[]" id="tags" class="form-control select2" multiple="multiple" required>
                                 @foreach ($tags as $tag)
-                                    <option value="{{ $tag->id }}" {{ in_array($tag->id, old('tags', $post->tags ? json_decode($post->tags, true) : [])) ? 'selected' : '' }}>
+                                    <option value="{{ $tag->id }}" {{ in_array($tag->id, old('tags', $post->tags ?? [])) ? 'selected' : '' }}>
                                         {{ $tag?->name ?? 'Tag' }}
                                     </option>
                                 @endforeach

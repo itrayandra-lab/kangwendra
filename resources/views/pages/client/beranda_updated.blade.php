@@ -8,9 +8,7 @@
             @foreach ($featuredPosts->take(3) as $index => $post)
                 <article class="post-layout-item img-hover-move">
                     <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="post-thumb media">
-                        @if($post->image)
-                            <img src="{{ getFile($post->image) }}" alt="{{ $post->title }}">
-                        @endif
+                        <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
                     </a>
                     <div class="post-content">
                         <ul class="post-meta">
@@ -30,6 +28,13 @@
                         <h3>
                             <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 60) }}</a>
                         </h3>
+                        @if(is_array($post->tags) && count($post->tags))
+                            <div class="article-tags">
+                                @foreach(array_slice($post->tags, 0, 3) as $tag)
+                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="tag-chip">#{{ $tag }}</a>
+                                @endforeach
+                            </div>
+                        @endif
                         @if($index == 2 && $post->content)
                             <p>{{ Str::limit(strip_tags($post->content), 150) }}</p>
                         @endif
@@ -98,9 +103,7 @@
                             <div class="swiper-slide">
                                 <article class="horizontal-post-card img-hover-move">
                                     <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="post-thumb media">
-                                        @if($post->image)
-                                            <img src="{{ getFile($post->image) }}" alt="{{ $post->title }}">
-                                        @endif
+                                        <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
                                     </a>
                                     <div class="post-content">
                                         <ul class="post-meta">
@@ -114,6 +117,13 @@
                                         <h3>
                                             <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 50) }}</a>
                                         </h3>
+                                        @if(is_array($post->tags) && count($post->tags))
+                                            <div class="article-tags">
+                                                @foreach(array_slice($post->tags, 0, 2) as $tag)
+                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="tag-chip">#{{ $tag }}</a>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                         <ul class="author-info">
                                             <li>
                                                 <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a>
@@ -138,27 +148,30 @@
     <div class="container">
         <div class="row gy-5 gy-lg-0 main-area">
             <div class="col-lg-8">
-                @if ($hikmahPosts->count() !== 0)
-                
+
+                {{-- SECTION: Latest Articles (semua post terbaru) --}}
+                @if ($featuredPosts->count() !== 0)
                     <div class="main-post-wrap">
-                        {{-- Section Header --}}
                         <div class="section-heading mb-4">
                             <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z"/></svg>
                                 <span>Artikel Terbaru</span>
                             </h3>
                         </div>
-                        
                         <div class="row gy-4">
-                            @foreach($latestNews->take(10) as $index => $article)
+                            @foreach($featuredPosts as $index => $article)
                                 <article class="col-lg-12 col-md-6">
                                     <div class="post-card horizontal-card img-hover-move">
                                         @if($article->image)
                                             <div class="post-thumb media">
                                                 <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
                                                     <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
+                                                </a>
+                                            </div>
+                                        @else
+                                            <div class="post-thumb media">
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
+                                                    <img src="{{ asset('assets/default.jpg') }}" alt="{{ $article->title }}">
                                                 </a>
                                             </div>
                                         @endif
@@ -175,6 +188,13 @@
                                             <h3>
                                                 <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
                                             </h3>
+                                            @if(is_array($article->tags) && count($article->tags))
+                                                <div class="article-tags">
+                                                    @foreach(array_slice($article->tags, 0, 3) as $tag)
+                                                        <a href="{{ route('tag', Str::slug($tag)) }}" class="tag-chip">#{{ $tag }}</a>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                             @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
@@ -184,9 +204,7 @@
                                                 </li>
                                                 <li>
                                                     <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/></svg>
                                                         <span>{{ $article->counter }}</span>
                                                     </a>
                                                 </li>
@@ -194,8 +212,6 @@
                                         </div>
                                     </div>
                                 </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
                                 @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
                                     <div class="col-12">
                                         <div class="advertisement-card">
@@ -213,307 +229,63 @@
                             @endforeach
                         </div>
                     </div>
+                @endif
 
-                    <div class="main-post-wrap">
-                        {{-- Section Header --}}
-                        <div class="section-heading mb-4">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
-                                </svg>
-                                <span>Hikmah</span>
-                            </h3>
-                        </div>
-                        <div class="row gy-4">
-                            @foreach($hikmahPosts->take(10) as $index => $article)
-                                <article class="col-lg-12 col-md-6">
-                                    <div class="post-card horizontal-card img-hover-move">
-                                        @if($article->image)
-                                            <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
-                                                </a>
-                                            </div>
-                                        @endif
-                                        <div class="post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
-                                                <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
+                {{-- DYNAMIC CATEGORY SECTIONS --}}
+                @foreach($categories as $catIndex => $category)
+                    @if($category->posts && $category->posts->count() > 0)
+                        <div class="main-post-wrap" style="margin-top: 40px;">
+                            <div class="section-heading mb-4">
+                                <h3>
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z"/></svg>
+                                    <span>{{ $category->name }}</span>
+                                </h3>
+                                <a href="{{ route('category', $category->slug) }}" class="see-all">Lihat Semua &rarr;</a>
+                            </div>
+                            <div class="row gy-4">
+                                @foreach($category->posts->take(4) as $idx => $article)
+                                    <article class="col-lg-6 col-md-6">
+                                        <div class="post-card horizontal-card img-hover-move">
+                                            @if($article->image)
+                                                <div class="post-thumb media">
+                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
+                                                        <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
+                                                    </a>
+                                                </div>
+                                            @else
+                                                <div class="post-thumb media">
+                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
+                                                        <img src="{{ asset('assets/default.jpg') }}" alt="{{ $article->title }}">
+                                                    </a>
+                                                </div>
                                             @endif
-                                            <ul class="post-card-footer">
-                                                <li>
-                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
-                                                        <span>{{ $article->counter }}</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
-                                @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                    <div class="col-12">
-                                        <div class="advertisement-card">
-                                            <div class="ad-content">
-                                                @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                                @if($imageAd)
-                                                    <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
-                                                    </a>
+                                            <div class="post-content">
+                                                <ul class="post-meta">
+                                                    <li>
+                                                        <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
+                                                    </li>
+                                                </ul>
+                                                <h3>
+                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ Str::limit($article->title, 60) }}</a>
+                                                </h3>
+                                                @if(is_array($article->tags) && count($article->tags))
+                                                    <div class="article-tags">
+                                                        @foreach(array_slice($article->tags, 0, 2) as $tag)
+                                                            <a href="{{ route('tag', Str::slug($tag)) }}" class="tag-chip">#{{ $tag }}</a>
+                                                        @endforeach
+                                                    </div>
                                                 @endif
                                             </div>
                                         </div>
-                                    </div>
-                                @endif
-                            @endforeach
+                                    </article>
+                                @endforeach
+                            </div>
                         </div>
-                    </div>
-                @endif
-                @if ($amazingPosts->count() !== 0)
-                    <div class="main-post-wrap">
-                        {{-- Section Header --}}
-                        <div class="section-heading mb-4">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
-                                </svg>
-                                <span>AmAzing</span>
-                            </h3>
-                        </div>
-                        
-                        <div class="row gy-4">
-                            @foreach($amazingPosts->take(10) as $index => $article)
-                                <article class="col-lg-12 col-md-6">
-                                    <div class="post-card horizontal-card img-hover-move">
-                                        @if($article->image)
-                                            <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
-                                                </a>
-                                            </div>
-                                        @endif
-                                        <div class="post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
-                                                <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
-                                            @endif
-                                            <ul class="post-card-footer">
-                                                <li>
-                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
-                                                        <span>{{ $article->counter }}</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
-                                @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                    <div class="col-12">
-                                        <div class="advertisement-card">
-                                            <div class="ad-content">
-                                                @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                                @if($imageAd)
-                                                    <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-                @if ($marketingPosts->count() !== 0)
-                    <div class="main-post-wrap">
-                        {{-- Section Header --}}
-                        <div class="section-heading mb-4">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
-                                </svg>
-                                <span>Marketing</span>
-                            </h3>
-                        </div>
-                        
-                        <div class="row gy-4">
-                            @foreach($marketingPosts->take(10) as $index => $article)
-                                <article class="col-lg-12 col-md-6">
-                                    <div class="post-card horizontal-card img-hover-move">
-                                        @if($article->image)
-                                            <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
-                                                </a>
-                                            </div>
-                                        @endif
-                                        <div class="post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
-                                                <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
-                                            @endif
-                                            <ul class="post-card-footer">
-                                                <li>
-                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
-                                                        <span>{{ $article->counter }}</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
-                                @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                    <div class="col-12">
-                                        <div class="advertisement-card">
-                                            <div class="ad-content">
-                                                @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                                @if($imageAd)
-                                                    <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-                @if ($brandingPosts->count() !== 0)
-                    <div class="main-post-wrap">
-                        {{-- Section Header --}}
-                        <div class="section-heading mb-4">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
-                                </svg>
-                                <span>Branding</span>
-                            </h3>
-                        </div>
-                        
-                        <div class="row gy-4">
-                            @foreach($brandingPosts->take(10) as $index => $article)
-                                <article class="col-lg-12 col-md-6">
-                                    <div class="post-card horizontal-card img-hover-move">
-                                        @if($article->image)
-                                            <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
-                                                </a>
-                                            </div>
-                                        @endif
-                                        <div class="post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
-                                                <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
-                                            @endif
-                                            <ul class="post-card-footer">
-                                                <li>
-                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
-                                                        <span>{{ $article->counter }}</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
-                                @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                    <div class="col-12">
-                                        <div class="advertisement-card">
-                                            <div class="ad-content">
-                                                @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                                @if($imageAd)
-                                                    <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+                    @endif
+                @endforeach
+
             </div>
-            
+
             {{-- Sidebar --}}
             <div class="col-lg-4">
                 <div class="sidebar-area">
@@ -555,6 +327,8 @@
                                         <a href="{{ route('category', $category->slug) }}" class="media">
                                             @if($category->posts->first() && $category->posts->first()->image)
                                                 <img src="{{ getFile($category->posts->first()->image) }}" alt="{{ $category->name }}">
+                                            @else
+                                                <img src="{{ asset('assets/default.jpg') }}" alt="{{ $category->name }}">
                                             @endif
                                             {{ $category->name }} 
                                             <span>{{ $category->posts->count() }}</span>
@@ -582,6 +356,12 @@
                                         <div class="widget-post-thumb media">
                                             <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}">
                                                 <img src="{{ getFile($popular->image) }}" alt="{{ $popular->title }}">
+                                            </a>
+                                        </div>
+                                    @else
+                                        <div class="widget-post-thumb media">
+                                            <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}">
+                                                <img src="{{ asset('assets/default.jpg') }}" alt="{{ $popular->title }}">
                                             </a>
                                         </div>
                                     @endif
@@ -722,6 +502,44 @@
     
     .section-heading h3 svg {
         color: #007bff;
+    }
+
+    /* Article card tags */
+    .article-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+    .tag-chip {
+        display: inline-block;
+        padding: 2px 8px;
+        background-color: #e9ecef;
+        color: #495057;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .tag-chip:hover {
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+    }
+    .section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .section-heading .see-all {
+        font-size: 0.85rem;
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .section-heading .see-all:hover {
+        text-decoration: underline;
     }
 </style>
 @endpush

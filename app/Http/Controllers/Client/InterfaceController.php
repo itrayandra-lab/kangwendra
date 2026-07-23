@@ -27,26 +27,34 @@ class InterfaceController extends Controller
     #landing start
     public function beranda()
     {
+        // Dynamic categories - ambil 4 kategori yang punya posts aktif
+        $dynamicCategories = \App\Models\PostCategory::whereHas('posts', function($q) {
+            $q->where('status', 'active')
+              ->whereNotNull('published_at')
+              ->where('published_at', '<=', \Carbon\Carbon::now());
+        })->with(['posts' => function($q) {
+            $q->where('status', 'active')
+              ->whereNotNull('published_at')
+              ->where('published_at', '<=', \Carbon\Carbon::now())
+              ->latest('published_at')
+              ->limit(6);
+        }])->limit(4)->get();
+
         $data = [
-            'slide'        => $this->datas->latestPublished(3), 
-            'latestNews'   => $this->datas->latestNews(3), 
-            'hikmahPosts'  => $this->datas->postsCategory(2, 'Hikmah'), 
-            'amazingPosts' => $this->datas->postsCategory(2, 'AmAzing'), 
-            'brandingPosts'=> $this->datas->postsCategory(2, 'Branding'), 
-            'marketingPosts'=> $this->datas->postsCategory(2, 'Marketing'), 
-            'featuredPosts'=> $this->datas->latestPublished(3), 
-            'randomNews'   => $this->datas->latestNews(4), 
-            'mostPopular'  => $this->datas->mostPopular(2),
-            'banner_1'     => $this->datas->information('banner', 5),
-            'banner_2'     => $this->datas->information('banner', 1, true),
-            'information'  => $this->datas->information('text', 4),
-            'recommended'  => $this->datas->recommended(6),
-            'tags'         => $this->datas->tags(9),
-            'categories'   => $this->datas->category(4),
-            'ads'         => $this->datas->ads(1, ['image','gif']),
+            'slide'         => $this->datas->latestPublished(6),
+            'featuredPosts' => $this->datas->latestPublished(6),
+            'randomNews'    => $this->datas->latestNews(8),
+            'mostPopular'   => $this->datas->mostPopular(5),
+            'banner_1'      => $this->datas->information('banner', 5),
+            'banner_2'      => $this->datas->information('banner', 1, true),
+            'information'   => $this->datas->information('text', 4),
+            'recommended'   => $this->datas->recommended(6),
+            'tags'          => $this->datas->tags(12),
+            'categories'    => $dynamicCategories,
+            'ads'          => $this->datas->ads(1, ['image','gif']),
         ];
 
-        return view('pages.client.beranda', $data);
+        return view('pages.client.beranda_updated', $data);
     }
 
     #search

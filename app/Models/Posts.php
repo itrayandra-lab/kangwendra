@@ -36,7 +36,9 @@ class Posts extends Model
      */
     protected $casts = [
         'published_at' => 'datetime',
-        'counter' => 'integer',
+        'counter'     => 'integer',
+        'tags'        => 'array',
+        'meta_data'   => 'array',
     ];
 
     /**

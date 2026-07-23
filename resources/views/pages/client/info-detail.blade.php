@@ -9,6 +9,10 @@
                         <div class="single-post-thumb">
                             <img src="{{ getFile($info->image) }}" alt="{{ $info->title }}">
                         </div>
+                    @else
+                        <div class="single-post-thumb">
+                            <img src="{{ asset('assets/default.jpg') }}" alt="{{ $info->title }}">
+                        </div>
                     @endif
                     <header class="entry-header">
                         <ul class="post-meta">
@@ -80,6 +84,12 @@
                                                     <div class="post-thumb media">
                                                         <a href="/info/{{ $item->slug }}">
                                                             <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}">
+                                                        </a>
+                                                    </div>
+                                                @else
+                                                    <div class="post-thumb media">
+                                                        <a href="/info/{{ $item->slug }}">
+                                                            <img src="{{ asset('assets/default.jpg') }}" alt="{{ $item->title }}">
                                                         </a>
                                                     </div>
                                                 @endif

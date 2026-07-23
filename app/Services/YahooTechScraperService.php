@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\Log;
 class YahooTechScraperService
 {
     protected string $baseUrl = 'https://tech.yahoo.com';
+    protected int $scrapeLimit = 5; // Maksimal article per scrape
 
-    /**
-     * Scrape daftar artikel dari tech.yahoo.com lalu simpan ke ref_articles.
-     * Return jumlah artikel baru yang berhasil disimpan.
-     */
+    public function __construct(int $scrapeLimit = 5)
+    {
+        $this->scrapeLimit = $scrapeLimit;
+    }
+
     public function scrapeAndSave(): int
     {
         $links = $this->fetchArticleLinks();
@@ -26,44 +28,142 @@ class YahooTechScraperService
         $saved = 0;
 
         foreach ($links as $url) {
-            // Skip jika sudah pernah disimpan
+            if ($saved >= $this->scrapeLimit) {
+                Log::info("YahooTechScraper: batas {$this->scrapeLimit} article per run tercapai.");
+                break;
+            }
+
             if (RefArticle::where('source_url', $url)->exists()) {
                 continue;
             }
 
             $article = $this->fetchArticleDetail($url);
 
-            if (!$article || empty($article['title']) || empty($article['content'])) {
+            if (!$this->isValidArticle($article)) {
                 continue;
             }
 
             RefArticle::create([
-                'source_url'    => $url,
-                'source_domain' => 'tech.yahoo.com',
-                'title'         => $article['title'],
-                'content'       => $article['content'],
-                'image_url'     => $article['image_url'] ?? null,
-                'tags'          => $article['tags'] ?? [],
-                'author'        => $article['author'] ?? null,
-                'published_at'  => $article['published_at'] ?? now(),
-                'ai_status'     => 'pending',
+                'source_url'     => $url,
+                'source_domain'  => 'tech.yahoo.com',
+                'title'          => $article['title'],
+                'content'        => $article['content'],
+                'image_url'      => $article['image_url'] ?? null,
+                'tags'           => $article['tags'] ?? [],
+                'author'         => $article['author'] ?? null,
+                'published_at'   => $article['published_at'] ?? now(),
+                'ai_status'      => 'pending',
             ]);
 
             $saved++;
-            // Jeda kecil agar tidak dianggap bot
-            usleep(500000); // 0.5 detik
+            usleep(500000);
         }
 
+        Log::info("YahooTechScraper: {$saved} artikel disimpan (limit {$this->scrapeLimit} per run).");
         return $saved;
     }
 
-    /**
-     * Ambil daftar URL artikel dari halaman utama tech.yahoo.com.
-     */
+    protected function isValidArticle(?array $article): bool
+    {
+        if (!$article) return false;
+        if (empty($article['title']) || empty($article['content'])) return false;
+
+        // WAJIB: harus punya gambar
+        if (empty($article['image_url'])) {
+            Log::debug("YahooTechScraper: skip - tidak ada gambar");
+            return false;
+        }
+
+        $plainContent = strip_tags($article['content']);
+
+        if (strlen($plainContent) < 200) {
+            Log::debug("YahooTechScraper: skip - konten terlalu pendek (" . strlen($plainContent) . " chars)");
+            return false;
+        }
+
+        $yesNoCount = substr_count(strtolower($plainContent), 'yes')
+                    + substr_count(strtolower($plainContent), 'no');
+        if ($yesNoCount > 3 && strlen($plainContent) < 2000) {
+            Log::debug("YahooTechScraper: skip - terdeteksi tabel comparison");
+            return false;
+        }
+
+        if (preg_match('/\$[\d,]+.*\$[\d,]+.*\$[\d,]+/', $plainContent) && strlen($plainContent) < 3000) {
+            Log::debug("YahooTechScraper: skip - terdeteksi daftar harga produk");
+            return false;
+        }
+
+        $paragraphCount = substr_count($plainContent, "\n\n");
+        if ($paragraphCount < 3 && strlen($plainContent) < 1000) {
+            Log::debug("YahooTechScraper: skip - bukan artikel dengan paragraf");
+            return false;
+        }
+
+        $textToLinkRatio = strlen($plainContent) / (substr_count(strtolower($plainContent), 'href') + 1);
+        if ($textToLinkRatio < 50) {
+            Log::debug("YahooTechScraper: skip - terlalu banyak link, kurang teks");
+            return false;
+        }
+
+        // Cek topicality - harus tentang tech/AI
+        $techKeywords = [
+            'ai', 'artificial intelligence', 'machine learning', 'deep learning',
+            'chatgpt', 'llm', 'generative ai', 'openai', 'gemini', 'anthropic', 'deepseek',
+            'google', 'apple', 'microsoft', 'meta', 'facebook', 'nvidia', 'amd', 'intel', 'qualcomm',
+            'samsung', 'xiaomi', 'oppo', 'vivo', 'huawei', 'oneplus', 'realme',
+            'tesla', 'amazon', 'techcrunch', 'theverge', 'wired',
+            'software', 'hardware', 'smartphone', 'laptop', 'computer', 'pc', 'mac',
+            'gadget', 'wearable', 'smartwatch', 'tablet', 'headphone', 'earbuds',
+            'robot', 'robotics', 'automation', 'drones',
+            'cybersecurity', 'cyber attack', 'malware', 'hack', 'ransomware', 'data breach',
+            'chip', 'processor', 'cpu', 'gpu', 'semiconductor', 'memory',
+            'cloud', 'server', 'data center', 'storage',
+            'app', 'application', 'browser', 'platform', 'os', 'android', 'ios', 'windows', 'linux', 'macos',
+            'social media', 'instagram', 'twitter', 'x.com', 'tiktok', 'youtube',
+            '5g', '6g', 'network', 'internet', 'broadband', 'wifi', 'iot',
+            'blockchain', 'crypto', 'bitcoin', 'nft', 'web3', 'metaverse',
+            'gaming', 'esport', 'console', 'playstation', 'xbox', 'nintendo', 'steam',
+            'streaming', 'netflix', 'spotify', 'disney+',
+        ];
+
+        // Negative keywords - skip jika mengandung ini (puzzle hints, non-tech)
+        $negativeKeywords = [
+            'wordle', 'crossword', 'nyt mini', 'strands', 'connections', 'quordle',
+            'leakdlord', 'nytimes', 'today\'s nyt', 'daily puzzle', 'puzzle hint', 'puzzle answer',
+        ];
+
+        $titleLower = strtolower($article['title']);
+        $haystack = strtolower($article['title'] . ' ' . $plainContent);
+
+        // Skip jika negative keyword di judul
+        foreach ($negativeKeywords as $neg) {
+            if (strpos($titleLower, $neg) !== false) {
+                Log::debug("YahooTechScraper: skip - negative keyword '" . $neg . "' di judul");
+                return false;
+            }
+        }
+
+        // Harus ada minimal 1 tech keyword
+        $hasTechKeyword = false;
+        foreach ($techKeywords as $kw) {
+            if (strpos($haystack, $kw) !== false) {
+                $hasTechKeyword = true;
+                break;
+            }
+        }
+
+        if (!$hasTechKeyword) {
+            Log::debug("YahooTechScraper: skip - bukan topik tech/AI");
+            return false;
+        }
+
+        return true;
+    }
+
     public function fetchArticleLinks(): array
     {
         try {
-            $response = Http::timeout(20)
+            $response = Http::timeout(60)
                 ->withHeaders($this->browserHeaders())
                 ->get($this->baseUrl);
 
@@ -75,13 +175,7 @@ class YahooTechScraperService
             $html  = $response->body();
             $links = [];
 
-            // Cari semua href yang mengarah ke artikel Yahoo Tech
-            // Pola URL artikel Yahoo: /XXXXX.html atau path dengan slug panjang
-            preg_match_all(
-                '/<a[^>]+href=["\']([^"\']+)["\'][^>]*>/i',
-                $html,
-                $matches
-            );
+            preg_match_all('/<a[^>]+href=["\']([^"\']+)["\'][^>]*>/i', $html, $matches);
 
             foreach ($matches[1] as $href) {
                 $url = $this->resolveUrl($href);
@@ -90,9 +184,7 @@ class YahooTechScraperService
                 }
             }
 
-            // Hapus duplikat
             $links = array_unique($links);
-
             Log::info('YahooTechScraper: ditemukan ' . count($links) . ' link artikel.');
 
             return array_values($links);
@@ -103,13 +195,10 @@ class YahooTechScraperService
         }
     }
 
-    /**
-     * Ambil detail artikel dari URL tertentu.
-     */
     public function fetchArticleDetail(string $url): ?array
     {
         try {
-            $response = Http::timeout(20)
+            $response = Http::timeout(60)
                 ->withHeaders($this->browserHeaders())
                 ->get($url);
 
@@ -120,12 +209,12 @@ class YahooTechScraperService
             $html = $response->body();
 
             return [
-                'title'        => $this->extractTitle($html),
-                'content'      => $this->extractContent($html),
-                'image_url'    => $this->extractImage($html),
-                'author'       => $this->extractAuthor($html),
+                'title'       => $this->extractTitle($html),
+                'content'     => $this->extractContent($html),
+                'image_url'   => $this->extractImage($html),
+                'author'      => $this->extractAuthor($html),
                 'published_at' => $this->extractPublishedAt($html),
-                'tags'         => $this->extractTags($html, $url),
+                'tags'        => $this->extractTags($html, $url),
             ];
 
         } catch (\Exception $e) {
@@ -134,61 +223,109 @@ class YahooTechScraperService
         }
     }
 
-    /* ─────────────────────────── Extractor Helpers ─────────────────────────── */
-
     private function extractTitle(string $html): string
     {
-        // Coba Open Graph title dulu
         if (preg_match('/<meta[^>]+property=["\']og:title["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i', $html, $m)) {
             return html_entity_decode(trim($m[1]), ENT_QUOTES);
         }
-        // Fallback ke <title>
         if (preg_match('/<title[^>]*>([^<]+)<\/title>/i', $html, $m)) {
             $title = html_entity_decode(trim($m[1]), ENT_QUOTES);
-            // Hilangkan suffix " - Yahoo Tech" dll
-            $title = preg_replace('/\s*[-|]\s*(Yahoo[\w\s]*)?$/i', '', $title);
-            return trim($title);
+            return trim(preg_replace('/\s*[-|]\s*(Yahoo[\w\s]*)?$/i', '', $title));
         }
         return '';
     }
 
     private function extractContent(string $html): string
     {
-        $content = '';
+        // Step 1: Hapus SEMUA script, style, nav, footer, aside, iframe
+        $html = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $html);
+        $html = preg_replace('/<style[^>]*>.*?<\/style>/is', '', $html);
+        $html = preg_replace('/<nav[^>]*>.*?<\/nav>/is', '', $html);
+        $html = preg_replace('/<footer[^>]*>.*?<\/footer>/is', '', $html);
+        $html = preg_replace('/<aside[^>]*>.*?<\/aside>/is', '', $html);
+        $html = preg_replace('/<form[^>]*>.*?<\/form>/is', '', $html);
+        $html = preg_replace('/<iframe[^>]*>.*?<\/iframe>/is', '', $html);
+        $html = preg_replace('/<!--.*?-->/s', '', $html);
 
-        // Coba ambil dari tag <article>
-        if (preg_match('/<article[^>]*>(.*?)<\/article>/is', $html, $m)) {
-            $content = $m[1];
-        }
-        // Fallback: cari div dengan class yang umum untuk konten artikel
-        elseif (preg_match('/<div[^>]+class=["\'][^"\']*(?:article-body|caas-body|body-wrap|story-body|post-content)[^"\']*["\'][^>]*>(.*?)<\/div>/is', $html, $m)) {
-            $content = $m[1];
+        // Step 2: Hapus SEMUA atribut HTML (data-ylk, data-yga, class, id, dll)
+        $html = preg_replace('/<(\w+)[^>]*\s+(?:class|id|data-[a-z-]+|aria-[a-z-]+|data-ylk|data-yga|onclick|onerror|onload)[^>]*>/i', '<$1>', $html);
+
+        // Step 3: Hapus semua anchor link yang tracking (commerce, affiliate, rapid-with-clickid)
+        $html = preg_replace('/<a[^>]+class=["\'][^"\']*(?:rapid-with-clickid|commerce-cta|sponsored|affiliate)[^"\']*["\'][^>]*>.*?<\/a>/is', '', $html);
+
+        // Step 4: Hapus divs yang jelas garbage (ad, sponsor, related, etc.)
+        $html = preg_replace('/<div[^>]+class=["\'][^"\']*(?:ad|advertisement|sponsor|promo|banner|related|recommend|sidebar|social-share|share-btn|comment|coupon)[^"\']*["\'][^>]*>.*?<\/div>/is', '', $html);
+
+        // Step 5: Hapus button elements
+        $html = preg_replace('/<button[^>]*>.*?<\/button>/is', '', $html);
+
+        // Step 6: Hapus dialog/modal elements
+        $html = preg_replace('/<dialog[^>]*>.*?<\/dialog>/is', '', $html);
+
+        // Step 7: Hapus semua img tags (gambar tidak perlu di text)
+        $html = preg_replace('/<img[^>]*>/i', '', $html);
+
+        // Step 8: Hapus semua figure+figcaption (gambar + caption)
+        $html = preg_replace('/<figure[^>]*>.*?<\/figure>/is', '', $html);
+        $html = preg_replace('/<figcaption[^>]*>.*?<\/figcaption>/is', '', $html);
+
+        // Step 9: Hapus semua anchor links - keep text only
+        $html = preg_replace('/<a[^>]+href=["\'][^"\']+["\'][^>]*>(.*?)<\/a>/is', '$1', $html);
+
+        // Step 10: Convert BR ke paragraph separator
+        $html = preg_replace('/<br\s*\/?>/i', "\n", $html);
+
+        // Step 11: Extract semua paragraph dan heading text
+        $lines = [];
+        $blockPatterns = [
+            '/<p[^>]*>([\s\S]*?)<\/p>/i',
+            '/<h1[^>]*>([\s\S]*?)<\/h1>/i',
+            '/<h2[^>]*>([\s\S]*?)<\/h2>/i',
+            '/<h3[^>]*>([\s\S]*?)<\/h3>/i',
+            '/<h4[^>]*>([\s\S]*?)<\/h4>/i',
+            '/<li[^>]*>([\s\S]*?)<\/li>/i',
+        ];
+
+        foreach ($blockPatterns as $pattern) {
+            if (preg_match_all($pattern, $html, $matches)) {
+                foreach ($matches[1] as $text) {
+                    $text = strip_tags($text);
+                    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $text = trim($text);
+                    $text = preg_replace('/\s+/', ' ', $text);
+                    $text = preg_replace('/^Follow[A-Z][a-zA-Z\s]+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/i', '', $text);
+                    $text = preg_replace('/^Add us on Google.*$/i', '', $text);
+                    $text = preg_replace('/^\d+\s+min read$/i', '', $text);
+                    $text = preg_replace('/^(Advertisement|Subscribe|Share|Read more).*$/i', '', $text);
+                    $text = preg_replace('/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+,?\s+\d{4}.*$/i', '', $text);
+                    if (strlen($text) >= 50 && !preg_match('/^[\W\d]+$/u', $text)) {
+                        $lines[] = $text;
+                    }
+                }
+            }
         }
 
-        if (empty($content)) {
+        $lines = array_unique($lines);
+        sort($lines);
+
+        if (empty($lines)) {
             return '';
         }
 
-        // Bersihkan tag script, style, nav, dll
-        $content = preg_replace('/<(script|style|nav|footer|aside|iframe|form)[^>]*>.*?<\/\1>/is', '', $content);
-        // Hapus atribut berlebihan (kecuali href di anchor)
-        $content = preg_replace('/<((?!a\s|\/a)[^>]+)\s+(?:class|id|data-[^=]*)=["\'][^"\']*["\']/', '<$1', $content);
-        // Ubah ke plain text
-        $content = strip_tags($content, '<p><h1><h2><h3><h4><ul><ol><li><strong><em><a><br>');
-        // Bersihkan whitespace berlebihan
-        $content = preg_replace('/\n{3,}/', "\n\n", $content);
-        $content = trim($content);
+        // Rebuild jadi HTML paragraph
+        $result = '';
+        foreach ($lines as $line) {
+            $result .= '<p>' . $line . '</p>' . "\n";
+        }
 
-        return $content;
+        return $result;
     }
 
     private function extractImage(string $html): ?string
     {
-        // Open Graph image
         if (preg_match('/<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i', $html, $m)) {
             return trim($m[1]);
         }
-        // Twitter card image
         if (preg_match('/<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i', $html, $m)) {
             return trim($m[1]);
         }
@@ -197,11 +334,9 @@ class YahooTechScraperService
 
     private function extractAuthor(string $html): ?string
     {
-        // JSON-LD author
         if (preg_match('/"author"\s*:\s*\{[^}]*"name"\s*:\s*"([^"]+)"/i', $html, $m)) {
             return trim($m[1]);
         }
-        // meta author
         if (preg_match('/<meta[^>]+name=["\']author["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i', $html, $m)) {
             return trim($m[1]);
         }
@@ -210,20 +345,15 @@ class YahooTechScraperService
 
     private function extractPublishedAt(string $html): ?string
     {
-        // JSON-LD datePublished
-        if (preg_match('/"datePublished"\s*:\s*"([^"]+)"/i', $html, $m)) {
-            $date = strtotime($m[1]);
-            return $date ? date('Y-m-d H:i:s', $date) : null;
-        }
-        // meta article:published_time
-        if (preg_match('/<meta[^>]+property=["\']article:published_time["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i', $html, $m)) {
-            $date = strtotime($m[1]);
-            return $date ? date('Y-m-d H:i:s', $date) : null;
-        }
-        // <time datetime>
-        if (preg_match('/<time[^>]+datetime=["\']([^"\']+)["\'][^>]*>/i', $html, $m)) {
-            $date = strtotime($m[1]);
-            return $date ? date('Y-m-d H:i:s', $date) : null;
+        foreach ([
+            '/"datePublished"\s*:\s*"([^"]+)"/i',
+            '/<meta[^>]+property=["\']article:published_time["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i',
+            '/<time[^>]+datetime=["\']([^"\']+)["\'][^>]*>/i',
+        ] as $pattern) {
+            if (preg_match($pattern, $html, $m)) {
+                $date = strtotime($m[1]);
+                return $date ? date('Y-m-d H:i:s', $date) : null;
+            }
         }
         return null;
     }
@@ -232,22 +362,16 @@ class YahooTechScraperService
     {
         $tags = ['Yahoo Tech'];
 
-        // Keywords dari JSON-LD
         if (preg_match_all('/"keywords"\s*:\s*\[([^\]]+)\]/i', $html, $m)) {
             preg_match_all('/"([^"]+)"/', $m[1][0], $kw);
             foreach ($kw[1] as $tag) {
-                $tag = trim($tag);
-                if ($tag && !in_array($tag, $tags)) {
-                    $tags[] = $tag;
-                }
+                if ($tag && !in_array($tag, $tags)) $tags[] = $tag;
             }
         }
 
-        // Fallback: cek apakah path URL mengandung kategori
         $path = parse_url($url, PHP_URL_PATH);
         if ($path) {
-            $segments = array_filter(explode('/', $path));
-            foreach ($segments as $seg) {
+            foreach (array_filter(explode('/', $path)) as $seg) {
                 $seg = ucfirst(str_replace('-', ' ', $seg));
                 if (strlen($seg) > 2 && strlen($seg) < 30 && !in_array($seg, $tags)) {
                     $tags[] = $seg;
@@ -258,66 +382,36 @@ class YahooTechScraperService
         return array_slice($tags, 0, 5);
     }
 
-    /* ─────────────────────────── URL Helpers ─────────────────────────── */
-
     private function resolveUrl(string $href): ?string
     {
         $href = trim($href);
-
         if (empty($href) || str_starts_with($href, '#') || str_starts_with($href, 'javascript')) {
             return null;
         }
-
-        // Sudah absolute URL
-        if (str_starts_with($href, 'http')) {
-            return $href;
-        }
-
-        // Relative URL
-        if (str_starts_with($href, '/')) {
-            return $this->baseUrl . $href;
-        }
-
+        if (str_starts_with($href, 'http')) return $href;
+        if (str_starts_with($href, '/')) return $this->baseUrl . $href;
         return null;
     }
 
     private function isArticleUrl(string $url): bool
     {
-        // Harus dari domain Yahoo
         $host = parse_url($url, PHP_URL_HOST);
-        if (!$host || stripos($host, 'yahoo.com') === false) {
-            return false;
-        }
+        if (!$host || stripos($host, 'yahoo.com') === false) return false;
 
-        // Pola URL artikel Yahoo biasanya diakhiri .html atau punya path panjang
         $path = parse_url($url, PHP_URL_PATH) ?? '';
 
-        // Filter halaman non-artikel
-        $exclude = ['/video/', '/videos/', '/tag/', '/category/', '/author/',
-                    '/search', '/login', '/signup', '/mail', '/finance/',
-                    '/news/', '/sports/', '/entertainment/'];
-
-        foreach ($exclude as $ex) {
-            if (stripos($path, $ex) !== false) {
-                return false;
-            }
+        foreach (['/video/', '/videos/', '/tag/', '/category/', '/author/', '/search', '/login', '/signup', '/mail', '/finance/', '/news/', '/sports/', '/entertainment/'] as $ex) {
+            if (stripos($path, $ex) !== false) return false;
         }
 
-        // URL artikel biasanya punya path lebih dari 1 segmen
         $segments = array_filter(explode('/', trim($path, '/')));
-        if (count($segments) < 1) {
-            return false;
-        }
-
-        // Cek apakah mengandung pola artikel (slug atau hash panjang)
-        $lastSegment = end($segments);
-        return strlen($lastSegment) > 10;
+        return count($segments) > 0 && strlen(end($segments)) > 10;
     }
 
     private function browserHeaders(): array
     {
         return [
-            'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+            'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36',
             'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language' => 'en-US,en;q=0.5',
             'Accept-Encoding' => 'gzip, deflate, br',
