@@ -4428,3 +4428,26 @@ body.modal-open{
         --dl-heading-color: var(--dl-body-color);
     }
 }
+
+/* Article card tags */
+.article-tags {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    margin-bottom: 8px !important;
+}
+.article-tags a {
+    display: inline-block !important;
+    padding: 2px 8px !important;
+    background: #e9ecef !important;
+    color: #495057 !important;
+    border-radius: 12px !important;
+    font-size: 0.75rem !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+.article-tags a:hover {
+    background: #007bff !important;
+    color: #fff !important;
+}
