@@ -1877,9 +1877,15 @@ body:not(.loaded){
     flex-wrap: wrap;
     gap: 24px;
 }
-.vartical-post-carousel {
-    height: auto;
-    overflow: hidden;
+/* Vertical Post List - replaces swiper carousel */
+.vertical-post-list {
+    display: flex;
+    flex-direction: column;
+}
+.vertical-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 @media (max-width: 767px) {
     .post-layout-2 {
@@ -1888,7 +1894,7 @@ body:not(.loaded){
     .post-layout-2 article.post-layout-item .post-thumb {
         height: 280px;
     }
-    .vartical-post-carousel {
+    .vertical-post-list {
         height: auto;
     }
 }
@@ -1899,12 +1905,6 @@ body:not(.loaded){
     }
     .post-layout-2 > .post-layout-item:first-child {
         flex: 2 1 0;
-    }
-    .vartical-post-carousel {
-        flex: 0 0 300px;
-        height: auto;
-        position: static;
-        overflow: hidden;
     }
 }
 .post-layout-2 > .post-layout-item:nth-child(n) {

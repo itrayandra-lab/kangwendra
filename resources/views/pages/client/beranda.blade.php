@@ -220,49 +220,45 @@
                 </article>
             @endforeach
 
-            {{-- Vertical Carousel dengan $randomNews --}}
-            <div class="post-layout-item">
-                <div class="swiper vartical-post-carousel">
-                    <div class="swiper-wrapper">
-                        @foreach ($randomNews as $post)
-                            <div class="swiper-slide">
-                                <article class="horizontal-post-card img-hover-move">
-                                    <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="post-thumb media">
-                                        <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
-                                    </a>
-                                    <div class="post-content">
-                                        <ul class="post-meta">
-                                            <li>
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
-                                                    <path d="M488.768-117.847Q470.922-100.001 446-100.001t-42.768-17.846l-286-286q-17.231-17.231-17.038-42.653.192-25.422 17.807-43.037l352-352.616q8.317-8.179 19.658-13.012 11.341-4.834 23.726-4.834h286q24.537 0 42.268 17.731 17.73 17.73 17.73 42.268v286q0 12.826-4.961 24.143-4.962 11.318-13.654 20.01l-352 352Zm210.571-532.154q20.815 0 35.43-14.57 14.615-14.57 14.615-35.384t-14.57-35.429q-14.57-14.615-35.384-14.615t-35.429 14.57q-14.616 14.57-14.616 35.384t14.57 35.429q14.57 14.615 35.384 14.615ZM446.172-160l353.213-354v-286H513.212L160-446l286.172 286Zm353.213-640Z"></path>
-                                                </svg>
-                                                <a href="{{ route('category', $post->category?->slug ?? 'uncategorized') }}" class="post-meta-text">{{ $post->category?->name ?? 'Uncategorized' }}</a>
-                                            </li>
-                                        </ul>
-                                        <h3>
-                                            <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 50) }}</a>
-                                        </h3>
-                                        @if(is_array($post->tags) && count($post->tags))
-                                            <div class="article-tags">
+    {{-- Vertical List dengan $randomNews --}}
+            <div class="post-layout-item vertical-post-list">
+                <div class="vertical-list-wrapper">
+                    @foreach ($randomNews as $post)
+                        <article class="horizontal-post-card img-hover-move">
+                            <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="post-thumb media">
+                                <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
+                            </a>
+                            <div class="post-content">
+                                <ul class="post-meta">
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+                                            <path d="M488.768-117.847Q470.922-100.001 446-100.001t-42.768-17.846l-286-286q-17.231-17.231-17.038-42.653.192-25.422 17.807-43.037l352-352.616q8.317-8.179 19.658-13.012 11.341-4.834 23.726-4.834h286q24.537 0 42.268 17.731 17.73 17.73 17.73 42.268v286q0 12.826-4.961 24.143-4.962 11.318-13.654 20.01l-352 352Zm210.571-532.154q20.815 0 35.43-14.57 14.615-14.57 14.615-35.384t-14.57-35.429q-14.57-14.615-35.384-14.615t-35.429 14.57q-14.616 14.57-14.616 35.384t14.57 35.429q14.57 14.615 35.384 14.615ZM446.172-160l353.213-354v-286H513.212L160-446l286.172 286Zm353.213-640Z"></path>
+                                        </svg>
+                                        <a href="{{ route('category', $post->category?->slug ?? 'uncategorized') }}" class="post-meta-text">{{ $post->category?->name ?? 'Uncategorized' }}</a>
+                                    </li>
+                                </ul>
+                                <h3>
+                                    <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 50) }}</a>
+                                </h3>
+                                @if(is_array($post->tags) && count($post->tags))
+                                    <div class="article-tags">
                                 @foreach(array_slice($post->tags, 0, 2) as $tag)
                                     <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
                                 @endforeach
-                                            </div>
-                                        @endif
-                                        <ul class="author-info">
-                                            <li>
-                                                <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a>
-                                                <a href="#">{{ $post->published_at?->format('d.m.Y') }}</a>
-                                            </li>
-                                        </ul>
                                     </div>
-                                </article>
+                                @endif
+                                <ul class="author-info">
+                                    <li>
+                                        <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a>
+                                        <a href="#">{{ $post->published_at?->format('d.m.Y') }}</a>
+                                    </li>
+                                </ul>
                             </div>
-                        @endforeach
-                    </div>
+                        </article>
+                    @endforeach
                 </div>
             </div>
-            <!--/.vartical-post-carousel-->
+            <!--/.vertical-post-list-->
         </div>
     </div>
 </div>
@@ -790,6 +786,7 @@
                     </div>
 
                     <!--Sidebar Category-->
+                    @if ($information && $information->total() > 0)
                         <div class="sidebar-widget widget">
                             <div class="widget-heading">
                                 <h3>
@@ -800,28 +797,27 @@
                                 </h3>
                             </div>
                             <div class="widget-post-items">
-                                @if ($information)
-                                    @foreach ($information as $data)
-                                        <div class="widget-post-item img-hover-move information-post">
-                                            <div class="widget-post-content">
-                                                <ul class="post-meta">
-                                                    <li>
-                                                        <a href="{{ $data->slug }}">#{{ $data->id }}</a>
-                                                    </li>
-                                                    <li class="sep"></li>
-                                                    <li>
-                                                        <a href="{{ $data->slug }}" class="date">{{ $data->created_at }}</a>
-                                                    </li>
-                                                </ul>
-                                                <h3>
-                                                    <a href="{{ $data->slug }}" class="text-hover">{{ $data->title }}</a>
-                                                </h3>
-                                            </div>
+                                @foreach ($information as $data)
+                                    <div class="widget-post-item img-hover-move information-post">
+                                        <div class="widget-post-content">
+                                            <ul class="post-meta">
+                                                <li>
+                                                    <a href="{{ $data->slug }}">#{{ $data->id }}</a>
+                                                </li>
+                                                <li class="sep"></li>
+                                                <li>
+                                                    <a href="{{ $data->slug }}" class="date">{{ $data->created_at }}</a>
+                                                </li>
+                                            </ul>
+                                            <h3>
+                                                <a href="{{ $data->slug }}" class="text-hover">{{ $data->title }}</a>
+                                            </h3>
                                         </div>
-                                    @endforeach
-                                @endif
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
+                    @endif
                     
                     {{-- Banner Widget --}}
                     @if(isset($ads) && $ads->count() > 0)
@@ -1119,43 +1115,6 @@
         effect: 'fade',
         fadeEffect: {
             crossFade: true
-        },
-    });
-
-    var verticalSwiper = new Swiper('.vartical-post-carousel', {
-        direction: 'vertical',
-        slidesPerView: 3,
-        spaceBetween: 20,
-        autoplay: {
-            delay: 3000,
-            disableOnInteraction: false,
-        },
-        loop: true,
-        breakpoints: {
-            768: {
-                slidesPerView: 4,
-            },
-            1024: {
-                slidesPerView: 5,
-            }
-        }
-    });
-
-    var featuredSwiper = new Swiper('.featured-post-carousel', {
-        slidesPerView: 1,
-        spaceBetween: 30,
-        autoplay: {
-            delay: 5000,
-            disableOnInteraction: false,
-        },
-        loop: true,
-        pagination: {
-            el: '.swiper-pagination',
-            clickable: true,
-        },
-        navigation: {
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev',
         },
     });
 </script>

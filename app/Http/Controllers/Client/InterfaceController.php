@@ -29,13 +29,13 @@ class InterfaceController extends Controller
     {
         $data = [
             'slide'         => $this->datas->latestPublished(3),
-            'latestNews'   => $this->datas->latestNews(3),
+            'latestNews'   => $this->datas->latestNews(7),
             'hikmahPosts'  => $this->datas->postsCategory(2, 'Hikmah'),
             'amazingPosts' => $this->datas->postsCategory(2, 'AmAzing'),
             'brandingPosts'=> $this->datas->postsCategory(2, 'Branding'),
             'marketingPosts'=> $this->datas->postsCategory(2, 'Marketing'),
             'featuredPosts'=> $this->datas->latestPublished(3),
-            'randomNews'   => $this->datas->latestNews(4),
+            'randomNews'   => $this->datas->latestNews(6),
             'mostPopular'  => $this->datas->mostPopular(5),
             'banner_1'     => $this->datas->information('banner', 5),
             'banner_2'     => $this->datas->information('banner', 1, true),
