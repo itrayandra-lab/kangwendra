@@ -89,23 +89,51 @@
 
                 {{-- Action Buttons --}}
                 <div class="mb-3 d-flex" style="gap:8px; flex-wrap:wrap;">
-                    {{-- Scrape --}}
+
+                    {{-- Scrape Yahoo Tech --}}
                     <form action="{{ route('ref-articles.scrape') }}" method="POST" style="display:inline;">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-sm"
-                            onclick="return confirm('Mulai scraping tech.yahoo.com?')">
-                            <i class="fa fa-download"></i> Scrape Artikel Baru
+                            onclick="return confirm('Mulai scraping tech.yahoo.com? (maks 5 artikel)')">
+                            <i class="fa fa-download"></i> Scrape Yahoo Tech
+                        </button>
+                    </form>
+
+                    {{-- Scrape Pharma --}}
+                    <form action="{{ route('ref-articles.scrape-pharma') }}" method="POST" style="display:inline;">
+                        @csrf
+                        <button type="submit" class="btn btn-info btn-sm"
+                            onclick="return confirm('Mulai scraping Tech Pharma? (maks 3 artikel)')">
+                            <i class="fa fa-plus"></i> Scrape Pharma
+                        </button>
+                    </form>
+
+                    {{-- Scrape All --}}
+                    <form action="{{ route('ref-articles.scrape-all') }}" method="POST" style="display:inline;">
+                        @csrf
+                        <button type="submit" class="btn btn-primary btn-sm"
+                            onclick="return confirm('Scrape Yahoo Tech + Pharma sekaligus?')">
+                            <i class="fa fa-globe"></i> Scrape Semua
                         </button>
                     </form>
 
                     {{-- Generate All --}}
                     <form action="{{ route('ref-articles.generate-all') }}" method="POST" style="display:inline;">
                         @csrf
+                        <input type="hidden" name="limit" value="5">
                         <button type="submit" class="btn btn-success btn-sm"
-                            onclick="return confirm('Generate AI untuk semua artikel pending?')">
+                            onclick="return confirm('Generate AI untuk semua artikel pending? (maks 5)')">
                             <i class="fa fa-magic"></i> Generate AI Semua ({{ $stats['pending'] }} pending)
                         </button>
                     </form>
+
+                    {{-- Retry Failed --}}
+                    @if($stats['failed'] > 0)
+                        <span class="badge badge-danger" style="padding:8px 12px; align-self:center;">
+                            <i class="fa fa-exclamation-triangle"></i> {{ $stats['failed'] }} failed
+                        </span>
+                    @endif
+
                 </div>
 
                 {{-- Table --}}

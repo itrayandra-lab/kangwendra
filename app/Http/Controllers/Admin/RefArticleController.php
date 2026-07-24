@@ -100,8 +100,8 @@ class RefArticleController extends Controller
 
     public function generateAll(Request $request)
     {
-        // Bulk generate: dispatch ke queue
-        $limit = (int) $request->input('limit', 20);
+        // Bulk generate: JALANKAN LANGSUNG (SYNCHRONOUS) - tidak pakai queue
+        $limit = (int) $request->input('limit', 5);
 
         RefArticle::failed()->update(['ai_status' => 'pending', 'ai_error' => null]);
         $pending = RefArticle::pending()->latest()->take($limit)->get();
@@ -110,13 +110,36 @@ class RefArticleController extends Controller
             return back()->with('error', 'Tidak ada artikel yang perlu di-generate.');
         }
 
-        $dispatched = 0;
+        $success = 0;
+        $failed = 0;
+        $errors = [];
+
         foreach ($pending as $ref) {
-            GenerateAiArticleJob::dispatch($ref->id);
-            $dispatched++;
+            $ref->update(['ai_status' => 'processing']);
+
+            try {
+                $job = new GenerateAiArticleJob($ref->id);
+                $job->handle();
+                $success++;
+            } catch (\Exception $e) {
+                $ref->update(['ai_status' => 'failed', 'ai_error' => $e->getMessage()]);
+                $failed++;
+                $errors[] = substr($ref->title, 0, 50) . ': ' . substr($e->getMessage(), 0, 100);
+            }
+
+            // Delay 3 detik antar artikel untuk avoid DeepSeek rate limit
+            sleep(3);
         }
 
-        return back()->with('success', "{$dispatched} job generate AI dikirim ke queue. Jalankan di terminal: php artisan queue:work --stop-when-empty");
+        $msg = "Generate AI selesai! {$success} berhasil, {$failed} gagal.";
+        if (!empty($errors)) {
+            $msg .= " Gagal: " . implode('; ', $errors);
+        }
+
+        if ($failed > 0) {
+            return back()->with('error', $msg);
+        }
+        return back()->with('success', $msg);
     }
 
     public function retry(RefArticle $refArticle)
