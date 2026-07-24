@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Jobs\GenerateAiArticleJob;
 use App\Models\RefArticle;
-use App\Services\NewsService;
 use App\Services\TechPharmaScraperService;
 use App\Services\YahooNewsScraperService;
 use App\Services\YahooTechScraperService;
@@ -15,13 +14,12 @@ use Illuminate\Support\Str;
 class AutoFeed extends Command
 {
     protected $signature = 'app:auto-feed
-                            {--rss-only : Hanya fetch RSS, jangan scrape atau AI}
                             {--scrape-only : Hanya scrape, jangan AI}
                             {--ai-only : Hanya generate AI dari ref_articles yang ada}
                             {--limit=3 : Maksimal article untuk AI generation per run}
-                            {--sources=yahoo,ynews,pharma : Sumber scraping (yahoo, ynews, pharma, all)}';
+                            {--sources=yahoo,pharma : Sumber scraping (yahoo, pharma, all)}';
 
-    protected $description = 'Automation feed: RSS fetch + Multi-source scraping + DeepSeek AI generation';
+    protected $description = 'Automation feed: Multi-source scraping + DeepSeek AI generation';
 
     public function handle(): int
     {
@@ -32,32 +30,25 @@ class AutoFeed extends Command
         $this->info('  Kangwendra Auto-Feed Automation');
         $this->info('============================================');
 
-        $rssOnly    = $this->option('rss-only');
         $scrapeOnly = $this->option('scrape-only');
         $aiOnly     = $this->option('ai-only');
         $limit      = (int) $this->option('limit');
         $sourcesOpt = $this->option('sources');
 
-        $sources = $sourcesOpt === 'all' ? ['yahoo', 'ynews', 'pharma'] : explode(',', $sourcesOpt);
+        $sources = $sourcesOpt === 'all' ? ['yahoo', 'pharma'] : explode(',', $sourcesOpt);
 
-        if ($rssOnly) {
-            $this->stepRss();
-        }
-
-        if (!$rssOnly && !$aiOnly) {
+        if (!$aiOnly) {
             foreach ($sources as $source) {
                 $source = trim($source);
                 if ($source === 'yahoo') {
                     $this->stepScrapeYahoo();
-                } elseif ($source === 'ynews') {
-                    $this->stepScrapeNews();
                 } elseif ($source === 'pharma') {
                     $this->stepScrapePharma();
                 }
             }
         }
 
-        if (!$rssOnly && !$scrapeOnly) {
+        if (!$scrapeOnly) {
             $this->stepAiGeneration($limit);
         }
 
@@ -76,29 +67,10 @@ class AutoFeed extends Command
         return 0;
     }
 
-    protected function stepRss(): void
-    {
-        $this->newLine();
-        $this->info('[Step 1] Fetching RSS feeds...');
-
-        try {
-            $newsService = new NewsService();
-            $newsItems   = $newsService->fetchFromYahooAiRss();
-            $count       = $newsService->saveNewsToDatabase($newsItems);
-
-            $this->info("  OK: {$count} berita disimpan");
-            Log::info("AutoFeed RSS: {$count} articles saved.");
-
-        } catch (\Exception $e) {
-            $this->error("  Gagal: {$e->getMessage()}");
-            Log::error("AutoFeed RSS failed: {$e->getMessage()}");
-        }
-    }
-
     protected function stepScrapeYahoo(): void
     {
         $this->newLine();
-        $this->info('[Step 2a] Scraping Yahoo Tech...');
+        $this->info('[Step 1] Scraping Yahoo Tech...');
 
         try {
             $scraper = new YahooTechScraperService();
@@ -116,7 +88,7 @@ class AutoFeed extends Command
     protected function stepScrapePharma(): void
     {
         $this->newLine();
-        $this->info('[Step 2b] Scraping Tech Pharma...');
+        $this->info('[Step 2] Scraping Tech Pharma...');
 
         try {
             $scraper = new TechPharmaScraperService();
@@ -131,24 +103,6 @@ class AutoFeed extends Command
         }
     }
 
-    protected function stepScrapeNews(): void
-    {
-        $this->newLine();
-        $this->info('[Step 2b] Scraping Yahoo News...');
-
-        try {
-            $scraper = new YahooNewsScraperService();
-            $saved   = $scraper->scrapeAndSave();
-
-            $this->info("  OK: {$saved} artikel disimpan");
-            Log::info("AutoFeed YahooNews: {$saved} articles saved.");
-
-        } catch (\Exception $e) {
-            $this->error("  Gagal: {$e->getMessage()}");
-            Log::error("AutoFeed YahooNews failed: {$e->getMessage()}");
-        }
-    }
-
     protected function stepAiGeneration(int $limit): void
     {
         $this->newLine();
@@ -159,7 +113,7 @@ class AutoFeed extends Command
         $pending = RefArticle::pending()->latest()->take($limit)->get();
 
         if ($pending->isEmpty()) {
-            $this->info('  OK: Tidak ada artikel baru untuk digenerate');
+            $this->info('  OK: Tidak ada artikel baru untuk diproses');
             return;
         }
 
