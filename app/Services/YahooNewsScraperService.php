@@ -109,9 +109,9 @@ class YahooNewsScraperService
             return false;
         }
 
-        // Cek topicality - harus tentang tech/AI/science/finance/world
+        // Cek topicality - harus tentang tech/AI/science-core/semiconductor SAJA
         $positiveKeywords = [
-            // AI & Tech
+            // AI & Tech - CORE ONLY
             'ai', 'artificial intelligence', 'machine learning', 'deep learning',
             'chatgpt', 'llm', 'generative ai', 'openai', 'gemini', 'anthropic', 'deepseek',
             'google', 'apple', 'microsoft', 'meta', 'facebook', 'nvidia', 'amd', 'intel', 'qualcomm',
@@ -120,55 +120,92 @@ class YahooNewsScraperService
             'software', 'hardware', 'smartphone', 'laptop', 'computer', 'pc', 'mac',
             'gadget', 'wearable', 'smartwatch', 'tablet', 'headphone', 'earbuds',
             'robot', 'robotics', 'automation', 'drones',
-            'cybersecurity', 'cyber attack', 'malware', 'hack', 'ransomware', 'data breach',
-            'chip', 'processor', 'cpu', 'gpu', 'semiconductor', 'memory',
-            'cloud', 'server', 'data center', 'storage',
+            'cybersecurity', 'cyber attack', 'malware', 'hack', 'ransomware', 'data breach', 'peretas',
+            'chip', 'processor', 'cpu', 'gpu', 'semiconductor', 'memory', 'vga',
+            'cloud', 'server', 'data center', 'storage', 'database',
             'app', 'application', 'browser', 'platform', 'os', 'android', 'ios', 'windows', 'linux', 'macos',
-            'social media', 'instagram', 'twitter', 'x.com', 'tiktok', 'youtube',
-            '5g', '6g', 'network', 'internet', 'broadband', 'wifi', 'iot',
+            'social media', 'instagram', 'twitter', 'x.com', 'tiktok', 'youtube', 'facebook meta',
+            '5g', '6g', 'network', 'internet', 'broadband', 'wifi', 'iot', 'jaringan',
             'blockchain', 'crypto', 'bitcoin', 'ethereum', 'nft', 'web3', 'metaverse',
             'gaming', 'esport', 'console', 'playstation', 'xbox', 'nintendo', 'steam',
             'streaming', 'netflix', 'spotify', 'disney+',
-            // Science & Space
-            'nasa', 'spacex', 'space', 'astronaut', 'satellite', 'rocket', 'mars', 'moon',
-            'research', 'scientist', 'discovery', 'study', 'experiment',
-            'climate', 'environment', 'earth', 'ocean', 'species', 'genetic', 'gene',
-            // Finance & Economy
-            'economy', 'economic', 'inflation', 'recession', 'gdp', 'tariff', 'trade war',
-            'stock market', 'nasdaq', 'dow jones', 's&p', 'bull market', 'bear market',
-            'ipo', 'venture capital', 'funding', 'startup', 'merger', 'acquisition',
-            'federal reserve', 'fed rate', 'interest rate', 'bond',
-            // World News & Politics
-            'war', 'military', 'ukraine', 'russia', 'china', 'taiwan', 'nato',
-            'election', 'president', 'congress', 'senate', 'supreme court',
-            'diplomacy', 'summit', 'g20', 'united nations', 'sanction',
-            'paris agreement', 'climate summit', 'energy transition',
-            // Health & Medicine
-            'vaccine', 'pandemic', 'covid', 'fda', 'who', 'disease', 'cancer',
-            'treatment', 'drug approval', 'clinical trial', 'health',
+            // Science & Space - SPACE/SCIENCE TECH ONLY (bukan general science news)
+            'nasa', 'spacex', 'astronaut', 'satellite', 'rocket', 'mars landing', 'moon landing',
+            'telescope', 'black hole', 'galaxy', 'universe', 'spacecraft', 'iss',
+            // Hardware & Components
+            'nvidia', 'gpu', 'processor', 'chip', 'intel', 'amd ryzen', 'snapdragon', 'mediatek',
+            'ram', 'ssd', 'hdd', 'storage', 'vga', 'cpu',
         ];
 
-        // Negative keywords - skip jika mengandung ini (lifestyle, puzzle, entertainment)
+        // Negative keywords - skip jika mengandung ini (sports, health non-tech, lifestyle, entertainment)
         $negativeKeywords = [
-            'wordle', 'crossword', 'strands', 'connections', 'quordle',
-            'horoscope', 'astrology', 'weather forecast',
-            'lottery result', 'betting', 'gambling',
-            'opinion', 'editorial', 'letters to editor',
-            'recipe', 'cooking', 'food', 'restaurant review',
+            // Sports
+            'nfl', 'ncaaf', 'ncaab', 'nba', 'mlb', 'nhl',
+            'football', 'basketball', 'baseball', 'soccer',
+            'tennis', 'golf', 'mma', 'boxing', 'wrestling', 'ufc',
+            'playoff', 'championship', 'super bowl', 'world series',
+            'draft', 'trade', 'free agency', 'roster',
+            'athlete', 'coach', 'stadium', 'arena',
+            'fantasy', 'betting', 'odds', 'spread',
+            // Health non-tech (conception, reproduction, general wellness)
+            'contraception', 'birth control', 'condom', 'iud', 'pill',
+            'pregnancy', 'pregnant', 'abortion', 'fertility',
+            'menstrual', 'menopause', 'hormone', 'testosterone',
+            'erectile', 'impotence', 'sexual health',
+            'vaccine', 'pandemic', 'covid', 'flu shot',
+            'supplement', 'vitamin', 'mineral',
+            // Lifestyle / Entertainment non-tech
+            'recipe', 'cooking', 'food', 'restaurant', 'meal',
+            'travel', 'vacation', 'hotel', 'airline', 'flight deal',
+            'fashion', 'style', 'beauty product', 'makeup',
             'celebrity', 'gossip', 'rumor', 'scandal',
-            'travel deal', 'hotel deal', 'flight deal',
+            'horoscope', 'astrology', 'tarot', 'fortune',
+            'wordle', 'crossword', 'strands', 'connections', 'quordle',
+            'lottery', 'powerball', 'mega millions',
+            'opinion', 'editorial', 'letters to editor',
+            // Politics non-tech
+            'election', 'voting', 'campaign', 'polling', 'senate',
+            'congress', 'parliament', 'presidential', 'governor',
         ];
 
         $titleLower = strtolower($article['title']);
         $haystack = strtolower($article['title'] . ' ' . $plainContent);
 
-        // Skip jika negative keyword di judul
+        // Skip jika negative keyword di judul ATAU konten
         foreach ($negativeKeywords as $neg) {
-            if (strpos($titleLower, $neg) !== false) {
-                Log::debug("YahooNewsScraper: skip - negative keyword '" . $neg . "' di judul");
+            if (strpos($titleLower, $neg) !== false || strpos($haystack, $neg) !== false) {
+                Log::debug("YahooNewsScraper: skip - negative keyword '" . $neg . "'");
                 return false;
             }
         }
+
+        // Positive keywords diperketat - HANYA tech/AI/science yang jelas
+        $positiveKeywords = [
+            // AI & Tech - CORE
+            'ai', 'artificial intelligence', 'machine learning', 'deep learning',
+            'chatgpt', 'llm', 'generative ai', 'openai', 'gemini', 'anthropic', 'deepseek',
+            'google', 'apple', 'microsoft', 'meta', 'facebook', 'nvidia', 'amd', 'intel', 'qualcomm',
+            'samsung', 'xiaomi', 'oppo', 'vivo', 'huawei', 'oneplus', 'realme',
+            'tesla', 'amazon', 'techcrunch', 'theverge', 'wired',
+            'software', 'hardware', 'smartphone', 'laptop', 'computer', 'pc', 'mac',
+            'gadget', 'wearable', 'smartwatch', 'tablet', 'headphone', 'earbuds',
+            'robot', 'robotics', 'automation', 'drones',
+            'cybersecurity', 'cyber attack', 'malware', 'hack', 'ransomware', 'data breach', 'peretas',
+            'chip', 'processor', 'cpu', 'gpu', 'semiconductor', 'memory', 'vga',
+            'cloud', 'server', 'data center', 'storage', 'database',
+            'app', 'application', 'browser', 'platform', 'os', 'android', 'ios', 'windows', 'linux', 'macos',
+            'social media', 'instagram', 'twitter', 'x.com', 'tiktok', 'youtube', 'facebook meta',
+            '5g', '6g', 'network', 'internet', 'broadband', 'wifi', 'iot', 'jaringan',
+            'blockchain', 'crypto', 'bitcoin', 'ethereum', 'nft', 'web3', 'metaverse',
+            'gaming', 'esport', 'console', 'playstation', 'xbox', 'nintendo', 'steam',
+            'streaming', 'netflix', 'spotify', 'disney+',
+            // Science & Space - CORE ONLY (NOT general science news)
+            'nasa', 'spacex', 'space', 'astronaut', 'satellite', 'rocket', 'mars', 'moon',
+            'telescope', 'black hole', 'galaxy', 'universe', 'spacecraft', 'iss',
+            // Hardware & Components
+            'nvidia', 'gpu', 'processor', 'chip', 'intel', 'amd ryzen', 'snapdragon', 'mediatek',
+            'ram', 'ssd', 'hdd', 'storage', 'vga', 'cpu',
+        ];
 
         // Harus ada minimal 1 positive keyword
         $hasPositive = false;
@@ -180,7 +217,7 @@ class YahooNewsScraperService
         }
 
         if (!$hasPositive) {
-            Log::debug("YahooNewsScraper: skip - bukan topik tech/science/finance/world");
+            Log::debug("YahooNewsScraper: skip - bukan topik tech/AI/science-core");
             return false;
         }
 
@@ -274,7 +311,7 @@ class YahooNewsScraperService
 
     protected function isArticleUrl(string $url): bool
     {
-        $skipPatterns = [
+        $skipDomains = [
             'video.yahoo.com',
             'mail.yahoo.com',
             'finance.yahoo.com',
@@ -285,22 +322,16 @@ class YahooNewsScraperService
             'login.yahoo.com',
             'signup.yahoo.com',
             'search.yahoo.com',
-            'news.yahoo.com/video',
-            'news.yahoo.com/photos',
-            'news.yahoo.com/ym-',
-            'consent.yahoo.com',
-            '/rdl/', '/clk/', '/watch?',
-            'redirect.',
             'shopping.yahoo.com',
+            'consent.yahoo.com',
         ];
 
-        foreach ($skipPatterns as $pattern) {
-            if (strpos($url, $pattern) !== false) {
+        foreach ($skipDomains as $domain) {
+            if (strpos($url, $domain) !== false) {
                 return false;
             }
         }
 
-        // Hanya boleh dari news.yahoo.com/tech/...
         if (strpos($url, 'news.yahoo.com') === false) {
             return false;
         }
@@ -310,15 +341,51 @@ class YahooNewsScraperService
             return false;
         }
 
-        // HANYA accept tech section - news, politics, sports, finance, world, travel = skip
         $path = parse_url($url, PHP_URL_PATH);
         $path = trim($path, '/');
-        $topSection = explode('/', $path)[0] ?? '';
+        $pathLower = strtolower($path);
+        $segments = array_filter(explode('/', $path));
 
-        $allowedSections = ['tech'];
-        if (!in_array($topSection, $allowedSections)) {
+        // SPORTS PATH SEGMENTS - reject immediately
+        $sportsSegments = [
+            'nfl', 'ncaaf', 'ncaab', 'nba', 'mlb', 'nhl',
+            'football', 'basketball', 'baseball', 'soccer',
+            'tennis', 'golf', 'mma', 'boxing', 'wrestling',
+            'espn', 'scores', 'standings', 'schedules',
+            'news-yahoo-com', 'default', 'index',
+        ];
+        foreach ($segments as $seg) {
+            if (in_array(strtolower($seg), $sportsSegments)) {
+                Log::debug("YahooNewsScraper: skip - sports path segment '$seg'");
+                return false;
+            }
+        }
+
+        // HANYA accept tech section
+        if (empty($segments)) {
+            return false;
+        }
+        $topSection = $segments[0] ?? '';
+        if (!in_array($topSection, ['tech'])) {
             Log::debug("YahooNewsScraper: skip - section '$topSection' bukan tech");
             return false;
+        }
+
+        // Additional: skip if URL contains sports/health/finance/other section keywords in path
+        $skipPathPatterns = [
+            'nfl', 'ncaaf', 'ncaab', 'nba', 'mlb', 'nhl',
+            'football', 'basketball', 'soccer', 'tennis', 'golf',
+            '/health', '/wellness', '/life', '/parenting',
+            '/finance', '/market', '/investing',
+            '/politics', '/opinion', '/world',
+            '/video', '/photos', '/slideshow',
+            '/entertainment', '/travel', '/real-estate',
+        ];
+        foreach ($skipPathPatterns as $pattern) {
+            if (strpos($pathLower, $pattern) !== false) {
+                Log::debug("YahooNewsScraper: skip - path contains '$pattern'");
+                return false;
+            }
         }
 
         return true;
