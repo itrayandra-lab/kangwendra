@@ -193,8 +193,10 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
     # Artikel Referensi (scrape + AI generate)
     Route::group(['prefix' => 'ref-articles', 'controller' => RefArticleController::class], function () {
         Route::get('/', 'index')->name('ref-articles.index');
+        Route::get('/batch-progress', 'batchProgress')->name('ref-articles.batch-progress');
+        Route::get('/batch-status', 'batchStatus')->name('ref-articles.batch-status');
         Route::get('/{refArticle}', 'show')->name('ref-articles.show');
-        Route::post('/scrape', 'scrape')->name('ref-articles.scrape');
+        Route::post('/scrape-yahoo', 'scrapeYahoo')->name('ref-articles.scrape-yahoo');
         Route::post('/scrape-pharma', 'scrapePharma')->name('ref-articles.scrape-pharma');
         Route::post('/scrape-all', 'scrapeAll')->name('ref-articles.scrape-all');
         Route::post('/generate-all', 'generateAll')->name('ref-articles.generate-all');
