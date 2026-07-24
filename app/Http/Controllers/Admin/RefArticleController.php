@@ -109,44 +109,12 @@ class RefArticleController extends Controller
             return back()->with('error', 'Tidak ada artikel pending. Klik Scrape dulu!');
         }
 
-        $batchId = 'ai_bg_' . Str::random(12);
-
-        // Mark all as processing with batch_id
         foreach ($pending as $ref) {
-            $ref->update([
-                'ai_status' => 'processing',
-                'batch_id'  => $batchId,
-            ]);
+            $ref->update(['ai_status' => 'processing', 'batch_id' => null]);
+            GenerateAiArticleJob::dispatch($ref->id);
         }
 
-        // Simpan info batch ke session + temp file
-        $basePath = base_path();
-        $batchFile = storage_path("logs/batch_{$batchId}.json");
-        $batchData = [
-            'batch_id'  => $batchId,
-            'total'     => $pending->count(),
-            'success'   => 0,
-            'failed'    => 0,
-            'errors'    => [],
-            'processed'  => [],
-            'started'   => now()->toDateTimeString(),
-            'status'    => 'running',
-        ];
-        file_put_contents($batchFile, json_encode($batchData, JSON_PRETTY_PRINT));
-
-        session([
-            'ai_batch_id'   => $batchId,
-            'ai_batch_total' => $pending->count(),
-            'ai_batch_done'  => 0,
-        ]);
-
-        // Spawn background process via Windows cmd /c
-        $php = PHP_BINARY;
-        $batchScript = base_path('process_ai_batch.php');
-        $startCmd = "cmd /c \"{$php} \"{$batchScript}\" \"{$batchId}\" {$limit}\"";
-        @proc_close(@proc_open($startCmd, [], $foo));
-
-        return redirect()->route('ref-articles.batch-progress', ['batch_id' => $batchId]);
+        return back()->with('success', "{$pending->count()} artikel masuk queue. Queue worker sedang memproses...");
     }
 
     /**

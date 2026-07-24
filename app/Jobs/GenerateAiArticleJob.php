@@ -249,7 +249,7 @@ PROMPT;
             ['keywords' => ['nvidia', 'gpu', 'processor', 'chip', 'intel', 'amd ryzen', 'snapdragon', 'mediatek', 'ram', 'ssd', 'hdd', 'storage', 'gpu gaming', 'vga', 'cpu'],
                 'label' => 'Hardware', 'category' => 'Teknologi'],
             // Security
-            ['keywords' => ['cybersecurity', 'hack', 'malware', 'virus', 'data breach', 'privacy', 'privasi', 'keamanan data', 'peretas', ' ransomware', 'phishing', 'kebocoran data'],
+            ['keywords' => ['cybersecurity', 'hack', 'malware', 'virus', 'data breach', 'privacy', 'privasi', 'keamanan data', 'peretas', 'ransomware', 'phishing', 'kebocoran data'],
                 'label' => 'Keamanan Siber', 'category' => 'Teknologi'],
             // Ecosystems
             ['keywords' => ['apple', 'iphone', 'mac', 'ipad', 'ios', 'macos', 'apple tv', 'apple watch', 'macbook air', 'macbook pro', 'imac', 'homepod', 'airpods', 'wwdc'],
@@ -258,17 +258,17 @@ PROMPT;
                 'label' => 'Android', 'category' => 'Teknologi'],
             ['keywords' => ['microsoft', 'windows', 'copilot', 'azure', 'office 365', 'bing', 'outlook', 'teams', 'xbox'],
                 'label' => 'Microsoft', 'category' => 'Teknologi'],
-            // EV & Green Tech
-            ['keywords' => ['tesla', 'ev', 'electric vehicle', 'mobil listrik', 'motor listrik', 'e-bike', 'energi terbarukan', 'solar panel', 'hev', 'byd', 'hyundai ev', 'wolf mobil'],
-                'label' => 'Kendaraan Listrik', 'category' => 'Otomotif'],
+            // Farmasi & Kesehatan (tech-focused)
+            ['keywords' => ['farmasi', 'farmasi', 'pharmaceutical', 'drug discovery', 'clinical trial', 'biotech', 'biotechnology', 'obat baru', 'pengembangan obat', 'clinical research', 'regulatory', 'generik obat', 'medicine', 'telemedicine', 'digital health', 'healthtech', 'ehr', 'electronic health record', 'medical device', 'robotics surgery', 'hospital teknologi', 'patient data', 'health data'],
+                'label' => 'Farmasi & Kesehatan', 'category' => 'Teknologi'],
             // Cloud & Data
             ['keywords' => ['cloud', 'server', 'data center', 'database', 'cloud computing', 'aws', 'google cloud', 'microsoft azure', 'oracle', 'ibm cloud', 'web hosting'],
                 'label' => 'Cloud Computing', 'category' => 'Teknologi'],
             // Social Media & Content
-            ['keywords' => ['media sosial', 'instagram', 'tiktok', 'youtube channel', 'x.com', 'twitter', 'facebook meta', 'social media', 'influencer', 'konten kreator', ' reels', 'shorts', 'tiktok shop'],
-                'label' => 'Social Media', 'category' => ' Hiburan'],
+            ['keywords' => ['media sosial', 'instagram', 'tiktok', 'youtube channel', 'x.com', 'twitter', 'facebook meta', 'social media', 'influencer', 'konten kreator', 'reels', 'shorts', 'tiktok shop'],
+                'label' => 'Social Media', 'category' => 'Hiburan'],
             ['keywords' => ['streaming', 'netflix', 'spotify', 'disney+', 'hbomax', 'prime video', 'youtube premium', 'music streaming', 'video on demand'],
-                'label' => 'Streaming', 'category' => ' Hiburan'],
+                'label' => 'Streaming', 'category' => 'Hiburan'],
             // Gaming
             ['keywords' => ['gaming', 'game', 'playstation', 'xbox', 'nintendo', 'steam', 'esport', 'pc gaming', 'console', 'game mobile', 'mobile legend', 'ff', 'free fire', 'genshin', 'roblox'],
                 'label' => 'Gaming', 'category' => 'Gaming'],
@@ -287,12 +287,15 @@ PROMPT;
                 'label' => 'Kecantikan', 'category' => 'Gaya Hidup'],
             ['keywords' => ['kesehatan', 'kesehatan mental', 'mental health', 'diet', 'nutrisi', 'vitamin', 'suplemen', 'workout', 'olahraga', 'yoga', 'meditasi'],
                 'label' => 'Kesehatan', 'category' => 'Kesehatan'],
-            ['keywords' => ['mobil', 'otomotif', 'automotive', 'mobil baru', 'motor', 'toyota', 'honda', 'suzuki', 'daihatsu', 'wuling', 'car', 'sedan', 'suv'],
+            // Otomotif - SPECIFIC brands/models only, no generic words
+            ['keywords' => ['tesla', 'ev', 'electric vehicle', 'mobil listrik', 'motor listrik', 'e-bike', 'energi terbarukan', 'solar panel', 'hev', 'byd', 'hyundai ev', 'wolf mobil', 'toyota', 'honda', 'suzuki', 'daihatsu', 'wuling', 'ferrari', 'lamborghini', 'porsche', 'bmw', 'mercedes', 'audi', 'lexus', 'mazda', 'subaru', 'mitsubishi', 'jeep', 'ford', 'chevrolet', 'volkswagen', 'peugeot', 'renault', 'nissan', 'kia'],
                 'label' => 'Otomotif', 'category' => 'Otomotif'],
+            // Finance
             ['keywords' => ['crypto', 'bitcoin', 'ethereum', 'blockchain', 'nft', 'web3', 'defi', 'cryptocurrency', 'trading crypto'],
                 'label' => 'Crypto', 'category' => 'Keuangan'],
             ['keywords' => ['investor', 'investasi', 'saham', 'trading', 'portofolio', 'reksadana', 'obligasi', 'financial', 'pendanaan'],
                 'label' => 'Investasi', 'category' => 'Keuangan'],
+            // Education
             ['keywords' => ['pendidikan', 'edtech', 'kursus online', 'pelajaran', 'sekolah', 'universitas', 'beasiswa', 'skill', 'pelatihan', 'certification'],
                 'label' => 'Pendidikan', 'category' => 'Pendidikan'],
         ];
@@ -315,7 +318,18 @@ PROMPT;
         $allTags = array_unique(array_merge([$sourceTag], $matchedTags, $aiTags));
         $tags = array_slice(array_values($allTags), 0, 8);
 
-        $categoryPriority = ['Keuangan' => 1, 'Otomotif' => 1, 'Gaya Hidup' => 1, 'Kesehatan' => 1, 'Pendidikan' => 1, 'Hiburan' => 1, 'Gaming' => 1, 'Bisnis' => 2, 'Sains' => 2, 'Teknologi' => 3];
+        $categoryPriority = [
+            'Keuangan'    => 1,
+            'Gaya Hidup'  => 1,
+            'Kesehatan'   => 1,
+            'Pendidikan'  => 1,
+            'Hiburan'     => 1,
+            'Gaming'      => 1,
+            'Bisnis'      => 2,
+            'Sains'       => 2,
+            'Teknologi'   => 3,
+            'Otomotif'    => 4,
+        ];
         $categoryNames = array_keys($matchedCategories);
         usort($categoryNames, function($a, $b) use ($categoryPriority) {
             return ($categoryPriority[$a] ?? 9) <=> ($categoryPriority[$b] ?? 9);

@@ -34,3 +34,12 @@ Schedule::command('app:auto-feed --scrape-only --sources=yahoo,pharma')
     ->timezone('Asia/Jakarta')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/scrape.log'));
+
+// =============================================
+// AI GENERATE: setiap 15 menit (max 3 article)
+// =============================================
+Schedule::command('app:process-pending-ai --limit=3')
+    ->everyFifteenMinutes()
+    ->timezone('Asia/Jakarta')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/ai-generate.log'));
