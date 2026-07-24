@@ -106,7 +106,7 @@ class RefArticleController extends Controller
             return back()->with('error', 'Tidak ada artikel pending. Klik Scrape dulu!');
         }
 
-        $batchId = 'ai_bg_' . Illuminate\Support\Str::random(12);
+        $batchId = 'ai_bg_' . Str::random(12);
 
         // Mark all as processing with batch_id
         foreach ($pending as $ref) {
