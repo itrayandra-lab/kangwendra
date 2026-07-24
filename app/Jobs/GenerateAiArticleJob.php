@@ -348,30 +348,55 @@ PROMPT;
         // --- PUBLISH TIME - staggered Indonesia timezone ---
         $tz = new DateTimeZone('Asia/Jakarta');
 
-        // Count posts already scheduled/published today (WIB)
+        // Cek post APA SAJA yang sudah terjadwal hari ini (published/draft)
         $todayStart = (new DateTime('today', $tz))->format('Y-m-d H:i:s');
         $tomorrowDt = new DateTime('tomorrow', $tz);
         $tomorrowDt->modify('-1 second');
-        $todayEnd   = $tomorrowDt->format('Y-m-d H:i:s');
-        $todaysCount = Posts::whereBetween('published_at', [$todayStart, $todayEnd])->count();
-        $todaysDraftCount = Posts::where('status', 'draft')
-            ->whereBetween('published_at', [$todayStart, $todayEnd])->count();
-        $todaysTotal = $todaysCount + $todaysDraftCount;
+        $todayEnd = $tomorrowDt->format('Y-m-d H:i:s');
 
-        // Slot: 0->8AM, 1->1PM, 2->4PM, 3+->besok 8AM
+        $existingToday = Posts::whereBetween('published_at', [$todayStart, $todayEnd])->get();
+
+        // Cek slot mana yang sudah terpakai hari ini
         $slots = [
             0 => ['hour' => 8,  'label' => 'pagi'],
             1 => ['hour' => 13, 'label' => 'siang'],
             2 => ['hour' => 16, 'label' => 'sore'],
         ];
-        $slotIdx = $todaysTotal % 3;
-        $slot = $slots[$slotIdx];
 
-        $publishTime = new DateTime('today', $tz);
-        if ($todaysTotal > 0) {
-            $publishTime = (new DateTime('tomorrow', $tz));
+        $usedSlots = [];
+        foreach ($existingToday as $post) {
+            $hour = (int) $post->published_at->format('H');
+            foreach ($slots as $idx => $slot) {
+                if ($hour === $slot['hour']) {
+                    $usedSlots[$idx] = true;
+                    break;
+                }
+            }
         }
-        $publishTime->setTime($slot['hour'], 0, 0);
+
+        // Cari slot pertama yang BELUM terpakai
+        $slotIdx = null;
+        foreach ([0, 1, 2] as $idx) {
+            if (!isset($usedSlots[$idx])) {
+                $slotIdx = $idx;
+                break;
+            }
+        }
+
+        // Semua slot penuh hari ini → besok jam 8
+        if ($slotIdx === null) {
+            $slotIdx = 0;
+            $publishTime = new DateTime('tomorrow', $tz);
+            $publishTime->setTime($slots[0]['hour'], 0, 0);
+        } else {
+            // Hitung: jika ada slot terpakai, push besok. Jika belum ada slot sama sekali, hari ini.
+            if (count($usedSlots) > 0) {
+                $publishTime = new DateTime('tomorrow', $tz);
+            } else {
+                $publishTime = new DateTime('today', $tz);
+            }
+            $publishTime->setTime($slots[$slotIdx]['hour'], 0, 0);
+        }
 
         $publishedAt = $publishTime->format('Y-m-d H:i:s');
         $status = 'draft'; // published manually via scheduler
@@ -397,7 +422,7 @@ PROMPT;
                 'ref_source_url'  => $ref->source_url,
                 'ref_title'       => $ref->title,
                 'ai_model'        => config('services.deepseek.model', 'deepseek-v4-pro'),
-                'publish_slot'     => "slot_{$slotIdx}_{$slot['label']}",
+                'publish_slot'     => "slot_{$slotIdx}_{$slots[$slotIdx]['label']}",
             ],
         ]);
     }
