@@ -202,6 +202,8 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::post('/generate-all', 'generateAll')->name('ref-articles.generate-all');
         Route::post('/{refArticle}/generate', 'generateOne')->name('ref-articles.generate');
         Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
+        Route::get('/{refArticle}/edit-post', 'editPost')->name('ref-articles.edit-post');
+        Route::put('/{refArticle}/update-post', 'updatePost')->name('ref-articles.update-post');
         Route::delete('/{refArticle}', 'destroy')->name('ref-articles.destroy');
     });
 

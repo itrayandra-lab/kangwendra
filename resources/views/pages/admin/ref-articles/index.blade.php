@@ -222,7 +222,19 @@
                                         <br>
                                         <small>
                                             <a href="{{ route('posts.edit', $article->generated_post_id) }}" target="_blank" class="text-success">
-                                                📰 Lihat Post
+                                                📝 Edit Post
+                                            </a>
+                                        </small>
+                                        <br>
+                                        <small>
+                                            <a href="{{ route('ref-articles.edit-post', $article) }}" class="text-primary" title="Edit cepat">
+                                                ✏️ Edit Cepat
+                                            </a>
+                                        </small>
+                                        <br>
+                                        <small>
+                                            <a href="{{ route('post_detail', [$article->generatedPost?->category?->slug ?? 'uncategorized', $article->generatedPost?->slug ?? '']) }}" target="_blank" class="text-info">
+                                                👁 Preview
                                             </a>
                                         </small>
                                     @endif

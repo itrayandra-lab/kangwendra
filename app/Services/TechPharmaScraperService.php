@@ -169,6 +169,34 @@ class TechPharmaScraperService
         }
 
         $plainContent = strip_tags($article['content']);
+        $titleLower = strtolower($article['title']);
+
+        // ── NEGATIVE KEYWORDS: block sensi topics ──
+        $negativeKeywords = [
+            // Health sensi / personal
+            'contraception', 'contraceptive', 'birth control', 'abortion', 'pregnancy', 'pregnant',
+            'fertility treatment', 'ivf', 'in vitro', 'miscarriage', 'postpartum',
+            'vaccine', 'vaccination', 'vaksin', 'booster shot',
+            'weight loss', 'diet plan', 'diet pill', 'obesity surgery',
+            'mental health', 'depression', 'anxiety disorder', 'therapy session', 'antidepressant',
+            'skin care', 'skincare', 'beauty product', 'cosmetic surgery', 'botox',
+            'sexual health', 'std test', 'sti diagnosis',
+            // Non-tech / lifestyle
+            'home garden', 'landscape design', 'backyard', 'outdoor living',
+            'ncaaf', 'ncaab', 'nba draft', 'playoff', 'fantasy football', 'fantasy baseball',
+            'climate change', 'global warming', 'carbon emission',
+            'personal finance', 'stock market', 'crypto trading', 'forex',
+            'recipe', 'cooking', 'meal prep', 'restaurant review',
+            'travel guide', 'hotel review', 'vacation',
+            'political', 'election', 'government policy', 'law passed',
+        ];
+
+        foreach ($negativeKeywords as $neg) {
+            if (stripos($titleLower, $neg) !== false || stripos($plainContent, $neg) !== false) {
+                Log::debug("TechPharmaScraper: skip - negative keyword '{$neg}'");
+                return false;
+            }
+        }
 
         if (strlen($plainContent) < 100) return false;
 

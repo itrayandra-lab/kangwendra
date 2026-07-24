@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\GenerateAiArticleJob;
+use App\Models\Posts;
 use App\Models\RefArticle;
+use App\Models\PostCategory;
+use App\Models\PostTags;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -248,5 +251,93 @@ class RefArticleController extends Controller
     {
         $page = 'Detail Referensi';
         return view('pages.admin.ref-articles.show', compact('page', 'refArticle'));
+    }
+
+    // ── EDIT POST (from generated post) ──────────────────
+
+    public function editPost(RefArticle $refArticle)
+    {
+        if (!$refArticle->generated_post_id) {
+            return back()->with('error', 'Artikel ini belum memiliki post yang di-generate.');
+        }
+
+        $post = Posts::with('category')->find($refArticle->generated_post_id);
+        if (!$post) {
+            return back()->with('error', 'Post tidak ditemukan.');
+        }
+
+        $categories = PostCategory::orderBy('name')->get();
+        $allTags = PostTags::orderBy('name')->get();
+        $page = 'Edit Post: ' . Str::limit($post->title, 40);
+
+        return view('pages.admin.ref-articles.edit-post', compact(
+            'page', 'refArticle', 'post', 'categories', 'allTags'
+        ));
+    }
+
+    public function updatePost(Request $request, RefArticle $refArticle)
+    {
+        if (!$refArticle->generated_post_id) {
+            return back()->with('error', 'Post tidak ditemukan.');
+        }
+
+        $post = Posts::find($refArticle->generated_post_id);
+        if (!$post) {
+            return back()->with('error', 'Post tidak ditemukan.');
+        }
+
+        $validated = $request->validate([
+            'title'        => 'required|string|max:255',
+            'content'     => 'required|string',
+            'category_id' => 'required|integer|exists:post_categories,id',
+            'tags'        => 'nullable|array',
+            'tags.*'      => 'string|max:50',
+            'status'      => 'required|in:active,draft',
+            'published_at' => 'required|date',
+            'slug'        => 'nullable|string|max:255',
+        ]);
+
+        // Update tags - create new ones if needed
+        if (!empty($validated['tags'])) {
+            foreach ($validated['tags'] as $tagName) {
+                $tagName = trim($tagName);
+                if ($tagName) {
+                    PostTags::firstOrCreate(
+                        ['slug' => Str::slug($tagName)],
+                        ['name' => $tagName]
+                    );
+                }
+            }
+        }
+
+        // Handle slug uniqueness
+        $slug = $validated['slug'] ?? Str::slug($validated['title']);
+        if ($slug !== $post->slug) {
+            $base = $slug;
+            $i = 1;
+            while (Posts::where('slug', $slug)->where('id', '!=', $post->id)->exists()) {
+                $slug = $base . '-' . $i++;
+            }
+        }
+
+        $post->update([
+            'title'        => $validated['title'],
+            'content'      => $validated['content'],
+            'category_id'  => $validated['category_id'],
+            'tags'         => $validated['tags'] ?? [],
+            'status'       => $validated['status'],
+            'published_at'  => $validated['published_at'],
+            'slug'         => $slug,
+            'updated_by'   => auth()->id(),
+        ]);
+
+        // Update meta_data
+        $meta = is_array($post->meta_data) ? $post->meta_data : (@json_decode($post->meta_data, true) ?: []);
+        $meta['edited_at'] = now()->toDateTimeString();
+        $meta['edited_by'] = auth()->id();
+        $post->update(['meta_data' => $meta]);
+
+        return redirect()->route('ref-articles.index')
+            ->with('success', 'Post berhasil diupdate: ' . Str::limit($post->title, 50));
     }
 }
