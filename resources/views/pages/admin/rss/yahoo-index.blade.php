@@ -22,20 +22,15 @@
                     @endif
                     
                     <div class="panel-action mb-4">
-                        <form action="{{ route('rss.fetch-yahoo') }}" method="POST" class="form-inline">
-                            @csrf
-                            <div class="form-group mr-2">
-                                <label for="date" class="mr-2">Tanggal (opsional):</label>
-                                <input type="date" name="date" id="date" class="form-control">
-                            </div>
-                            <button type="submit" class="btn btn-success btn-sm">
-                                <i class="fa fa-refresh"></i> Ambil RSS Yahoo AI Sekarang
-                            </button>
-                        </form>
+                        <div class="alert alert-warning">
+                            <strong>DINONAKTIFKAN:</strong> Tombol RSS langsung save ke Posts tanpa AI paraphrase (copyright risk).
+                            Gunakan <code>app:auto-feed --scrape-only</code> sebagai gantinya.
+                        </div>
                     </div>
                     <hr>
                     <div class="alert alert-info mb-4">
-                        <strong>Info:</strong> RSS Yahoo AI akan diambil dari Yahoo News dan Yahoo Tech.
+                        <strong>Info:</strong> RSS Yahoo AI <strong>DINONAKTIFKAN</strong>. Pipeline otomatis menggunakan
+                        <code>app:auto-feed --scrape-only</code> (scrape → RefArticle → AI paraphrase → Post).
                     </div>
 
                     <!-- Livewire Component for Yahoo News Table -->

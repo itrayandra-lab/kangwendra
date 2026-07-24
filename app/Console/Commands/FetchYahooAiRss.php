@@ -27,28 +27,9 @@ class FetchYahooAiRss extends Command
      */
     public function handle()
     {
-        $this->info('Starting to fetch Yahoo News RSS (Technology & AI)...');
-
-        try {
-            $newsService = new NewsService();
-            $dateFilter = $this->option('date');
-
-            $newsItems = $newsService->fetchFromYahooAiRss($dateFilter);
-
-            $count = $newsService->saveNewsToDatabase($newsItems);
-
-            foreach ($newsItems as $item) {
-                $this->info("Fetched: {$item['title']}");
-            }
-
-            $this->info("Successfully fetched and saved {$count} articles!");
-            Log::info("Successfully fetched {$count} technology/AI articles from Yahoo News RSS");
-            return 0;
-
-        } catch (\Exception $e) {
-            $this->error('Error: ' . $e->getMessage());
-            Log::error('Error fetching Yahoo AI RSS', ['exception' => $e]);
-            return 1;
-        }
+        $this->error('PERINGATAN: Command ini DINONAKTIFKAN. RSS langsung save ke Posts tanpa AI paraphrase = copyright risk tinggi.');
+        $this->error('Gunakan app:auto-feed --scrape-only sebagai gantinya (via RefArticle pipeline).');
+        $this->info('Command ini DISABLED permanen. Hubungi admin jika perlu di-enable kembali.');
+        return 1;
     }
 }

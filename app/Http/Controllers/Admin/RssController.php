@@ -16,16 +16,6 @@ class RssController extends Controller
 
     public function fetchYahoo(Request $request)
     {
-        try {
-            $newsService = new NewsService();
-            $date = $request->input('date');
-
-            $newsItems = $newsService->fetchFromYahooAiRss($date);
-            $count = $newsService->saveNewsToDatabase($newsItems);
-
-            return back()->with('success', "RSS berhasil diambil! {$count} artikel disimpan dari berbagai sumber.");
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengambil RSS: ' . $e->getMessage());
-        }
+        return back()->with('error', 'PERINGATAN: RSS fetch DINONAKTIFKAN permanen. Command ini save langsung ke Posts tanpa AI paraphrase (copyright risk). Hubungi developer jika perlu di-enable kembali.');
     }
 }

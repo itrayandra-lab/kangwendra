@@ -40,7 +40,7 @@ class AutoFeed extends Command
 
         $sources = $sourcesOpt === 'all' ? ['yahoo', 'ynews', 'pharma'] : explode(',', $sourcesOpt);
 
-        if (!$scrapeOnly && !$aiOnly) {
+        if ($rssOnly) {
             $this->stepRss();
         }
 
