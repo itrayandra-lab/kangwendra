@@ -286,7 +286,43 @@
                         </tbody>
                     </table>
                 </div>
-                {{ $articles->links() }}
+
+                {{-- Pagination with page numbers --}}
+                @if($articles->lastPage() > 1)
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px;">
+                    <span style="font-size: 13px; color: #888;">
+                        Halaman {{ $articles->currentPage() }} dari {{ $articles->lastPage() }}
+                        &nbsp;|&nbsp;
+                        Total {{ $articles->total() }} artikel
+                    </span>
+                    <div style="display: flex; gap: 4px; align-items: center;">
+                        @if($articles->currentPage() > 1)
+                            <a href="{{ $articles->url(1) }}" class="btn btn-default btn-xs">&laquo;</a>
+                            <a href="{{ $articles->previousPageUrl() }}" class="btn btn-default btn-xs">&lsaquo;</a>
+                        @endif
+
+                        @php
+                            $start = max(1, $articles->currentPage() - 2);
+                            $end = min($articles->lastPage(), $articles->currentPage() + 2);
+                            if ($end - $start < 4) {
+                                if ($start == 1) { $end = min($articles->lastPage(), 5); }
+                                if ($end == $articles->lastPage()) { $start = max(1, $end - 4); }
+                            }
+                        @endphp
+                        @for($i = $start; $i <= $end; $i++)
+                            <a href="{{ $articles->url($i) }}"
+                                class="btn btn-xs {{ $i == $articles->currentPage() ? 'btn-primary' : 'btn-default' }}">
+                                {{ $i }}
+                            </a>
+                        @endfor
+
+                        @if($articles->currentPage() < $articles->lastPage())
+                            <a href="{{ $articles->nextPageUrl() }}" class="btn btn-default btn-xs">&rsaquo;</a>
+                            <a href="{{ $articles->url($articles->lastPage()) }}" class="btn btn-default btn-xs">&raquo;</a>
+                        @endif
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
 
