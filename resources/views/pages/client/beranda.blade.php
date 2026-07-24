@@ -92,171 +92,61 @@
 
 @section('content')
 
-@if(isset($banner_1) && $banner_1->count() > 0)
-<section class="hero-banner-slider">
-    <div class="swiper hero-banner-swiper">
-        <div class="swiper-wrapper">
-            @foreach($banner_1 as $banner)
-                <div class="swiper-slide">
-                    <div class="banner-item">
-                        @if($banner->image)
-                            <a href="{{ $banner->link ?? '#' }}" class="banner-link">
-                                <img src="{{ getFile($banner->image) }}" alt="{{ $banner->title ?? 'Banner' }}" class="banner-image">
-                                @if($banner->title || $banner->description)
-                                    <div class="banner-content">
-                                        <div class="banner-content-inner">
-                                            @if($banner->title)
-                                                <h2 class="banner-title">{{ $banner->title }}</h2>
-                                            @endif
-                                            @if($banner->description)
-                                                <p class="banner-description">{!!  Str::limit(strip_tags($banner->description), 150)  !!}</p>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-                            </a>
-                        @endif
+{{-- ===== HERO BANNER dari Berita ===== --}}
+@php
+    $heroPosts = $featuredPosts->take(4);
+    $heroMain  = $heroPosts->first();
+    $heroSubs  = $heroPosts->skip(1)->values();
+@endphp
+
+@if($heroMain)
+<section class="homepage-hero">
+    <div class="container">
+        <div class="hero-grid">
+
+            {{-- Artikel Utama (besar, kiri) --}}
+            <div class="hero-main">
+                <a href="{{ route('post_detail', [$heroMain->category?->slug ?? 'uncategorized', $heroMain->slug]) }}" class="hero-main-link">
+                    <div class="hero-main-img">
+                        <img src="{{ $heroMain->image ? getFile($heroMain->image) : asset('assets/default.jpg') }}" alt="{{ $heroMain->title }}">
+                        <div class="hero-main-overlay">
+                            <div class="hero-main-content">
+                                <span class="hero-category">{{ $heroMain->category?->name ?? 'Uncategorized' }}</span>
+                                <h2 class="hero-title">{{ Str::limit($heroMain->title, 90) }}</h2>
+                                <div class="hero-meta">
+                                    <span>{{ $heroMain->createdBy?->name ?? 'Admin' }}</span>
+                                    <span class="hero-meta-sep">·</span>
+                                    <span>{{ $heroMain->published_at ? $heroMain->published_at->diffForHumans() : $heroMain->created_at->diffForHumans() }}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            @endforeach
+                </a>
+            </div>
+
+            {{-- Artikel Sub (kecil, kanan) --}}
+            @if($heroSubs->count() > 0)
+            <div class="hero-sub-grid">
+                @foreach($heroSubs->take(3) as $sub)
+                <a href="{{ route('post_detail', [$sub->category?->slug ?? 'uncategorized', $sub->slug]) }}" class="hero-sub-item">
+                    <div class="hero-sub-img">
+                        <img src="{{ $sub->image ? getFile($sub->image) : asset('assets/default.jpg') }}" alt="{{ $sub->title }}">
+                        <div class="hero-sub-overlay">
+                            <span class="hero-category">{{ $sub->category?->name ?? 'Uncategorized' }}</span>
+                            <h3 class="hero-sub-title">{{ Str::limit($sub->title, 60) }}</h3>
+                            <span class="hero-sub-date">{{ $sub->published_at ? $sub->published_at->diffForHumans() : $sub->created_at->diffForHumans() }}</span>
+                        </div>
+                    </div>
+                </a>
+                @endforeach
+            </div>
+            @endif
+
         </div>
-        <div class="swiper-pagination"></div>
-        <div class="swiper-button-next"></div>
-        <div class="swiper-button-prev"></div>
     </div>
 </section>
 @endif
-
-<div class="featured-post-grid">
-    <div class="container">
-        <div class="post-layout-2">
-            @foreach ($featuredPosts->take(3) as $index => $post)
-                <article class="post-layout-item img-hover-move">
-                    <a href="{{ route('post_detail', [$post?->category?->slug, $post->slug]) }}" class="post-thumb media">
-                        <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
-                    </a>
-                    <div class="post-content">
-                        <ul class="post-meta">
-                            <li class="reading-time">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
-                                    <path d="m618.924-298.924 42.152-42.152-151.077-151.087V-680h-59.998v212.154l168.923 168.922ZM480.067-100.001q-78.836 0-148.204-29.92-69.369-29.92-120.682-81.21-51.314-51.291-81.247-120.629-29.933-69.337-29.933-148.173t29.92-148.204q29.92-69.369 81.21-120.682 51.291-51.314 120.629-81.247 69.337-29.933 148.173-29.933t148.204 29.92q69.369 29.92 120.682 81.21 51.314 51.291 81.247 120.629 29.933 69.337 29.933 148.173t-29.92 148.204q-29.92 69.369-81.21 120.682-51.291 51.314-120.629 81.247-69.337 29.933-148.173 29.933ZM480-480Zm0 320q133 0 226.5-93.5T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160Z"></path>
-                                </svg>
-                                <span class="post-meta-text">{{ $post->published_at ? $post->published_at->diffForHumans() : $post->created_at->diffForHumans() }}</span>
-                            </li>
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
-                                    <path d="M488.768-117.847Q470.922-100.001 446-100.001t-42.768-17.846l-286-286q-17.231-17.231-17.038-42.653.192-25.422 17.807-43.037l352-352.616q8.317-8.179 19.658-13.012 11.341-4.834 23.726-4.834h286q24.537 0 42.268 17.731 17.73 17.73 17.73 42.268v286q0 12.826-4.961 24.143-4.962 11.318-13.654 20.01l-352 352Zm210.571-532.154q20.815 0 35.43-14.57 14.615-14.57 14.615-35.384t-14.57-35.429q-14.57-14.615-35.384-14.615t-35.429 14.57q-14.616 14.57-14.616 35.384t14.57 35.429q14.57 14.615 35.384 14.615ZM446.172-160l353.213-354v-286H513.212L160-446l286.172 286Zm353.213-640Z"></path>
-                                </svg>
-                                <a href="{{ route('category', $post->category?->slug ?? 'uncategorized') }}" class="post-meta-text">{{ $post->category?->name ?? 'Uncategorized' }}</a>
-                            </li>
-                        </ul>
-                        <h3>
-                            <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 60) }}</a>
-                        </h3>
-                        @if(is_array($post->tags) && count($post->tags))
-                            <div class="article-tags">
-                                @foreach(array_slice($post->tags, 0, 3) as $tag)
-                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
-                                @endforeach
-                            </div>
-                        @endif
-                        @if($index == 2 && $post->content)
-                            <p>{{ Str::limit(strip_tags($post->content), 150) }}</p>
-                        @endif
-                        <ul class="author-info">
-                            <li>
-                                <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">
-                                    @if($post->createdBy?->image)
-                                        <img src="{{ getFile($post->createdBy?->image) }}" alt="{{ $post->createdBy?->name ?? 'Unknown' }}">
-                                    @endif
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a>
-                                <a href="#">{{ $post->published_at?->format('d.m.Y') }}</a>
-                            </li>
-                            @if($index == 2)
-                                <li class="share-icon">
-                                    <div class="share">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
-                                            <path d="M720.045-90q-45.814 0-77.929-32.084-32.115-32.083-32.115-77.916 0-7.49 1.192-15.514 1.192-8.025 3.577-14.794L318.923-403.539q-15.846 15.769-36.077 24.654-20.231 8.884-42.846 8.884-45.833 0-77.916-32.07t-32.083-77.884q0-45.814 32.083-77.929T240-589.999q22.615 0 42.846 8.884 20.231 8.885 36.077 24.654L614.77-729.692q-2.385-6.769-3.577-14.794-1.192-8.024-1.192-15.514 0-45.833 32.07-77.916t77.884-32.083q45.814 0 77.929 32.07t32.115 77.884q0 45.814-32.083 77.929T720-650.001q-22.615 0-42.846-8.884-20.231-8.885-36.077-24.654L345.23-510.308q2.385 6.769 3.577 14.767 1.192 7.997 1.192 15.461 0 7.465-1.192 15.542t-3.577 14.846l295.847 173.231q15.846-15.769 36.077-24.654 20.231-8.884 42.846-8.884 45.833 0 77.916 32.07t32.083 77.884q0 45.814-32.07 77.929t-77.884 32.115ZM720-710q20.846 0 35.424-14.577 14.577-14.578 14.577-35.424t-14.577-35.424Q740.846-810.001 720-810.001t-35.424 14.577Q669.999-780.846 669.999-760t14.577 35.424q14.578 14.577 35.424 14.577Zm-480 280q20.846 0 35.424-14.577 14.577-14.578 14.577-35.424t-14.577-35.424Q260.846-530.001 240-530.001t-35.424 14.577Q189.999-500.846 189.999-480t14.577 35.424q14.578 14.577 35.424 14.577Zm480 280q20.846 0 35.424-14.577 14.577-14.578 14.577-35.424t-14.577-35.424Q740.846-250.001 720-250.001t-35.424 14.577Q669.999-220.846 669.999-200t14.577 35.424q14.578 14.577 35.424 14.577ZM720-760ZM240-480Zm480 280Z"></path>
-                                        </svg>
-                                        <ul class="social-share">
-                                            <li>
-                                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug])) }}" target="_blank">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor">
-                                                        <path d="M80 299.3V512H196V299.3h86.5l18-97.8H196V166.9c0-51.7 20.3-71.5 72.7-71.5c16.3 0 29.4 .4 37 1.2V7.9C291.4 4 256.4 0 236.2 0C129.3 0 80 50.5 80 159.4v42.1H14v97.8H80z"></path>
-                                                    </svg>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="https://twitter.com/intent/tweet?url={{ urlencode(route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug])) }}&text={{ urlencode($post->title) }}" target="_blank">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
-                                                        <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
-                                                    </svg>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="https://pinterest.com/pin/create/button/?url={{ urlencode(route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug])) }}&description={{ urlencode($post->title) }}" target="_blank">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" fill="currentColor">
-                                                        <path d="M496 256c0 137-111 248-248 248-25.6 0-50.2-3.9-73.4-11.1 10.1-16.5 25.2-43.5 30.8-65 3-11.6 15.4-59 15.4-59 8.1 15.4 31.7 28.5 56.8 28.5 74.8 0 128.7-68.8 128.7-154.3 0-81.9-66.9-143.2-152.9-143.2-107 0-163.9 71.8-163.9 150.1 0 36.4 19.4 81.7 50.3 96.1 4.7 2.2 7.2 1.2 8.3-3.3 .8-3.4 5-20.3 6.9-28.1 .6-2.5 .3-4.7-1.7-7.1-10.1-12.5-18.3-35.3-18.3-56.6 0-54.7 41.4-107.6 112-107.6 60.9 0 103.6 41.5 103.6 100.9 0 67.1-33.9 113.6-78 113.6-24.3 0-42.6-20.1-36.7-44.8 7-29.5 20.5-61.3 20.5-82.6 0-19-10.2-34.9-31.4-34.9-24.9 0-44.9 25.7-44.9 60.2 0 22 7.4 36.8 7.4 36.8s-24.5 103.8-29 123.2c-5 21.4-3 51.6-.9 71.2C65.4 450.9 0 361.1 0 256 0 119 111 8 248 8s248 111 248 248z"></path>
-                                                    </svg>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug])) }}" target="_blank">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor">
-                                                        <path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"></path>
-                                                    </svg>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                        <!--/.social-share-->
-                                    </div>
-                                </li>
-                            @endif
-                        </ul>
-                    </div>
-                </article>
-            @endforeach
-
-            {{-- Static Vertical List dengan $randomNews --}}
-            <div class="post-layout-item">
-                <div class="vertical-post-list">
-                    @foreach ($randomNews as $post)
-                        <article class="horizontal-post-card img-hover-move">
-                            <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="post-thumb media">
-                                <img src="{{ $post->image ? getFile($post->image) : asset('assets/default.jpg') }}" alt="{{ $post->title }}">
-                            </a>
-                            <div class="post-content">
-                                <ul class="post-meta">
-                                    <li>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
-                                            <path d="M488.768-117.847Q470.922-100.001 446-100.001t-42.768-17.846l-286-286q-17.231-17.231-17.038-42.653.192-25.422 17.807-43.037l352-352.616q8.317-8.179 19.658-13.012 11.341-4.834 23.726-4.834h286q24.537 0 42.268 17.731 17.73 17.73 17.73 42.268v286q0 12.826-4.961 24.143-4.962 11.318-13.654 20.01l-352 352Zm210.571-532.154q20.815 0 35.43-14.57 14.615-14.57 14.615-35.384t-14.57-35.429q-14.57-14.615-35.384-14.615t-35.429 14.57q-14.616 14.57-14.616 35.384t14.57 35.429q14.57 14.615 35.384 14.615ZM446.172-160l353.213-354v-286H513.212L160-446l286.172 286Zm353.213-640Z"></path>
-                                        </svg>
-                                        <a href="{{ route('category', $post->category?->slug ?? 'uncategorized') }}" class="post-meta-text">{{ $post->category?->name ?? 'Uncategorized' }}</a>
-                                    </li>
-                                </ul>
-                                <h3>
-                                    <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 50) }}</a>
-                                </h3>
-                                <ul class="author-info">
-                                    <li>
-                                        <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a>
-                                        <a href="#">{{ $post->published_at?->format('d.m.Y') }}</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </article>
-                    @endforeach
-                </div>
-            </div>
-            <!--/.vartical-post-carousel-->
-        </div>
-    </div>
-</div>
-
-<section class="main-post-area padding">
+<section class="main-post-area" style="padding: 40px 0 100px;">
     <div class="container">
         <div class="row gy-5 gy-lg-0 main-area">
             <div class="col-lg-8">
@@ -265,10 +155,11 @@
                     <div class="section-heading mb-4">
                         <h3>
                             <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
+                                <path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Zm-40 200h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Z"/>
                             </svg>
-                            <span>Artikel Terbaru</span>
+                            <span>Berita Pilihan Hari Ini</span>
                         </h3>
+                        <p class="section-subtitle">Update terkini seputar teknologi, bisnis, dan lifestyle</p>
                     </div>
                     
                     <div class="row gy-4">
@@ -334,15 +225,16 @@
                     </div>
                 </div>
                 @if ($hikmahPosts->count() !== 0)
-                    <div class="main-post-wrap">
+                    <div class="main-post-wrap" style="margin-top: 50px;">
                         {{-- Section Header --}}
                         <div class="section-heading mb-4">
                             <h3>
                                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
+                                    <path d="m233-80 65-281L80-550l288-25 112-265 112 265 288 25-218 189 65 281-247-149L233-80Zm247-350Zm0 0Z"/>
                                 </svg>
-                                <span>Hikmah</span>
+                                <span>Hikmah & Inspirasi</span>
                             </h3>
+                            <p class="section-subtitle">Renungan dan pembelajaran untuk kehidupan</p>
                         </div>
                         <div class="row gy-4">
                             @foreach($hikmahPosts->take(10) as $index => $article)
@@ -408,15 +300,16 @@
                     </div>
                 @endif
                 @if ($amazingPosts->count() !== 0)
-                    <div class="main-post-wrap">
+                    <div class="main-post-wrap" style="margin-top: 50px;">
                         {{-- Section Header --}}
                         <div class="section-heading mb-4">
                             <h3>
                                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
+                                    <path d="M440-240h80v-120h120v-80H520v-120h-80v120H320v80h120v120ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h168q13-36 43.5-58t68.5-22q38 0 68.5 22t43.5 58h168q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm280-590q13 0 21.5-8.5T510-820q0-13-8.5-21.5T480-850q-13 0-21.5 8.5T450-820q0 13 8.5 21.5T480-790ZM200-200v-560 560Z"/>
                                 </svg>
                                 <span>AmAzing</span>
                             </h3>
+                            <p class="section-subtitle">Kisah-kisah menakjubkan yang menginspirasi</p>
                         </div>
                         
                         <div class="row gy-4">
@@ -483,15 +376,16 @@
                     </div>
                 @endif
                 @if ($marketingPosts->count() !== 0)
-                    <div class="main-post-wrap">
+                    <div class="main-post-wrap" style="margin-top: 50px;">
                         {{-- Section Header --}}
                         <div class="section-heading mb-4">
                             <h3>
                                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
+                                    <path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H160v400Zm140-40h360v-80H300v80Zm0-120h360v-80H300v80ZM180-680h60v-60h-60v60Zm140 0h60v-60h-60v60Zm140 0h60v-60h-60v60Z"/>
                                 </svg>
-                                <span>Marketing</span>
+                                <span>Marketing & Bisnis</span>
                             </h3>
+                            <p class="section-subtitle">Strategi dan tips mengembangkan bisnis Anda</p>
                         </div>
                         
                         <div class="row gy-4">
@@ -558,15 +452,16 @@
                     </div>
                 @endif
                 @if ($brandingPosts->count() !== 0)
-                    <div class="main-post-wrap">
+                    <div class="main-post-wrap" style="margin-top: 50px;">
                         {{-- Section Header --}}
                         <div class="section-heading mb-4">
                             <h3>
                                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
+                                    <path d="M120-120v-80l80-80v160h-80Zm160 0v-240l80-80v320h-80Zm160 0v-320l80 81v239h-80Zm160 0v-239l80-80v319h-80Zm160 0v-400l80-80v480h-80ZM120-327v-113l280-280 160 160 280-280v113L560-447 400-607 120-327Z"/>
                                 </svg>
-                                <span>Branding</span>
+                                <span>Branding & Kreativitas</span>
                             </h3>
+                            <p class="section-subtitle">Membangun identitas brand yang kuat dan berkesan</p>
                         </div>
                         
                         <div class="row gy-4">
