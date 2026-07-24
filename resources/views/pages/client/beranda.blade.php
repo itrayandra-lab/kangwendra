@@ -1,4 +1,4 @@
-@extends('layouts.client.app')
+﻿@extends('layouts.client.app')
 
 @push('structured-data')
 <script type="application/ld+json">
@@ -220,9 +220,9 @@
                 </article>
             @endforeach
 
-    {{-- Vertical List dengan $randomNews --}}
-            <div class="post-layout-item vertical-post-list">
-                <div class="vertical-list-wrapper">
+            {{-- Static Vertical List dengan $randomNews --}}
+            <div class="post-layout-item">
+                <div class="vertical-post-list">
                     @foreach ($randomNews as $post)
                         <article class="horizontal-post-card img-hover-move">
                             <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="post-thumb media">
@@ -240,13 +240,6 @@
                                 <h3>
                                     <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}" class="text-hover">{{ Str::limit($post->title, 50) }}</a>
                                 </h3>
-                                @if(is_array($post->tags) && count($post->tags))
-                                    <div class="article-tags">
-                                @foreach(array_slice($post->tags, 0, 2) as $tag)
-                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
-                                @endforeach
-                                    </div>
-                                @endif
                                 <ul class="author-info">
                                     <li>
                                         <a href="{{ route('author', $post->createdBy?->slug ?? '#') }}">{{ $post->createdBy?->name ?? 'Unknown' }}</a>
@@ -258,7 +251,7 @@
                     @endforeach
                 </div>
             </div>
-            <!--/.vertical-post-list-->
+            <!--/.vartical-post-carousel-->
         </div>
     </div>
 </div>
@@ -288,12 +281,6 @@
                                                 <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
                                             </a>
                                         </div>
-                                    @else
-                                        <div class="post-thumb media">
-                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                <img src="{{ asset('assets/default.jpg') }}" alt="{{ $article->title }}">
-                                            </a>
-                                        </div>
                                     @endif
                                     <div class="post-content">
                                         <ul class="post-meta">
@@ -308,13 +295,6 @@
                                         <h3>
                                             <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
                                         </h3>
-                                        @if(is_array($article->tags) && count($article->tags))
-                                            <div class="article-tags">
-                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
-                                                @endforeach
-                                            </div>
-                                        @endif
                                         @if($article->content)
                                             <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                         @endif
@@ -385,17 +365,10 @@
                                                     <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
-                                        <h3>
-                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                        </h3>
-                                        @if(is_array($article->tags) && count($article->tags))
-                                            <div class="article-tags">
-                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                        @if($article->content)
+                                            <h3>
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                            </h3>
+                                            @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
@@ -467,17 +440,10 @@
                                                     <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
-                                        <h3>
-                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                        </h3>
-                                        @if(is_array($article->tags) && count($article->tags))
-                                            <div class="article-tags">
-                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                        @if($article->content)
+                                            <h3>
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                            </h3>
+                                            @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
@@ -549,17 +515,10 @@
                                                     <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
-                                        <h3>
-                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                        </h3>
-                                        @if(is_array($article->tags) && count($article->tags))
-                                            <div class="article-tags">
-                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                        @if($article->content)
+                                            <h3>
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                            </h3>
+                                            @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
@@ -631,17 +590,10 @@
                                                     <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
                                                 </li>
                                             </ul>
-                                        <h3>
-                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                        </h3>
-                                        @if(is_array($article->tags) && count($article->tags))
-                                            <div class="article-tags">
-                                                @foreach(array_slice($article->tags, 0, 3) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                        @if($article->content)
+                                            <h3>
+                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
+                                            </h3>
+                                            @if($article->content)
                                                 <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
                                             @endif
                                             <ul class="post-card-footer">
@@ -785,7 +737,7 @@
                         </div>
                     </div>
 
-                    <!--Sidebar Category-->
+                    <!--Sidebar Information-->
                     @if ($information && $information->total() > 0)
                         <div class="sidebar-widget widget">
                             <div class="widget-heading">
@@ -1091,6 +1043,66 @@
     .section-heading h3 svg {
         color: #007bff;
     }
+
+    .post-layout-2 {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .post-layout-item {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .post-layout-item:first-child {
+        flex: 1.5;
+    }
+
+    .post-layout-item:nth-child(2) {
+        flex: 1;
+    }
+
+    .post-layout-item:nth-child(3) {
+        flex: 1;
+    }
+
+    .vartical-post-carousel {
+        overflow: hidden;
+    }
+
+    .vertical-post-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .vertical-post-list .post-layout-item {
+        min-width: 0;
+        flex: unset;
+    }
+
+    .information-post .widget-post-content {
+        padding: 12px 0;
+    }
+
+    .information-post .widget-post-content h3 {
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    @media (max-width: 768px) {
+        .post-layout-2 {
+            flex-direction: column;
+        }
+        .post-layout-item,
+        .post-layout-item:first-child,
+        .post-layout-item:nth-child(2),
+        .post-layout-item:nth-child(3) {
+            flex: unset;
+            min-width: 0;
+        }
+    }
 </style>
 @endpush
 
@@ -1117,7 +1129,8 @@
             crossFade: true
         },
     });
-</script>
+
+    </script>
 @endpush
 
 
