@@ -134,13 +134,6 @@
                     </li>
                 @endif
 
-                <!-- Menu RSS Yahoo AI -->
-                <li>
-                    <a href="{{ route('rss.yahoo.index') }}" class="waves-effect {{ isActive($page, 'RSS Yahoo AI') }}">
-                        <i class="fa fa-yahoo"></i><span>RSS Yahoo AI</span>
-                    </a>
-                </li>
-
                 <!-- Menu Artikel Referensi & AI -->
                 <li>
                     <a href="{{ route('ref-articles.index') }}" class="waves-effect {{ isActive($page, 'Artikel Referensi') }}">

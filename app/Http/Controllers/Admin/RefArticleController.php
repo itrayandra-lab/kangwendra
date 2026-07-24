@@ -303,6 +303,7 @@ class RefArticleController extends Controller
             'slug'         => 'nullable|string|max:255',
         ]);
 
+        // Create new tags in DB
         foreach ($tags as $tagName) {
             if ($tagName) {
                 PostTags::firstOrCreate(

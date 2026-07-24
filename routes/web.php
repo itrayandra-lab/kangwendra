@@ -184,12 +184,6 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::delete('/{id}', 'destroy')->name('domain-share.destroy')->middleware('permission:delete domain-share');
     });
 
-    # Menu RSS Yahoo AI
-    Route::group(['prefix' => 'rss-yahoo', 'controller' => RssController::class], function () {
-        Route::get('/', 'yahooIndex')->name('rss.yahoo.index');
-        Route::post('/fetch', 'fetchYahoo')->name('rss.fetch-yahoo');
-    });
-
     # Artikel Referensi (scrape + AI generate)
     Route::group(['prefix' => 'ref-articles', 'controller' => RefArticleController::class], function () {
         Route::get('/', 'index')->name('ref-articles.index');
