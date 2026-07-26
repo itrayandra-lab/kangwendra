@@ -298,6 +298,54 @@ class RefArticleController extends Controller
         return view('pages.admin.ref-articles.show', compact('page', 'refArticle'));
     }
 
+    /**
+     * Generate/paraphrase article from a RefArticle (for pending status)
+     */
+    public function generate(RefArticle $refArticle)
+    {
+        if (!$refArticle->source_url) {
+            return back()->with('error', 'Source URL tidak tersedia.');
+        }
+
+        $refArticle->update(['ai_status' => 'pending']);
+
+        ScrapeParaphraseJob::dispatch(
+            $refArticle->source_url,
+            $refArticle->source_domain ?? parse_url($refArticle->source_url, PHP_URL_HOST),
+            $refArticle->source_keyword ?? 'general',
+            $refArticle->batch_id ?? Str::uuid()->toString(),
+            $refArticle->ai_confidence ?? 50,
+            null,
+            $refArticle->id
+        );
+
+        return back()->with('success', 'Generate job dispatched.');
+    }
+
+    /**
+     * Retry generate after failed status
+     */
+    public function retry(RefArticle $refArticle)
+    {
+        if (!$refArticle->source_url) {
+            return back()->with('error', 'Source URL tidak tersedia.');
+        }
+
+        $refArticle->update(['ai_status' => 'pending', 'ai_error' => null]);
+
+        ScrapeParaphraseJob::dispatch(
+            $refArticle->source_url,
+            $refArticle->source_domain ?? parse_url($refArticle->source_url, PHP_URL_HOST),
+            $refArticle->source_keyword ?? 'general',
+            $refArticle->batch_id ?? Str::uuid()->toString(),
+            $refArticle->ai_confidence ?? 50,
+            null,
+            $refArticle->id
+        );
+
+        return back()->with('success', 'Retry job dispatched.');
+    }
+
     // ── EDIT POST (from generated post) ───────────────────────
 
     public function editPost(RefArticle $refArticle)

@@ -191,6 +191,8 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/batch-status', 'batchStatus')->name('ref-articles.batch-status');
         Route::get('/recommendations/{keyword}', 'recommendations')->name('ref-articles.recommendations');
         Route::get('/{refArticle}', 'show')->name('ref-articles.show');
+        Route::post('/{refArticle}/generate', 'generate')->name('ref-articles.generate');
+        Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
         // Research & recommendations
         Route::post('/research', 'research')->name('ref-articles.research');
         Route::post('/recommendation/{id}/approve', 'approveRecommendation')->name('ref-articles.recommendation.approve');

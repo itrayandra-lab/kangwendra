@@ -177,15 +177,9 @@ class ScrapeParaphraseJob implements ShouldQueue
                     'content' => $this->buildPrompt($refTitle, $refContent),
                 ],
             ],
-            'response_format' => ['type' => 'json_object'],
             'max_tokens'      => 8192,
             'temperature'     => 0.7,
-            'reasoning_effort' => 'high',
         ];
-
-        if ($model === 'deepseek-v4-pro') {
-            $payload['extra_body'] = ['thinking' => ['type' => 'enabled']];
-        }
 
         $response = Http::timeout(600)
             ->withHeaders([
@@ -212,8 +206,20 @@ class ScrapeParaphraseJob implements ShouldQueue
             ]);
         }
 
-        $raw     = $body['choices'][0]['message']['content'] ?? '';
+        $raw = $body['choices'][0]['message']['content'] ?? '';
+
+        // Try direct JSON parse first
         $decoded = json_decode($raw, true);
+
+        // Fallback: extract JSON from markdown code block
+        if (!$decoded && preg_match('/```(?:json)?\s*([\s\S]+?)```/', $raw, $m)) {
+            $decoded = json_decode(trim($m[1]), true);
+        }
+
+        // Fallback: extract first { ... } block
+        if (!$decoded && preg_match('/\{[\s\S]+\}/', $raw, $m)) {
+            $decoded = json_decode($m[0], true);
+        }
 
         if (!$decoded || empty($decoded['title']) || empty($decoded['content'])) {
             throw new \Exception('DeepSeek returned invalid format: ' . Str::limit($raw, 300));
