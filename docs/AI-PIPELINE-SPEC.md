@@ -21,25 +21,26 @@
 
 ```
 08:00 WIB (SETIAP PAGI) — AUTOMATED
-│
+|
 ├─ KeywordResearchJob (sitemap scraping)
-│   ├─ HTTP GET post-sitemap.xml (SEL + SEJ, 5 page each)
+│   ├─ HTTP GET post-sitemap.xml (SEL + SEJ, paginated)
 │   ├─ SimpleXML parse (handle sitemap namespace)
-│   ├─ Filter: 30 hari terakhir, AI-focused, reject patterns
-│   ├─ HTTP validation per URL
+│   ├─ Filter: skip media files, wp-content paths, author/category/tag/page URLs
+│   ├─ Keyword-matched confidence scoring (sort by relevance)
 │   └─ Simpan ke research_recommendations (pending)
-│
+|
 ├─ ScrapeParaphraseJob × 5 (scrape → paraphrase → save → cleanup)
-│
+│   └─ HTTP validation + scrape quality check di sini
+|
 ├─ Schedule publish:
 │   ├─ Post #1 → hari ini 08:00 WIB
 │   ├─ Post #2 → hari ini 13:00 WIB
 │   ├─ Post #3 → hari ini 16:00 WIB
 │   ├─ Post #4 → besok 08:00 WIB
 │   └─ Post #5 → besok 13:00 WIB
-│
+|
 ├─ Auto-publish di jam 08:00, 13:00, 16:00 WIB (scheduler existing)
-│
+|
 └─ AI Learning (background):
     ├─ Kalau source URL mati (404/timeout) → SKIP, jangan simpan
     └─ Track preference score (untuk future use)
@@ -86,7 +87,7 @@ Schema::create('research_recommendations', function (Blueprint $table) {
     $table->timestamps();
     $table->index('keyword');
     $table->index('status');
-    $table->unique('url');
+    $table->unique(['keyword', 'url']); // composite unique
 });
 ```
 
@@ -118,7 +119,7 @@ $table->string('unpublished_reason', 255)->nullable()->after('unpublished_at');
 ## 3. Jobs
 
 ### 3.1 KeywordResearchJob
-AI research keyword → output 5 recommended URLs dari SEL/SEJ.
+AI research keyword → output 5 recommended URLs dari SEL/SEJ. Sitemap URLs tidak perlu HTTP validation karena sudah pre-validated oleh search engine.
 
 ### 3.2 ScrapeParaphraseJob
 1 job = scrape + paraphrase + save + cleanup.
@@ -141,7 +142,7 @@ Background job untuk recalculate preference scores.
 | #4 | Besok 08:00 WIB | Post scraped keempat (overflow) |
 | #5 | Besok 13:00 WIB | Post scraped kelima (overflow) |
 
-- **Confidence threshold:** 85%
+- **Confidence threshold:** 50% (sitemap URLs already pre-validated via sitemap)
 - **Source:** searchengineland.com, searchenginejournal.com
 - **Daily limit:** 5 artikel
 
@@ -152,7 +153,7 @@ Background job untuk recalculate preference scores.
 - Editor approve URL → score + confidence naik
 - Editor reject URL → blocklist + score turun
 - Post di-unpublish → confidence turun
-- Confidence < 85% → tidak di-scrape
+- Confidence < threshold → tidak di-scrape
 
 ---
 
