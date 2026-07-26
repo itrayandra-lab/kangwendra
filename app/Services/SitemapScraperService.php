@@ -64,11 +64,6 @@ class SitemapScraperService
 
         $result = array_column(array_slice($allEntries, 0, $limit), 'url');
 
-        Log::info('SitemapScraper: found ' . count($result) . ' URLs', [
-            'keyword' => $keyword,
-            'total_entries' => count($allEntries),
-        ]);
-
         return $result;
     }
 
@@ -144,19 +139,11 @@ class SitemapScraperService
             }
 
             libxml_clear_errors();
-
-            Log::debug('SitemapScraper: parsed ' . count($entries) . ' entries from ' . basename($sitemapUrl));
-
             return $entries;
 
         } catch (\Exception $e) {
-            Log::error('SitemapScraper: parse error', [
-                'sitemap' => $sitemapUrl,
-                'error'   => $e->getMessage(),
-            ]);
             return [];
         }
-    }
 
     /**
      * Fallback: extract using regex (when SimpleXML fails)
