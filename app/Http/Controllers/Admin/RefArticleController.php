@@ -3,12 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\GenerateAiArticleJob;
+use App\Jobs\KeywordResearchJob;
+use App\Jobs\ScrapeParaphraseJob;
+use App\Jobs\UpdateEditorPreferenceJob;
+use App\Models\EditorPreference;
 use App\Models\Posts;
-use App\Models\RefArticle;
 use App\Models\PostCategory;
 use App\Models\PostTags;
+use App\Models\RefArticle;
+use App\Models\ResearchRecommendation;
+use App\Services\EditorPreferenceService;
+use App\Services\KeywordResearchService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RefArticleController extends Controller
@@ -17,14 +24,15 @@ class RefArticleController extends Controller
     {
         $page   = 'Manajemen Artikel AI';
         $status = $request->input('status');
-        $source = $request->input('source');
+        $domain = $request->input('domain');
 
         $query = RefArticle::latest();
+
         if ($status) {
             $query->where('ai_status', $status);
         }
-        if ($source) {
-            $query->where('source_domain', 'like', "%{$source}%");
+        if ($domain) {
+            $query->where('source_domain', 'like', "%{$domain}%");
         }
 
         $articles = $query->paginate(15)->withQueryString();
@@ -37,115 +45,222 @@ class RefArticleController extends Controller
             'failed'     => RefArticle::where('ai_status', 'failed')->count(),
         ];
 
-        // Active batch progress from session
-        $batchId = session('ai_batch_id');
-        $batch = null;
-        if ($batchId) {
-            $batchTotal = RefArticle::where('batch_id', $batchId)->count();
-            if ($batchTotal > 0) {
-                $batchDone = RefArticle::where('batch_id', $batchId)
-                    ->whereIn('ai_status', ['done', 'failed'])->count();
-                $batch = [
-                    'batch_id'  => $batchId,
-                    'total'    => $batchTotal,
-                    'done'     => $batchDone,
-                    'success'  => RefArticle::where('batch_id', $batchId)->where('ai_status', 'done')->count(),
-                    'failed'   => RefArticle::where('batch_id', $batchId)->where('ai_status', 'failed')->count(),
-                ];
-            }
-        }
+        // Pending recommendations
+        $pendingRecommendations = ResearchRecommendation::pending()
+            ->orderByDesc('confidence_score')
+            ->limit(10)
+            ->get();
+
+        // Pipeline stats
+        $prefStats = [
+            'total_keywords' => EditorPreference::count(),
+            'avg_confidence' => round(EditorPreference::avg('confidence') ?? 0, 1),
+            'high_confidence' => EditorPreference::hasConfidence(85)->count(),
+        ];
 
         return view('pages.admin.ref-articles.index', compact(
-            'page', 'articles', 'stats', 'status', 'source', 'batch'
+            'page', 'articles', 'stats', 'status', 'domain', 'pendingRecommendations', 'prefStats'
         ));
     }
 
-    // ── SCRAPE ──────────────────────────────────────────
+    // ── RESEARCH & RECOMMENDATIONS ─────────────────────────────
 
-    public function scrapeYahoo()
+    /**
+     * Dispatch keyword research job
+     */
+    public function research(Request $request)
     {
-        set_time_limit(0);
-        try {
-            $saved = (new \App\Services\YahooTechScraperService(5))->scrapeAndSave();
-            return back()->with('success', "Scraping Yahoo Tech selesai! {$saved} artikel disimpan.");
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal: ' . $e->getMessage());
-        }
-    }
+        $validated = $request->validate([
+            'keyword' => 'required|string|min:2|max:255',
+        ]);
 
-    public function scrapePharma()
-    {
-        set_time_limit(0);
-        try {
-            $saved = (new \App\Services\TechPharmaScraperService(3))->scrapeAndSave();
-            return back()->with('success', "Scraping Tech Pharma selesai! {$saved} artikel disimpan.");
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal: ' . $e->getMessage());
-        }
-    }
+        $keyword = trim($validated['keyword']);
 
-    public function scrapeAll()
-    {
-        set_time_limit(0);
-        try {
-            $y = (new \App\Services\YahooTechScraperService(5))->scrapeAndSave();
-            $p = (new \App\Services\TechPharmaScraperService(3))->scrapeAndSave();
-            return back()->with('success', "Scraping selesai! {$y} Yahoo Tech + {$p} Pharma = " . ($y + $p) . " total.");
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal: ' . $e->getMessage());
-        }
-    }
-
-    // ── GENERATE AI (ASYNC via queue) ──────────────────
-
-    public function generateAll(Request $request)
-    {
-        $limit = (int) $request->input('limit', 5);
-
-        RefArticle::failed()->update(['ai_status' => 'pending', 'ai_error' => null]);
-        $pending = RefArticle::pending()->latest()->take($limit)->get();
-
-        if ($pending->isEmpty()) {
-            return back()->with('error', 'Tidak ada artikel pending. Klik Scrape dulu!');
+        // Check if already has pending recommendations
+        $existing = ResearchRecommendation::byKeyword($keyword)->pending()->count();
+        if ($existing > 0) {
+            return redirect()
+                ->route('ref-articles.recommendations', urlencode($keyword))
+                ->with('info', "Sudah ada {$existing} rekomendasi untuk keyword '{$keyword}'.");
         }
 
-        foreach ($pending as $ref) {
-            $ref->update(['ai_status' => 'processing', 'batch_id' => null]);
-            GenerateAiArticleJob::dispatch($ref->id);
-        }
+        // Dispatch research job
+        KeywordResearchJob::dispatch($keyword);
 
-        return back()->with('success', "{$pending->count()} artikel masuk queue. Queue worker sedang memproses...");
+        Log::info('Keyword research dispatched', ['keyword' => $keyword]);
+
+        return redirect()
+            ->route('ref-articles.recommendations', urlencode($keyword))
+            ->with('info', "Research untuk '{$keyword}' sedang diproses. Refresh dalam beberapa detik.");
     }
 
     /**
-     * AJAX: cek status batch dari file
+     * Show research recommendations for a keyword
      */
+    public function recommendations(string $keyword)
+    {
+        $keyword = urldecode($keyword);
+        $page = 'Rekomendasi Artikel';
+
+        $recommendations = ResearchRecommendation::byKeyword($keyword)
+            ->orderByDesc('confidence_score')
+            ->get();
+
+        $pref = EditorPreference::where('keyword', strtolower($keyword))->first();
+
+        return view('pages.admin.ref-articles.recommendations', compact(
+            'page', 'keyword', 'recommendations', 'pref'
+        ));
+    }
+
+    /**
+     * Approve + scrape a single recommendation
+     */
+    public function approveRecommendation(Request $request, int $id)
+    {
+        $rec = ResearchRecommendation::findOrFail($id);
+        $rec->update(['status' => 'approved']);
+
+        // Dispatch scrape + paraphrase
+        ScrapeParaphraseJob::dispatch(
+            $rec->url,
+            $rec->domain ?? parse_url($rec->url, PHP_URL_HOST),
+            $rec->keyword,
+            Str::uuid()->toString(),
+            $rec->confidence_score ?? 50,
+            $rec->id,
+            false // not auto mode
+        );
+
+        // Record AI learning
+        UpdateEditorPreferenceJob::dispatch('approval', [
+            'keyword' => $rec->keyword,
+            'url'     => $rec->url,
+            'topic'   => $this->extractTopic($rec->title ?? ''),
+        ]);
+
+        Log::info('Recommendation approved + dispatched', ['rec_id' => $id, 'url' => $rec->url]);
+
+        return back()->with('success', "Scraping + Paraphrase untuk '{$rec->title}' sedang diproses.");
+    }
+
+    /**
+     * Reject a recommendation
+     */
+    public function rejectRecommendation(Request $request, int $id)
+    {
+        $rec = ResearchRecommendation::findOrFail($id);
+        $rec->update(['status' => 'rejected']);
+
+        // Record rejection in AI learning
+        UpdateEditorPreferenceJob::dispatch('rejection', [
+            'keyword' => $rec->keyword,
+            'url'     => $rec->url,
+            'topic'   => $this->extractTopic($rec->title ?? ''),
+        ]);
+
+        Log::info('Recommendation rejected', ['rec_id' => $id, 'url' => $rec->url]);
+
+        return back()->with('success', "URL ditolak dan masuk blocklist.");
+    }
+
+    /**
+     * Approve all pending recommendations for a keyword
+     */
+    public function approveAll(Request $request, string $keyword)
+    {
+        $keyword = urldecode($keyword);
+
+        $recs = ResearchRecommendation::byKeyword($keyword)
+            ->pending()
+            ->orderByDesc('confidence_score')
+            ->limit(5)
+            ->get();
+
+        if ($recs->isEmpty()) {
+            return back()->with('error', 'Tidak ada rekomendasi yang bisa disetujui.');
+        }
+
+        $count = 0;
+        foreach ($recs as $rec) {
+            $rec->update(['status' => 'approved']);
+            ScrapeParaphraseJob::dispatch(
+                $rec->url,
+                $rec->domain ?? parse_url($rec->url, PHP_URL_HOST),
+                $rec->keyword,
+                Str::uuid()->toString(),
+                $rec->confidence_score ?? 50,
+                $rec->id,
+                false
+            );
+            $count++;
+        }
+
+        return back()->with('success', "{$count} artikel sedang diproses.");
+    }
+
+    // ── SCRAPE & PARAPHRASE ──────────────────────────────────
+
+    /**
+     * Manual scrape + paraphrase for a specific URL (for future use)
+     */
+    public function scrapeAndParaphrase(Request $request, int $id)
+    {
+        $rec = ResearchRecommendation::findOrFail($id);
+
+        if ($rec->status === 'scraped') {
+            return back()->with('error', 'URL ini sudah discrape sebelumnya.');
+        }
+
+        ScrapeParaphraseJob::dispatch(
+            $rec->url,
+            $rec->domain ?? parse_url($rec->url, PHP_URL_HOST),
+            $rec->keyword,
+            Str::uuid()->toString(),
+            $rec->confidence_score ?? 50,
+            $rec->id,
+            false
+        );
+
+        return back()->with('success', "Scrape + Paraphrase untuk '{$rec->title}' sedang diproses.");
+    }
+
+    // ── BATCH PROGRESS ───────────────────────────────────────
+
     public function batchStatus(Request $request)
     {
         $batchId = $request->get('batch_id');
-        if (!$batchId) return response()->json(['error' => 'no batch_id']);
-
-        $batchFile = storage_path("logs/batch_{$batchId}.json");
-        if (!file_exists($batchFile)) {
-            return response()->json(['error' => 'batch file not found', 'batch_id' => $batchId]);
+        if (!$batchId) {
+            return response()->json(['error' => 'no batch_id']);
         }
 
-        $data = json_decode(file_get_contents($batchFile), true);
+        $total      = RefArticle::where('batch_id', $batchId)->count();
+        $done       = RefArticle::where('batch_id', $batchId)->whereIn('ai_status', ['done', 'failed'])->count();
+        $success    = RefArticle::where('batch_id', $batchId)->where('ai_status', 'done')->count();
+        $failed     = RefArticle::where('batch_id', $batchId)->where('ai_status', 'failed')->count();
+        $processing = RefArticle::where('batch_id', $batchId)->where('ai_status', 'processing')->count();
+
+        $failedArticles = RefArticle::where('batch_id', $batchId)
+            ->where('ai_status', 'failed')
+            ->select('id', 'title', 'ai_error')
+            ->limit(10)
+            ->get();
 
         return response()->json([
-            'batch_id'   => $data['batch_id'] ?? $batchId,
-            'total'     => $data['total'] ?? 0,
-            'success'   => $data['success'] ?? 0,
-            'failed'    => $data['failed'] ?? 0,
-            'errors'    => $data['errors'] ?? [],
-            'processed'  => $data['processed'] ?? [],
-            'status'    => $data['status'] ?? 'running',
+            'batch_id'   => $batchId,
+            'total'     => $total,
+            'done'      => $done,
+            'success'   => $success,
+            'failed'    => $failed,
+            'processing'=> $processing,
+            'errors'    => $failedArticles->map(fn($a) => ['title' => $a->title, 'error' => $a->ai_error]),
+            'status'    => $total > 0 && $done >= $total ? 'completed' : 'running',
         ]);
     }
 
     public function batchProgress(Request $request)
     {
-        $batchId = $request->get('batch_id') ?? session('ai_batch_id');
+        $batchId = $request->get('batch_id');
 
         if (!$batchId) {
             return redirect()->route('ref-articles.index');
@@ -153,12 +268,11 @@ class RefArticleController extends Controller
 
         $page = 'Progress Generate AI';
 
-        $total = RefArticle::where('batch_id', $batchId)->count();
-        $done = RefArticle::where('batch_id', $batchId)->whereIn('ai_status', ['done', 'failed'])->count();
-        $success = RefArticle::where('batch_id', $batchId)->where('ai_status', 'done')->count();
-        $failed = RefArticle::where('batch_id', $batchId)->where('ai_status', 'failed')->count();
+        $total      = RefArticle::where('batch_id', $batchId)->count();
+        $done       = RefArticle::where('batch_id', $batchId)->whereIn('ai_status', ['done', 'failed'])->count();
+        $success    = RefArticle::where('batch_id', $batchId)->where('ai_status', 'done')->count();
+        $failed     = RefArticle::where('batch_id', $batchId)->where('ai_status', 'failed')->count();
         $processing = RefArticle::where('batch_id', $batchId)->where('ai_status', 'processing')->count();
-        $pending = RefArticle::where('batch_id', $batchId)->where('ai_status', 'pending')->count();
 
         $failedArticles = RefArticle::where('batch_id', $batchId)
             ->where('ai_status', 'failed')
@@ -167,47 +281,11 @@ class RefArticleController extends Controller
             ->get();
 
         return view('pages.admin.ref-articles.batch-progress', compact(
-            'page', 'batchId', 'total', 'done', 'success', 'failed', 'processing', 'pending', 'failedArticles'
+            'page', 'batchId', 'total', 'done', 'success', 'failed', 'processing', 'failedArticles'
         ));
     }
 
-    // Generate 1 artikel
-    public function generateOne(RefArticle $refArticle)
-    {
-        set_time_limit(0);
-
-        if ($refArticle->ai_status === 'done') {
-            return back()->with('error', 'Sudah di-generate. Gunakan Retry untuk ulangi.');
-        }
-
-        $refArticle->update(['ai_status' => 'processing']);
-
-        try {
-            $job = new GenerateAiArticleJob($refArticle->id);
-            $job->handle();
-            return back()->with('success', "Berhasil: " . substr($refArticle->title, 0, 60));
-        } catch (\Exception $e) {
-            $refArticle->update(['ai_status' => 'failed', 'ai_error' => $e->getMessage()]);
-            return back()->with('error', 'Gagal: ' . substr($e->getMessage(), 0, 100));
-        }
-    }
-
-    // Retry 1 artikel
-    public function retry(RefArticle $refArticle)
-    {
-        set_time_limit(0);
-
-        $refArticle->update(['ai_status' => 'processing', 'ai_error' => null]);
-
-        try {
-            $job = new GenerateAiArticleJob($refArticle->id);
-            $job->handle();
-            return back()->with('success', "Retry berhasil: " . substr($refArticle->title, 0, 60));
-        } catch (\Exception $e) {
-            $refArticle->update(['ai_status' => 'failed', 'ai_error' => $e->getMessage()]);
-            return back()->with('error', 'Gagal: ' . substr($e->getMessage(), 0, 100));
-        }
-    }
+    // ── REF ARTICLE CRUD ──────────────────────────────────────
 
     public function destroy(RefArticle $refArticle)
     {
@@ -221,11 +299,10 @@ class RefArticleController extends Controller
         return view('pages.admin.ref-articles.show', compact('page', 'refArticle'));
     }
 
-    // ── EDIT POST (from generated post) ──────────────────
+    // ── EDIT POST (from generated post) ───────────────────────
 
     public function editPost(RefArticle $refArticle)
     {
-        // Cari post: pertama via generated_post_id, fallback via source_url
         $post = null;
         if ($refArticle->generated_post_id) {
             $post = Posts::with('category')->find($refArticle->generated_post_id);
@@ -263,15 +340,14 @@ class RefArticleController extends Controller
         $tags = array_filter(array_map('trim', explode(',', $tagsInput)));
 
         $validated = $request->validate([
-            'title'         => 'required|string|max:255',
-            'content'      => 'required|string',
+            'title'        => 'required|string|max:255',
+            'content'     => 'required|string',
             'category_id'  => 'required|integer|exists:post_categories,id',
             'status'       => 'required|in:active,draft',
             'published_at' => 'required|date',
             'slug'         => 'nullable|string|max:255',
         ]);
 
-        // Create new tags in DB
         foreach ($tags as $tagName) {
             if ($tagName) {
                 PostTags::firstOrCreate(
@@ -292,21 +368,42 @@ class RefArticleController extends Controller
 
         $post->update([
             'title'        => $validated['title'],
-            'content'     => $validated['content'],
-            'category_id' => $validated['category_id'],
-            'tags'        => $tags,
-            'status'      => $validated['status'],
+            'content'      => $validated['content'],
+            'category_id'  => $validated['category_id'],
+            'tags'         => $tags,
+            'status'       => $validated['status'],
             'published_at' => $validated['published_at'],
-            'slug'        => $slug,
-            'updated_by'  => auth()->id(),
+            'slug'         => $slug,
+            'updated_by'   => auth()->id(),
         ]);
 
-        $meta = is_array($post->meta_data) ? $post->meta_data : (@json_decode($post->meta_data, true) ?: []);
+        $meta = is_array($post->meta_data) ? $post->meta_data : [];
         $meta['edited_at'] = now()->toDateTimeString();
         $meta['edited_by'] = auth()->user()->name ?? auth()->id();
         $post->update(['meta_data' => $meta]);
 
         return redirect()->route('ref-articles.index')
             ->with('success', 'Post berhasil disimpan: ' . Str::limit($post->title, 50));
+    }
+
+    // ── HELPERS ───────────────────────────────────────────────
+
+    protected function extractTopic(string $title): string
+    {
+        $aiTopics = ['ai', 'llm', 'machine learning', 'deep learning', 'openai', 'gemini', 'chatgpt', 'neural', 'generative', 'agentic'];
+        foreach ($aiTopics as $topic) {
+            if (stripos($title, $topic) !== false) {
+                return 'AI & Teknologi';
+            }
+        }
+
+        $seoTopics = ['seo', 'search', 'google', 'algorithm', 'serp'];
+        foreach ($seoTopics as $topic) {
+            if (stripos($title, $topic) !== false) {
+                return 'SEO & Search';
+            }
+        }
+
+        return 'Teknologi';
     }
 }

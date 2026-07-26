@@ -27,6 +27,10 @@ class Posts extends Model
         'meta_data',
         'updated_by',
         'published_at',
+        // New fields
+        'published_by',
+        'unpublished_at',
+        'unpublished_reason',
     ];
 
     /**
@@ -35,10 +39,11 @@ class Posts extends Model
      * @var array
      */
     protected $casts = [
-        'published_at' => 'datetime',
-        'counter'     => 'integer',
-        'tags'        => 'array',
-        'meta_data'   => 'array',
+        'published_at'  => 'datetime',
+        'unpublished_at'=> 'datetime',
+        'counter'       => 'integer',
+        'tags'          => 'array',
+        'meta_data'     => 'array',
     ];
 
     /**

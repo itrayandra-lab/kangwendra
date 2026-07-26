@@ -57,22 +57,46 @@ class PostsController extends Controller
                 })
                 ->addColumn('created_by', fn($post) => $post->createdBy?->name ?? '-')
                 ->addColumn('updated_by', fn($post) => $post->updatedBy?->name ?? '-')
+                ->addColumn('published_by', function ($post) {
+                    if ($post->published_by === 'system') {
+                        return '<span class="label label-info">AI</span>';
+                    }
+                    return '<span class="label label-default">Editor</span>';
+                })
                 ->editColumn('published_at', fn($post) => $post->published_at
                     ? $post->published_at->translatedFormat('d M Y H:i')
-                    : '<span class="text-muted">Belum</span>') 
+                    : '<span class="text-muted">Belum</span>')
                 ->editColumn('created_at', fn($post) => $post->created_at->translatedFormat('d M Y H:i'))
                 ->editColumn('updated_at', fn($post) => $post->updated_at->translatedFormat('d M Y H:i'))
                 ->addColumn('action', function ($post) {
                     $edit = '<a href="'.route('posts.edit', $post->id).'" class="btn btn-primary btn-xs"><i class="fa fa-edit"></i></a>';
+
+                    // Unpublish button for active/published posts
+                    $unpublish = '';
+                    if ($post->status === 'active' && $post->published_at && $post->published_at <= now()) {
+                        $unpublish = '<form action="'.route('posts.unpublish', $post->id).'" method="POST" style="display:inline" onsubmit="return confirm(\'Unpublish post ini? Post akan jadi draft.\')">
+                            '.csrf_field().'
+                            <button type="submit" class="btn btn-warning btn-xs"><i class="fa fa-ban"></i></button>
+                        </form>';
+                    }
+
+                    // Regenerate button for AI-generated posts
+                    $regenerate = '';
+                    if ($post->published_by === 'system' || $post->source) {
+                        $regenerate = '<form action="'.route('posts.regenerate', $post->id).'" method="POST" style="display:inline" onsubmit="return confirm(\'Regenerate post ini dari source URL?\')">
+                            '.csrf_field().'
+                            <button type="submit" class="btn btn-info btn-xs"><i class="fa fa-refresh"></i></button>
+                        </form>';
+                    }
 
                     $delete = '<form action="'.route('posts.destroy', $post->id).'" method="POST" style="display:inline" onsubmit="return confirm(\'Yakin hapus?\')">
                                 '.csrf_field().method_field('DELETE').'
                                 <button type="submit" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i></button>
                         </form>';
 
-                    return '<div class="text-center">'.$edit.' '.$delete.'</div>';
+                    return '<div class="text-center">'.$edit.' '.$unpublish.' '.$regenerate.' '.$delete.'</div>';
                 })
-                ->rawColumns(['link', 'image', 'status', 'tags', 'published_at', 'action']) 
+                ->rawColumns(['link', 'image', 'status', 'tags', 'published_at', 'published_by', 'action'])
                 ->make(true);
         }
 
@@ -252,5 +276,113 @@ class PostsController extends Controller
         $posts->delete();
 
         return redirect()->route('posts.index')->with('success', 'Postingan deleted successfully');
+    }
+
+    /**
+     * Unpublish a post (set status to draft/inactive)
+     */
+    public function unpublish(Request $request, $id)
+    {
+        try {
+            $post = Posts::findOrFail($id);
+
+            $reason = $request->input('reason', 'Editor unpublished');
+
+            $post->update([
+                'status'            => 'inactive',
+                'unpublished_at'    => now(),
+                'unpublished_reason' => $reason,
+            ]);
+
+            // Record AI learning if this was an AI-generated post
+            $ref = \App\Models\RefArticle::where('generated_post_id', $post->id)->first();
+            if ($ref && $ref->source_keyword) {
+                \App\Jobs\UpdateEditorPreferenceJob::dispatch('unpublish', [
+                    'keyword' => $ref->source_keyword,
+                ]);
+            }
+
+            Log::info('Post unpublished', ['post_id' => $post->id, 'reason' => $reason]);
+
+            return redirect()
+                ->back()
+                ->with('success', 'Post berhasil di-unpublish.');
+        } catch (\Exception $e) {
+            Log::error('Unpublish failed', ['post_id' => $id, 'error' => $e->getMessage()]);
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal meng-unpublish post: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Regenerate a post from its source URL (re-scrape + re-paraphrase)
+     */
+    public function regenerate(Request $request, $id)
+    {
+        try {
+            $post = Posts::findOrFail($id);
+            $ref  = \App\Models\RefArticle::where('generated_post_id', $post->id)->first();
+
+            if (!$ref) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Referensi article tidak ditemukan untuk post ini.');
+            }
+
+            // Check: does RefArticle still have content?
+            if (empty($ref->content)) {
+                // No content - need to re-scrape from source URL
+                if (empty($ref->source_url)) {
+                    return redirect()
+                        ->back()
+                        ->with('error', 'Source URL tidak tersedia. Tidak bisa regenerate.');
+                }
+
+                // Re-scrape from source URL
+                $scraper = app(\App\Services\SearchEngineLandScraperService::class);
+                $article = $scraper->fetchArticleDetail($ref->source_url);
+
+                if (!$article || !$scraper->isValidArticle($article)) {
+                    return redirect()
+                        ->back()
+                        ->with('error', 'Source URL tidak bisa di-scrape ulang. Silakan edit manual.');
+                }
+
+                // Update ref_article with fresh content
+                $ref->update([
+                    'content'           => $article['content'],
+                    'image_url'         => $article['image_url'],
+                    'title'             => $article['title'],
+                    'author'            => $article['author'],
+                    'published_at'       => $article['published_at'],
+                    'tags'               => $article['tags'] ?? [],
+                    'ai_status'          => 'pending',
+                ]);
+            }
+
+            // Dispatch regenerate job
+            \App\Jobs\ScrapeParaphraseJob::dispatch(
+                $ref->source_url,
+                $ref->source_domain,
+                $ref->source_keyword ?? '',
+                \Illuminate\Support\Str::uuid()->toString(),
+                50.0,
+                0,
+                false
+            );
+
+            Log::info('Regenerate dispatched', ['post_id' => $post->id, 'ref_id' => $ref->id]);
+
+            return redirect()
+                ->back()
+                ->with('success', 'Regenerate job dispatched. Post akan di-update setelah paraphrase selesai.');
+
+        } catch (\Exception $e) {
+            Log::error('Regenerate failed', ['post_id' => $id, 'error' => $e->getMessage()]);
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal regenerate: ' . $e->getMessage());
+        }
     }
 }

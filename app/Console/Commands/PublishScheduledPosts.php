@@ -36,7 +36,10 @@ class PublishScheduledPosts extends Command
         $this->info("Menemukan {$drafts->count()} draft siap publish ({$now->format('H:i')} WIB):");
 
         foreach ($drafts as $post) {
-            $post->update(['status' => 'active']);
+            $post->update([
+                'status'       => 'active',
+                'published_by' => 'system',
+            ]);
             $this->info("  [PUBLISH] " . substr($post->title, 0, 60));
             Log::info("PublishScheduledPosts: published", ['post_id' => $post->id, 'title' => $post->title]);
         }

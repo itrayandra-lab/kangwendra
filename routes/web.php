@@ -184,21 +184,28 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::delete('/{id}', 'destroy')->name('domain-share.destroy')->middleware('permission:delete domain-share');
     });
 
-    # Artikel Referensi (scrape + AI generate)
+    # Artikel Referensi (AI Pipeline: Research + Scrape + Paraphrase)
     Route::group(['prefix' => 'ref-articles', 'controller' => RefArticleController::class], function () {
         Route::get('/', 'index')->name('ref-articles.index');
         Route::get('/batch-progress', 'batchProgress')->name('ref-articles.batch-progress');
         Route::get('/batch-status', 'batchStatus')->name('ref-articles.batch-status');
+        Route::get('/recommendations/{keyword}', 'recommendations')->name('ref-articles.recommendations');
         Route::get('/{refArticle}', 'show')->name('ref-articles.show');
-        Route::post('/scrape-yahoo', 'scrapeYahoo')->name('ref-articles.scrape-yahoo');
-        Route::post('/scrape-pharma', 'scrapePharma')->name('ref-articles.scrape-pharma');
-        Route::post('/scrape-all', 'scrapeAll')->name('ref-articles.scrape-all');
-        Route::post('/generate-all', 'generateAll')->name('ref-articles.generate-all');
-        Route::post('/{refArticle}/generate', 'generateOne')->name('ref-articles.generate');
-        Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
+        // Research & recommendations
+        Route::post('/research', 'research')->name('ref-articles.research');
+        Route::post('/recommendation/{id}/approve', 'approveRecommendation')->name('ref-articles.recommendation.approve');
+        Route::post('/recommendation/{id}/reject', 'rejectRecommendation')->name('ref-articles.recommendation.reject');
+        Route::post('/{id}/scrape-paraphrase', 'scrapeAndParaphrase')->name('ref-articles.scrape-paraphrase');
+        // Post editing
         Route::get('/{refArticle}/edit-post', 'editPost')->name('ref-articles.edit-post');
         Route::put('/{refArticle}/update-post', 'updatePost')->name('ref-articles.update-post');
         Route::delete('/{refArticle}', 'destroy')->name('ref-articles.destroy');
+    });
+
+    // Posts - Unpublish & Regenerate
+    Route::group(['controller' => PostsController::class], function () {
+        Route::post('/posts/{id}/unpublish', 'unpublish')->name('posts.unpublish');
+        Route::post('/posts/{id}/regenerate', 'regenerate')->name('posts.regenerate');
     });
 
 });

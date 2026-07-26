@@ -19,6 +19,10 @@ class RefArticle extends Model
         'ai_error',
         'generated_post_id',
         'batch_id',
+        // New fields
+        'ai_research_status',
+        'source_keyword',
+        'research_notes',
     ];
 
     protected $casts = [
@@ -54,5 +58,20 @@ class RefArticle extends Model
     public function scopeFailed($query)
     {
         return $query->where('ai_status', 'failed');
+    }
+
+    public function scopeResearching($query)
+    {
+        return $query->where('ai_research_status', 'researching');
+    }
+
+    public function scopeResearchDone($query)
+    {
+        return $query->where('ai_research_status', 'done');
+    }
+
+    public function recommendations()
+    {
+        return $this->hasMany(ResearchRecommendation::class, 'ref_article_id');
     }
 }
