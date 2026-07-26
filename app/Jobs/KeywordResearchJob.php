@@ -41,7 +41,7 @@ class KeywordResearchJob implements ShouldQueue
             ->where('ai_research_status', 'researching')
             ->update(['ai_research_status' => 'idle']);
 
-        // Step 1: Extract URLs from sitemaps based on keyword
+        // Extract URLs from sitemaps
         $urls = $scraper->findUrls($this->keyword, $this->maxUrls);
 
         if (empty($urls)) {
@@ -51,49 +51,58 @@ class KeywordResearchJob implements ShouldQueue
 
         Log::info('KeywordResearchJob: found ' . count($urls) . ' URLs, validating...', ['keyword' => $this->keyword]);
 
-        // Step 2: Validate URLs (HTTP check) and filter out dead links
         $saved = 0;
         $validatedCount = 0;
+        $skippedExisting = 0;
+        $skippedAccessible = 0;
 
         foreach ($urls as $url) {
             if ($saved >= $this->maxUrls) break;
+            if ($saved + $validatedCount >= $this->maxUrls) break;
 
-            // Skip if already exists
-            if (ResearchRecommendation::where('url', $url)->exists()) {
-                Log::debug('KeywordResearchJob: skip duplicate URL', ['url' => $url]);
+            // Skip if URL already exists for THIS keyword
+            if (ResearchRecommendation::where('url', $url)->where('keyword', $this->keyword)->exists()) {
+                Log::debug('KeywordResearchJob: skip URL already saved for this keyword', [
+                    'url' => $url,
+                    'keyword' => $this->keyword,
+                ]);
+                $skippedExisting++;
                 continue;
             }
 
-            // Fast validation - HTTP GET with short timeout
+            // Fast HTTP validation
             $accessible = $scraper->isAccessible($url);
 
             if (!$accessible) {
                 Log::debug('KeywordResearchJob: skip dead URL', ['url' => $url]);
+                $skippedAccessible++;
                 continue;
             }
 
             $validatedCount++;
 
-            // Extract title from URL slug as fallback
             $path = parse_url($url, PHP_URL_PATH);
-            $slugTitle = $this->extractTitleFromSlug($path);
+            $slugTitle = $scraper->extractTitleFromSlug($path ?? '');
             $domain = $scraper->getDomain($url);
-
-            // Calculate confidence based on keyword match
             $confidence = $this->calculateConfidence($url, $this->keyword);
 
-            ResearchRecommendation::create([
-                'keyword'           => $this->keyword,
-                'url'              => $url,
-                'title'            => $slugTitle,
-                'domain'           => $domain,
-                'snippet'          => "Artikel dari {$domain} tentang {$this->keyword}",
-                'confidence_score' => $confidence,
-                'status'           => 'pending',
-            ]);
-
-            $saved++;
-            Log::debug('KeywordResearchJob: saved URL', ['url' => $url, 'confidence' => $confidence]);
+            try {
+                ResearchRecommendation::create([
+                    'keyword'           => $this->keyword,
+                    'url'              => $url,
+                    'title'            => $slugTitle,
+                    'domain'           => $domain,
+                    'snippet'          => "Artikel dari {$domain} tentang {$this->keyword}",
+                    'confidence_score' => $confidence,
+                    'status'           => 'pending',
+                ]);
+                $saved++;
+                Log::debug('KeywordResearchJob: saved URL', ['url' => $url, 'confidence' => $confidence]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                // URL exists for a different keyword (unique constraint) — skip gracefully
+                Log::debug('KeywordResearchJob: skip URL (exists for different keyword)', ['url' => $url]);
+                $skippedExisting++;
+            }
         }
 
         Log::info('KeywordResearchJob: completed', [
@@ -101,6 +110,8 @@ class KeywordResearchJob implements ShouldQueue
             'total_found'   => count($urls),
             'validated'     => $validatedCount,
             'saved'         => $saved,
+            'skipped_existing' => $skippedExisting,
+            'skipped_accessible' => $skippedAccessible,
         ]);
     }
 

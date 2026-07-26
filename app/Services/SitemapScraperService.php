@@ -284,15 +284,18 @@ class SitemapScraperService
      */
     public function extractTitleFromSlug(string $url): string
     {
-        $path = parse_url($url, PHP_URL_PATH);
-        if (!$path) return 'Tanpa Judul';
+        if (!$url) return 'Tanpa Judul';
 
-        $path = trim($path, '/');
-        $segments = explode('/', $path);
+        $url = trim($url, '/');
+        $segments = explode('/', $url);
         $slug = end($segments);
 
-        $title = str_replace('-', ' ', $slug);
-        $title = str_replace('_', ' ', $title);
+        // If last segment is just a number, use second-to-last segment
+        if (preg_match('/^\d+$/', $slug) && count($segments) > 1) {
+            $slug = $segments[count($segments) - 2] ?? $slug;
+        }
+
+        $title = str_replace(['-', '_'], ' ', $slug);
         $title = preg_replace('/^\d+\s+/', '', $title);
         $title = trim(ucwords($title));
 

@@ -55,8 +55,10 @@ class AutoPipeline extends Command
             return 0;
         }
 
-        $remainingSlots = self::DAILY_LIMIT - $publishedToday;
-        $this->info("Articles remaining today: {$remainingSlots}");
+        // Effective max: can't exceed remaining slots
+        $remainingSlots = max(0, self::DAILY_LIMIT - $publishedToday);
+        $effectiveMax = min((int) $this->option('max'), $remainingSlots);
+        $this->info("Articles remaining today: {$remainingSlots} (will dispatch max {$effectiveMax})");
 
         // ── Step 2: Get keyword(s) ──
         $keywordOption = $this->option('keyword');
@@ -75,7 +77,7 @@ class AutoPipeline extends Command
             $this->info('Auto-selected keywords: ' . implode(', ', $keywords));
         }
 
-        $maxArticles = (int) $this->option('max');
+        $maxArticles = $effectiveMax;
         $dispatched = 0;
         $dryRun = $this->option('dry-run');
 
