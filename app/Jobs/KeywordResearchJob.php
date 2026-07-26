@@ -30,11 +30,6 @@ class KeywordResearchJob implements ShouldQueue
     {
         Log::info('KeywordResearchJob: starting', ['keyword' => $this->keyword]);
 
-        // Clean up old pending recommendations for this keyword
-        ResearchRecommendation::where('keyword', $this->keyword)
-            ->where('status', 'pending')
-            ->update(['status' => 'rejected']);
-
         // Initialize editor preference
         $pref = EditorPreference::firstOrCreate(
             ['keyword' => strtolower(trim($this->keyword))],

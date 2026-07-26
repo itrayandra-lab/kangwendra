@@ -22,16 +22,14 @@
 ```
 08:00 WIB (SETIAP PAGI) — AUTOMATED
 │
-├─ KeywordResearchJob
-│   └─ AI research keyword berdasarkan preferensi editor
+├─ KeywordResearchJob (sitemap scraping)
+│   ├─ HTTP GET post-sitemap.xml (SEL + SEJ, 5 page each)
+│   ├─ SimpleXML parse (handle sitemap namespace)
+│   ├─ Filter: 30 hari terakhir, AI-focused, reject patterns
+│   ├─ HTTP validation per URL
+│   └─ Simpan ke research_recommendations (pending)
 │
-├─ AI auto-select URL (confidence >= 85%)
-│   └─ Max 5 URL
-│
-├─ ScrapeParaphraseJob × 5 (per URL = 1 job independent)
-│   ├─ HTTP GET → Parse → Validate → Save RefArticle
-│   ├─ DeepSeek Paraphrase → Save Post
-│   └─ Cleanup: Hapus original_content (hemat DB)
+├─ ScrapeParaphraseJob × 5 (scrape → paraphrase → save → cleanup)
 │
 ├─ Schedule publish:
 │   ├─ Post #1 → hari ini 08:00 WIB
@@ -166,28 +164,33 @@ Background job untuk recalculate preference scores.
 - `app/Jobs/UpdateEditorPreferenceJob.php`
 - `app/Console/Commands/AutoPipelineCommand.php`
 - `app/Services/SearchEngineLandScraperService.php`
-- `app/Services/KeywordResearchService.php`
+- `app/Services/SitemapScraperService.php`
 - `app/Services/EditorPreferenceService.php`
 - `app/Models/EditorPreference.php`
 - `app/Models/ResearchRecommendation.php`
 - Migration: `editor_preferences`
 - Migration: `research_recommendations`
 
-### MODIFY (6 files)
+### MODIFY (8 files)
 - `app/Models/RefArticle.php`
 - `app/Models/Post.php`
 - `app/Http/Controllers/Admin/RefArticleController.php`
-- `app/Http/Controllers/Admin/PostController.php`
+- `app/Http/Controllers/Admin/PostsController.php`
+- `app/Http/Controllers/Admin/HomeController.php`
 - `resources/views/pages/admin/ref-articles/index.blade.php`
+- `resources/views/pages/admin/ref-articles/recommendations.blade.php`
 - `resources/views/pages/admin/home/index.blade.php`
 - `routes/console.php`
 
-### DELETE (5 files)
+### DELETE (8 files)
 - `app/Services/YahooTechScraperService.php`
 - `app/Services/TechPharmaScraperService.php`
+- `app/Services/KeywordResearchService.php`
 - `app/Jobs/GenerateAiArticleJob.php`
 - `app/Console/Commands/ProcessPendingAi.php`
 - `app/Console/Commands/AutoFeedCommand.php`
+- `app/Console/Commands/ScrapeYahooTech.php`
+- `app/Console/Commands/UpdateExistingPostsDomain.php`
 
 ---
 
@@ -195,7 +198,7 @@ Background job untuk recalculate preference scores.
 
 1. Database migrations
 2. Models (EditorPreference, ResearchRecommendation) + modify RefArticle, Post
-3. Services (SearchEngineLandScraper, KeywordResearch, EditorPreference)
+3. Services (SearchEngineLandScraper, SitemapScraper, EditorPreference)
 4. Jobs (KeywordResearchJob, ScrapeParaphraseJob, UpdateEditorPreferenceJob)
 5. AutoPipelineCommand + PostController (unpublish, regenerate)
 6. RefArticleController + routes
