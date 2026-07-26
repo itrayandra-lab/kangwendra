@@ -30,16 +30,16 @@ class SitemapScraperService
     ];
 
     /**
-     * Find article URLs from sitemaps (recent ones only)
+     * Find article URLs from sitemaps (keyword-matched, no date filter
+     * since sitemap URLs are already pre-validated by search engines)
      */
     public function findUrls(string $keyword, int $limit = 10): array
     {
-        $cutoffDate = date('Y-m-d', strtotime('-30 days'));
         $allEntries = [];
 
         foreach ($this->baseSitemaps as $domain => $sitemaps) {
             foreach ($sitemaps as $pageNum => $sitemapUrl) {
-                $entries = $this->extractFromSitemap($sitemapUrl, $cutoffDate, $this->maxPerSitemap);
+                $entries = $this->extractFromSitemap($sitemapUrl, $this->maxPerSitemap);
                 $allEntries = array_merge($allEntries, $entries);
 
                 if (count($allEntries) >= $limit * 5) break 2;
@@ -70,7 +70,7 @@ class SitemapScraperService
     /**
      * Extract URLs from sitemap using SimpleXML (handles namespaces)
      */
-    protected function extractFromSitemap(string $sitemapUrl, string $cutoffDate, int $limit): array
+    protected function extractFromSitemap(string $sitemapUrl, int $limit): array
     {
         try {
             $response = Http::timeout($this->timeout)
@@ -89,11 +89,8 @@ class SitemapScraperService
 
             if ($xml === false) {
                 // Fallback: try regex parsing
-                return $this->extractViaRegex($xmlString, $cutoffDate, $limit);
+                return $this->extractViaRegex($xmlString, $limit);
             }
-
-            // Register default namespace
-            $xml->registerXPathNamespace('sm', 'http://www.sitemaps.org/schemas/sitemap/0.9');
 
             $entries = [];
             $count = 0;
@@ -107,32 +104,19 @@ class SitemapScraperService
 
                 if (!$this->isArticleUrl($url)) continue;
 
-                // Get <lastmod> directly
+                // Get <lastmod> for sorting (optional, not used for filtering)
                 $dateStr = trim((string) ($urlEl->lastmod ?? ''));
                 $dateTs = 0;
 
                 if ($dateStr) {
-                    // Parse ISO 8601 date: 2026-07-24T21:24:30+00:00
                     $parsed = strtotime($dateStr);
                     if ($parsed !== false) {
                         $dateTs = $parsed;
-                        $date = date('Y-m-d', $parsed);
-                    } else {
-                        $date = '1970-01-01';
                     }
-                } else {
-                    $date = '1970-01-01';
-                    $dateTs = 0;
-                }
-
-                // Skip if older than cutoff
-                if ($date !== '1970-01-01' && $date < $cutoffDate) {
-                    continue;
                 }
 
                 $entries[] = [
                     'url'     => $url,
-                    'date'    => $date,
                     'date_ts' => $dateTs,
                 ];
                 $count++;
@@ -144,11 +128,12 @@ class SitemapScraperService
         } catch (\Exception $e) {
             return [];
         }
+    }
 
     /**
      * Fallback: extract using regex (when SimpleXML fails)
      */
-    protected function extractViaRegex(string $xml, string $cutoffDate, int $limit): array
+    protected function extractViaRegex(string $xml, int $limit): array
     {
         $entries = [];
 
@@ -165,28 +150,18 @@ class SitemapScraperService
 
                 if (!$this->isArticleUrl($url)) continue;
 
-                // Extract <lastmod>
-                $dateStr = '';
+                // Extract <lastmod> for sorting
                 $dateTs = 0;
-                $date = '1970-01-01';
 
                 if (preg_match('/<lastmod[^>]*>([^<]+)<\/lastmod>/i', $block, $dateMatch)) {
-                    $dateStr = trim($dateMatch[1]);
-                    $parsed = strtotime($dateStr);
+                    $parsed = strtotime(trim($dateMatch[1]));
                     if ($parsed !== false) {
                         $dateTs = $parsed;
-                        $date = date('Y-m-d', $parsed);
                     }
-                }
-
-                // Skip if older than cutoff
-                if ($date !== '1970-01-01' && $date < $cutoffDate) {
-                    continue;
                 }
 
                 $entries[] = [
                     'url'     => $url,
-                    'date'    => $date,
                     'date_ts' => $dateTs,
                 ];
             }
@@ -200,6 +175,28 @@ class SitemapScraperService
      */
     protected function isArticleUrl(string $url): bool
     {
+        // Skip non-URL strings
+        if (!str_starts_with($url, 'http')) return false;
+
+        // Skip media files, attachments, images
+        $skipExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico',
+            '.pdf', '.mp4', '.mp3', '.zip', '.doc', '.docx', '.xlsx'];
+        foreach ($skipExtensions as $ext) {
+            if (str_ends_with(strtolower($url), $ext)) return false;
+        }
+
+        // Skip media/uploads paths
+        $skipPaths = [
+            '/wp-content/uploads/', '/wp-content/plugins/', '/wp-content/themes/',
+            '/wp-content/backup/', '/wp-content/cache/',
+            '/media/', '/uploads/', '/files/', '/attachments/',
+            '/assets/', '/static/', '/images/', '/img/',
+        ];
+        foreach ($skipPaths as $skip) {
+            if (stripos($url, $skip) !== false) return false;
+        }
+
+        // Skip author, category, tag, page, latest posts, search, feeds
         $skipPatterns = [
             '/author/', '/category/', '/tag/', '/amp/',
             '/video/', '/podcast/', '/webinar/', '/about/', '/contact/',
@@ -207,18 +204,19 @@ class SitemapScraperService
             '/newsletter/', '/subscribe/', '/rss/', '/feed/',
             '/topics/', '/resources/', '/events/',
             '/latest-posts', '/latest-news', '/trending',
-            '/page/', '/search/',
+            '/page/', '/search/', '/sitemap', '/robots.txt',
+            '/embed/', '/api/', '/wp-json/', '/trackback/',
         ];
 
         foreach ($skipPatterns as $pattern) {
             if (stripos($url, $pattern) !== false) return false;
         }
 
-        $host = parse_url($url, PHP_URL_HOST);
-        $path = parse_url($url, PHP_URL_PATH);
-
         // Must be from allowed domains
-        $allowed = ['searchengineland.com', 'www.searchengineland.com', 'searchenginejournal.com', 'www.searchenginejournal.com'];
+        $host = parse_url($url, PHP_URL_HOST);
+        $path = parse_url($url, PHP_URL_PATH) ?? '';
+        $allowed = ['searchengineland.com', 'www.searchengineland.com',
+                    'searchenginejournal.com', 'www.searchenginejournal.com'];
         $validHost = false;
         foreach ($allowed as $domain) {
             if (stripos($host, $domain) !== false) {
@@ -228,9 +226,14 @@ class SitemapScraperService
         }
         if (!$validHost) return false;
 
-        // Must be a real article path (not just domain root or short path)
-        $pathLen = strlen(trim($path ?? '', '/'));
+        // Must be a real article path (not just root or very short path)
+        $pathLen = strlen(trim($path, '/'));
         if ($pathLen < 10) return false;
+
+        // Must have article slug format (hyphenated, not just numbers)
+        $slug = basename($path);
+        if (preg_match('/^\d+$/', $slug)) return false; // e.g. /98/, /123/
+        if (preg_match('/^[a-f0-9]{32,}$/', $slug)) return false; // hash filenames
 
         return true;
     }
