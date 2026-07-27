@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\KeywordResearchJob;
+use Illuminate\Support\Facades\Bus;
 use App\Jobs\ScrapeParaphraseJob;
 use App\Jobs\UpdateEditorPreferenceJob;
 use App\Models\EditorPreference;
@@ -65,7 +65,7 @@ class RefArticleController extends Controller
     // ── RESEARCH & RECOMMENDATIONS ─────────────────────────────
 
     /**
-     * Dispatch keyword research job
+     * Dispatch keyword research job SYNCHRONOUSLY so results appear immediately
      */
     public function research(Request $request)
     {
@@ -76,24 +76,29 @@ class RefArticleController extends Controller
         $keyword = trim($validated['keyword']);
 
         // Always delete old low-quality recommendations before re-researching
-        // This ensures fresh, AI-focused results
         $deleted = ResearchRecommendation::byKeyword($keyword)
             ->where('confidence_score', '<', 45)
             ->delete();
 
-        // Also reset rejected recommendations for this keyword so they can be re-fetched
+        // Reset rejected recommendations so they can be re-fetched
         ResearchRecommendation::byKeyword($keyword)
             ->where('status', 'rejected')
             ->update(['status' => 'pending']);
 
-        // Dispatch research job
-        KeywordResearchJob::dispatch($keyword);
+        // Run research SYNCHRONOUSLY so results appear immediately
+        $job = new \App\Jobs\KeywordResearchJob($keyword);
+        $job->handle(app(\App\Services\SitemapScraperService::class));
 
-        Log::info('Keyword research dispatched', ['keyword' => $keyword, 'deleted_low_score' => $deleted]);
+        Log::info('Keyword research completed synchronously', [
+            'keyword' => $keyword,
+            'deleted_low_score' => $deleted,
+        ]);
+
+        $count = ResearchRecommendation::byKeyword($keyword)->where('confidence_score', '>=', 45)->count();
 
         return redirect()
             ->route('ref-articles.recommendations', urlencode($keyword))
-            ->with('info', "Research untuk '{$keyword}' sedang diproses. Hapus {$deleted} hasil lama yang berkualitas rendah.");
+            ->with('info', "Research selesai! {$count} URL AI-focused ditemukan untuk '{$keyword}'. {$deleted} hasil lama dihapus.");
     }
 
     /**

@@ -166,17 +166,30 @@
             </div>
 
             {{-- Keyword Research Form --}}
-            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
-                <form action="{{ route('ref-articles.research') }}" method="POST" style="display:flex; gap:8px; flex:1; max-width:400px;">
-                    @csrf
-                    <input type="text" name="keyword" class="form-control" placeholder="Ketik keyword (contoh: AI systems, LLM, SEO AI)" required style="border-radius:8px;">
-                    <button type="submit" class="action-btn btn-research">
-                        Research
-                    </button>
-                </form>
+            <div>
+                {{-- Quick Topic Buttons --}}
+                <div style="margin-bottom:10px;">
+                    <span style="font-size:12px; color:#888; margin-right:8px;">Topik AI:</span>
+                    @foreach(['ChatGPT', 'Gemini', 'Claude', 'DeepSeek', 'OpenAI', 'LLM', 'SEO AI', 'AI Agent', 'Machine Learning', 'Artificial Intelligence', 'Anthropic', 'Mistral'] as $topic)
+                        <form action="{{ route('ref-articles.research') }}" method="POST" style="display:inline;">
+                            @csrf
+                            <input type="hidden" name="keyword" value="{{ $topic }}">
+                            <button type="submit" class="btn btn-outline-primary btn-sm" style="border-radius:15px; padding:2px 10px; font-size:11px; margin:2px;">
+                                {{ $topic }}
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
 
-                <div style="font-size:13px; color:#666; padding:6px 0;">
-                    Sumber: Search Engine Land &amp; Search Engine Journal | Maks 5 artikel/hari
+                {{-- Manual Keyword Search --}}
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <form action="{{ route('ref-articles.research') }}" method="POST" style="display:flex; gap:8px; flex:1; max-width:400px;">
+                        @csrf
+                        <input type="text" name="keyword" class="form-control" placeholder="Atau ketik topik AI baru (contoh: Grok, Perplexity, AI coding, Claude Code)" required style="border-radius:8px;">
+                        <button type="submit" class="action-btn btn-research">
+                            Research
+                        </button>
+                    </form>
                 </div>
             </div>
 
