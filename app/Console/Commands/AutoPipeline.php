@@ -25,7 +25,7 @@ class AutoPipeline extends Command
     protected $description = 'Automated AI pipeline: Sitemap research, scrape, paraphrase, and schedule publish (runs at 08:00 WIB daily)';
 
     protected const DAILY_LIMIT = 5;
-    protected const CONFIDENCE_THRESHOLD = 50.0; // Lowered since sitemap URLs are pre-validated
+    protected const CONFIDENCE_THRESHOLD = 45.0;
     protected const LOG_CHANNEL = 'ai-generate';
 
     public function handle(

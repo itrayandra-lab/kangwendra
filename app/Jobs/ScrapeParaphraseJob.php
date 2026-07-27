@@ -240,7 +240,11 @@ class ScrapeParaphraseJob implements ShouldQueue
             ]);
         }
 
-        $raw = $body['choices'][0]['message']['content'] ?? '';
+        $raw = trim($body['choices'][0]['message']['content'] ?? '');
+
+        // Sanitize: DeepSeek sometimes embeds raw newlines inside JSON strings
+        // Replace unescaped newlines with \n literal for JSON compatibility
+        $raw = preg_replace('/(?<!\\\)[\r\n]+/', "\n", $raw);
 
         // Try direct JSON parse first
         $decoded = json_decode($raw, true);
@@ -252,6 +256,8 @@ class ScrapeParaphraseJob implements ShouldQueue
 
         // Fallback: extract first { ... } block
         if (!$decoded && preg_match('/\{[\s\S]+\}/', $raw, $m)) {
+            $decoded = json_decode($m[0], true);
+        }
             $decoded = json_decode($m[0], true);
         }
 
