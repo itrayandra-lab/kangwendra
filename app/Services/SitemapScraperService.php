@@ -23,12 +23,11 @@ class SitemapScraperService
     /**
      * Find article URLs from sitemaps - discovers newest sitemaps first
      * and filters by minimum year to find AI-focused content.
-     * Processes domains round-robin to ensure both SEL and SEJ contribute.
+     * Fetches fairly from all domains, sorts by relevance, returns top candidates.
      */
     public function findUrls(string $keyword, int $limit = 10): array
     {
         $allEntries = [];
-        $maxTotalEntries = $limit * 5; // collect pool of candidates for good sorting
 
         // Step 1: Discover sitemaps for each domain
         $domainSitemaps = [];
@@ -48,37 +47,44 @@ class SitemapScraperService
             return [];
         }
 
-        // Step 2: Round-robin sitemap fetching (ensure both domains get represented)
+        // Step 2: Fair round-robin sitemap fetching
+        // Skip sitemaps that return 0 entries to allow exploring newer ones
         $sitemapIterators = [];
         foreach ($domainSitemaps as $domain => $sitemaps) {
             $sitemapIterators[$domain] = 0;
         }
+        $maxSitemapsPerDomain = 30;
+        $collectLimit = $limit * 10;
+        $maxPerDomain = 40; // cap entries per domain for diversity
 
-        $maxSitemapsPerDomain = 20; // limit sitemap fetches per domain
-
-        while (count($allEntries) < $maxTotalEntries) {
-            $fetchedThisRound = false;
+        while (count($allEntries) < $collectLimit) {
+            $allDone = true;
 
             foreach ($domainSitemaps as $domain => $sitemaps) {
-                if (count($allEntries) >= $maxTotalEntries) break;
-
                 $idx = &$sitemapIterators[$domain];
-                if ($idx >= count($sitemaps) || $idx >= $maxSitemapsPerDomain) {
-                    continue;
+                $domainEntries = 0;
+
+                // Skip sitemaps that return 0 entries (waste of a round)
+                while ($idx < count($sitemaps) && $idx < $maxSitemapsPerDomain) {
+                    $entries = $this->extractFromSitemap($sitemaps[$idx], $this->maxPerSitemap);
+                    $idx++;
+
+                    if (empty($entries)) continue; // try next sitemap without counting
+
+                    $domainEntries += count($entries);
+                    $allEntries = array_merge($allEntries, $entries);
+                    $allDone = false;
+                    break; // exit inner while, continue outer foreach
                 }
 
-                $sitemapUrl = $sitemaps[$idx];
-                $entries = $this->extractFromSitemap($sitemapUrl, $this->maxPerSitemap);
-                $allEntries = array_merge($allEntries, $entries);
-                $idx++;
-                $fetchedThisRound = true;
+                if ($domainEntries >= $maxPerDomain) continue;
+                if ($idx < count($sitemaps)) $allDone = false;
             }
 
-            // If no domain fetched anything this round, stop
-            if (!$fetchedThisRound) break;
+            if ($allDone) break;
         }
 
-        // Deduplicate by URL
+        // Step 3: Deduplicate
         $seen = [];
         $allEntries = array_filter($allEntries, function ($e) use (&$seen) {
             if (isset($seen[$e['url']])) return false;
@@ -86,7 +92,7 @@ class SitemapScraperService
             return true;
         });
 
-        // Sort by score + recency
+        // Step 4: Sort by score + recency
         usort($allEntries, function ($a, $b) use ($keyword) {
             $scoreA = $this->calculateConfidence($a['url'], $keyword);
             $scoreB = $this->calculateConfidence($b['url'], $keyword);
@@ -94,9 +100,7 @@ class SitemapScraperService
             return $b['date_ts'] <=> $a['date_ts'];
         });
 
-        $result = array_column(array_slice($allEntries, 0, $limit), 'url');
-
-        return $result;
+        return array_column(array_slice($allEntries, 0, $limit), 'url');
     }
 
     protected string $minArticleYear = '2022'; // Skip articles older than this
@@ -349,49 +353,69 @@ class SitemapScraperService
     }
 
     /**
-     * Calculate confidence score - MUST have AI keyword match to qualify
+     * Calculate confidence score.
+     * AI entity matching determines qualification (base score).
+     * User keyword matching gives bonus for ranking.
+     * Must have at least one AI keyword match to qualify.
      */
     public function calculateConfidence(string $url, string $keyword): float
     {
         $urlLower = strtolower($url);
-        $score = 30; // Start lower - base 50 was too permissive
+        $keywordLower = strtolower($keyword);
 
-        // AI keyword bonus (REQUIRED for high scores)
-        $aiBonus = [
-            'ai-agent' => 20, 'agentic-ai' => 20, 'generative-ai' => 18,
-            'machine-learning' => 18, 'deep-learning' => 18,
-            'large-language' => 20, 'llm' => 18,
-            'openai' => 15, 'chatgpt' => 15, 'gemini' => 15,
-            'deepseek' => 15, 'claude' => 15, 'mistral' => 15,
-            'google-ai' => 12, 'microsoft-ai' => 12, 'meta-ai' => 12,
-            'neural-network' => 15, 'transformer' => 15, 'rag-' => 15,
-            'seo-ai' => 18, 'search-ai' => 18,
-            'artificial-intelligence' => 18, 'nlp' => 12,
-            'enterprise-ai' => 12, 'ai-regulation' => 12,
-            'ai-chip' => 10, 'automation' => 8, 'robotics' => 8,
-            'anthropic' => 15, 'foundation-model' => 15,
-            'ai-startup' => 10, 'ai-funding' => 10,
+        // Step 1: AI entity match - ANY single match qualifies
+        // Each URL gets a FIXED bonus based on the BEST matching entity (not cumulative)
+        // This prevents URLs with many AI keywords from dominating
+        $aiKeywords = [
+            // Top entities (+20)
+            'gemini', 'claude', 'chatgpt', 'deepseek', 'mistral', 'openai',
+            'llm', 'large-language', 'artificial-intelligence', 'generative-ai',
+            'ai-agent', 'agentic', 'machine-learning', 'deep-learning',
+            'neural-network', 'transformer',
+            'gpt-5', 'gpt-4', 'copilot', 'anthropic',
+            'foundation-model', 'ai-model',
+            'seo-ai', 'search-ai', 'ai-search',
+            'enterprise-ai', 'microsoft-ai', 'google-ai', 'meta-ai',
+            'ai-tools', 'ai-platform', 'ai-regulation',
+            'ai-chip', 'robotics', 'ai-startup', 'ai-funding',
+            'automation',
         ];
-        $hasAiMatch = false;
-        foreach ($aiBonus as $kw => $bonus) {
+
+        $aiMatch = false;
+        foreach ($aiKeywords as $kw) {
             if (stripos($urlLower, $kw) !== false) {
-                $score += $bonus;
-                $hasAiMatch = true;
+                $aiMatch = true;
+                break;
             }
         }
 
-        // Domain bonus (only if also has AI match)
-        if ($hasAiMatch) {
-            if (stripos($urlLower, 'searchenginejournal.com') !== false) $score += 5;
-            if (stripos($urlLower, 'searchengineland.com') !== false) $score += 5;
+        if (!$aiMatch) {
+            return 15; // does not qualify
         }
 
-        // Reject penalty - heavy penalties for non-AI content
+        // Step 2: Base score for qualifying AI articles
+        $score = 45;
+
+        // Step 3: User keyword match bonus - small boost for relevant keywords
+        $keywordParts = preg_split('/[\s,\-_]+/', $keywordLower);
+        foreach ($keywordParts as $part) {
+            $part = trim($part);
+            if (strlen($part) < 3) continue;
+            if (stripos($urlLower, $part) !== false) {
+                $score += 5; // small bonus per keyword match (max ~20)
+            }
+        }
+
+        // Step 4: Domain bonus
+        if (stripos($urlLower, 'searchenginejournal.com') !== false) $score += 3;
+        if (stripos($urlLower, 'searchengineland.com') !== false) $score += 3;
+
+        // Step 5: Reject penalty
         $reject = [
-            'review' => -20, '-vs-' => -20, 'comparison' => -15,
+            'review' => -15, '-vs-' => -15, 'comparison' => -10,
             'budget' => -15, 'hp-murah' => -20, 'smartphone' => -15,
             'iphone' => -15, 'samsung' => -15, 'xiaomi' => -15, 'oppo' => -15,
-            'wordle' => -30, 'crossword' => -30, 'nyt' => -30,
+            'wordle' => -20, 'crossword' => -20, 'nyt' => -20,
             'yahoo' => -15, 'bing' => -10, 'youtube' => -10,
             'facebook' => -10, 'twitter' => -10, 'instagram' => -10,
             'shopping' => -15, 'ecommerce' => -15, 'price' => -15,
@@ -401,7 +425,7 @@ class SitemapScraperService
             if (stripos($urlLower, $pattern) !== false) $score += $penalty;
         }
 
-        return max(15, min(98, $score));
+        return max(20, min(80, $score));
     }
 
     /**
