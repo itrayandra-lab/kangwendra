@@ -52,11 +52,11 @@ class KeywordResearchJob implements ShouldQueue
         Log::info('KeywordResearchJob: found ' . count($urls) . ' URLs', ['keyword' => $this->keyword]);
 
         // Step 2: Save recommendations (only high-confidence AI URLs)
-        // Confidence score must be >= 50 to qualify as AI-focused
+        // Confidence score must be >= configured threshold (default 45)
         $saved = 0;
         $skippedLowScore = 0;
         $skippedExisting = 0;
-        $minConfidence = 45;
+        $minConfidence = \App\Models\ScraperConfig::getConfidenceThreshold();
 
         foreach ($urls as $url) {
             if ($saved >= $this->maxUrls) break;

@@ -170,7 +170,7 @@
                 {{-- Quick Topic Buttons --}}
                 <div style="margin-bottom:10px;">
                     <span style="font-size:12px; color:#888; margin-right:8px;">Topik AI:</span>
-                    @foreach(['ChatGPT', 'Gemini', 'Claude', 'DeepSeek', 'OpenAI', 'LLM', 'SEO AI', 'AI Agent', 'Machine Learning', 'Artificial Intelligence', 'Anthropic', 'Mistral'] as $topic)
+                    @foreach(App\Models\ScraperConfig::getKeywords() as $topic)
                         <form action="{{ route('ref-articles.research') }}" method="POST" style="display:inline;">
                             @csrf
                             <input type="hidden" name="keyword" value="{{ $topic }}">

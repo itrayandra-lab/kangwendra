@@ -195,6 +195,11 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::post('/keywords', 'storeKeyword')->name('ref-articles.keywords.store');
         Route::delete('/keywords/{id}', 'destroyKeyword')->name('ref-articles.keywords.destroy');
         Route::post('/clear-blocklists', 'clearBlocklists')->name('ref-articles.clear-blocklists');
+        Route::get('/scrape-config', [App\Http\Controllers\Admin\ScraperConfigController::class, 'index'])->name('admin.scraper-config.index');
+        Route::put('/scrape-config/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'update'])->name('admin.scraper-config.update');
+        Route::post('/scrape-config/add-item/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'addItem'])->name('admin.scraper-config.add-item');
+        Route::post('/scrape-config/remove-item/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'removeItem'])->name('admin.scraper-config.remove-item');
+        Route::post('/scrape-config/flush-cache', [App\Http\Controllers\Admin\ScraperConfigController::class, 'flushCache'])->name('admin.scraper-config.flush-cache');
         Route::get('/{refArticle}', 'show')->name('ref-articles.show');
         Route::post('/{refArticle}/generate', 'generate')->name('ref-articles.generate');
         Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');

@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             PostTagSeeder::class,
             PostSeeder::class,
             PublishScheduleSeeder::class,
+            ScraperConfigSeeder::class,
         ]);
     }
 }

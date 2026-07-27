@@ -13,13 +13,18 @@ class SitemapScraperService
     protected int $maxPerSitemap = 50; // Max URLs to fetch per sitemap
 
     // Base sitemap index URLs
-    protected array $sitemapIndices = [
-        'searchengineland.com'        => 'https://searchengineland.com/sitemap_index.xml',
-        'searchenginejournal.com'     => 'https://www.searchenginejournal.com/sitemap_index.xml',
-    ];
+    // Read sitemap indices from ScraperConfig DB
+    protected array $sitemapIndices = [];
 
     // Minimum year for articles (AI content started appearing ~2022-2023)
     protected string $minYear = '2022';
+
+    public function __construct()
+    {
+        $this->sitemapIndices = \App\Models\ScraperConfig::getSourceUrls();
+        $year = \App\Models\ScraperConfig::getMinYear();
+        if ($year) $this->minYear = (string) $year;
+    }
 
     /**
      * Find article URLs from sitemaps - discovers newest sitemaps first

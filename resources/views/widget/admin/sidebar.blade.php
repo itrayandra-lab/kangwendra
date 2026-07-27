@@ -148,6 +148,13 @@
                     </a>
                 </li>
 
+                <!-- Menu Konfigurasi Scraping -->
+                <li>
+                    <a href="{{ route('admin.scraper-config.index') }}" class="waves-effect {{ isActive($page, 'Konfigurasi Scraping') }}">
+                        <i class="fa fa-cogs"></i><span>Konfigurasi Scraping</span>
+                    </a>
+                </li>
+
                 @if (auth()->user()->hasAnyPermission(['manage roles', 'manage permissions', 'view domain-share']))
                     <li class="has_sub">
                         <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Roles', 'Permissions', 'Domain Share']) }}">

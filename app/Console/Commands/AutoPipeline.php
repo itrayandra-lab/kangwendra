@@ -24,9 +24,13 @@ class AutoPipeline extends Command
 
     protected $description = 'Automated AI pipeline: Sitemap research, scrape, paraphrase, and schedule publish (runs at 08:00 WIB daily)';
 
-    protected const DAILY_LIMIT = 5;
     protected const CONFIDENCE_THRESHOLD = 45.0;
     protected const LOG_CHANNEL = 'ai-generate';
+
+    protected function getDailyLimit(): int
+    {
+        return \App\Models\ScraperConfig::getDailyLimit();
+    }
 
     public function handle(
         EditorPreferenceService $prefService,
@@ -49,14 +53,14 @@ class AutoPipeline extends Command
             ->where('status', 'draft')
             ->count();
 
-        if ($publishedToday >= self::DAILY_LIMIT) {
+        if ($publishedToday >= $this->getDailyLimit()) {
             $this->warn("Daily limit ({$publishedToday}/{$this->getDailyLimit()}) reached. Exiting.");
             Log::info('AutoPipeline: daily limit reached', ['count' => $publishedToday]);
             return 0;
         }
 
         // Effective max: can't exceed remaining slots
-        $remainingSlots = max(0, self::DAILY_LIMIT - $publishedToday);
+        $remainingSlots = max(0, $this->getDailyLimit() - $publishedToday);
         $effectiveMax = min((int) $this->option('max'), $remainingSlots);
         $this->info("Articles remaining today: {$remainingSlots} (will dispatch max {$effectiveMax})");
 
@@ -164,7 +168,7 @@ class AutoPipeline extends Command
         $this->info("  - Keywords processed: " . count($keywords));
         $this->info("  - Articles dispatched: {$dispatched}");
         $this->info("  - Duration: {$duration}s");
-        $this->info("  - Daily total: " . ($publishedToday + $dispatched) . '/' . self::DAILY_LIMIT);
+        $this->info("  - Daily total: " . ($publishedToday + $dispatched) . '/' . $this->getDailyLimit());
         $this->info('============================================');
 
         Log::info('AutoPipeline: completed', [
@@ -175,10 +179,5 @@ class AutoPipeline extends Command
         ]);
 
         return 0;
-    }
-
-    protected function getDailyLimit(): int
-    {
-        return self::DAILY_LIMIT;
     }
 }
