@@ -22,33 +22,60 @@ class SitemapScraperService
 
     /**
      * Find article URLs from sitemaps - discovers newest sitemaps first
-     * and filters by minimum year to find AI-focused content
+     * and filters by minimum year to find AI-focused content.
+     * Processes domains round-robin to ensure both SEL and SEJ contribute.
      */
     public function findUrls(string $keyword, int $limit = 10): array
     {
         $allEntries = [];
+        $maxTotalEntries = $limit * 5; // collect pool of candidates for good sorting
 
+        // Step 1: Discover sitemaps for each domain
+        $domainSitemaps = [];
         foreach ($this->sitemapIndices as $domain => $indexUrl) {
             $postSitemaps = $this->discoverPostSitemaps($indexUrl);
 
             if (empty($postSitemaps)) {
-                // Fallback: try old static sitemaps
-                $fallback = $this->getFallbackSitemaps($domain);
-                foreach ($fallback as $url) {
-                    $entries = $this->extractFromSitemap($url, $this->maxPerSitemap);
-                    $allEntries = array_merge($allEntries, $entries);
-                    if (count($allEntries) >= $limit * 5) break 2;
-                }
-                continue;
+                $postSitemaps = $this->getFallbackSitemaps($domain);
             }
 
-            // Process newest sitemaps first
-            foreach ($postSitemaps as $sitemapUrl) {
+            if (!empty($postSitemaps)) {
+                $domainSitemaps[$domain] = $postSitemaps;
+            }
+        }
+
+        if (empty($domainSitemaps)) {
+            return [];
+        }
+
+        // Step 2: Round-robin sitemap fetching (ensure both domains get represented)
+        $sitemapIterators = [];
+        foreach ($domainSitemaps as $domain => $sitemaps) {
+            $sitemapIterators[$domain] = 0;
+        }
+
+        $maxSitemapsPerDomain = 20; // limit sitemap fetches per domain
+
+        while (count($allEntries) < $maxTotalEntries) {
+            $fetchedThisRound = false;
+
+            foreach ($domainSitemaps as $domain => $sitemaps) {
+                if (count($allEntries) >= $maxTotalEntries) break;
+
+                $idx = &$sitemapIterators[$domain];
+                if ($idx >= count($sitemaps) || $idx >= $maxSitemapsPerDomain) {
+                    continue;
+                }
+
+                $sitemapUrl = $sitemaps[$idx];
                 $entries = $this->extractFromSitemap($sitemapUrl, $this->maxPerSitemap);
                 $allEntries = array_merge($allEntries, $entries);
-
-                if (count($allEntries) >= $limit * 5) break 2;
+                $idx++;
+                $fetchedThisRound = true;
             }
+
+            // If no domain fetched anything this round, stop
+            if (!$fetchedThisRound) break;
         }
 
         // Deduplicate by URL
@@ -250,10 +277,19 @@ class SitemapScraperService
         $pathLen = strlen(trim($path, '/'));
         if ($pathLen < 10) return false;
 
-        // Must have article slug format (hyphenated, not just numbers)
-        $slug = basename($path);
-        if (preg_match('/^\d+$/', $slug)) return false; // e.g. /98/, /123/
-        if (preg_match('/^[a-f0-9]{32,}$/', $slug)) return false; // hash filenames
+        // Extract slug from path
+        // SEJ: /article-title/123456 → get article-title
+        // SEL: /article-title-123456 → get article-title-123456
+        $cleanPath = rtrim($path, '/');
+        // If last segment is numeric (5+ digits = article ID), strip it
+        if (preg_match('/^(\/.*?)\/\d{5,}$/', $cleanPath, $m)) {
+            $cleanPath = $m[1];
+        }
+        $slug = basename($cleanPath);
+        if (empty($slug)) return false;
+        // Reject if slug is purely numeric or hash
+        if (preg_match('/^\d+$/', $slug)) return false;
+        if (preg_match('/^[a-f0-9]{32,}$/', $slug)) return false;
 
         return true;
     }
