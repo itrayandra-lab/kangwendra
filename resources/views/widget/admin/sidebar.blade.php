@@ -141,6 +141,13 @@
                     </a>
                 </li>
 
+                <!-- Menu Jadwal Publish -->
+                <li>
+                    <a href="{{ route('schedules.index') }}" class="waves-effect {{ isActive($page, 'Jadwal Publish') }}">
+                        <i class="fa fa-clock-o"></i><span>Jadwal Publish</span>
+                    </a>
+                </li>
+
                 @if (auth()->user()->hasAnyPermission(['manage roles', 'manage permissions', 'view domain-share']))
                     <li class="has_sub">
                         <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Roles', 'Permissions', 'Domain Share']) }}">

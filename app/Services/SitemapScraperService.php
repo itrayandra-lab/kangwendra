@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -53,9 +54,9 @@ class SitemapScraperService
         foreach ($domainSitemaps as $domain => $sitemaps) {
             $sitemapIterators[$domain] = 0;
         }
-        $maxSitemapsPerDomain = 30;
-        $collectLimit = $limit * 10;
-        $maxPerDomain = 40; // cap entries per domain for diversity
+        $maxSitemapsPerDomain = 5; // only check 5 newest sitemaps per domain (fast)
+        $collectLimit = $limit * 5; // collect up to 5x the needed entries before filtering
+        $maxPerDomain = 100; // cap entries per domain for diversity
 
         while (count($allEntries) < $collectLimit) {
             $allDone = true;
@@ -66,7 +67,7 @@ class SitemapScraperService
 
                 // Skip sitemaps that return 0 entries (waste of a round)
                 while ($idx < count($sitemaps) && $idx < $maxSitemapsPerDomain) {
-                    $entries = $this->extractFromSitemap($sitemaps[$idx], $this->maxPerSitemap);
+                    $entries = $this->extractFromSitemap($sitemaps[$idx]['url'], $this->maxPerSitemap);
                     $idx++;
 
                     if (empty($entries)) continue; // try next sitemap without counting
@@ -464,59 +465,64 @@ class SitemapScraperService
 
     /**
      * Dynamically discover post sitemaps from sitemap_index.xml,
-     * sorted newest first, filtered by minimum year
+     * sorted newest first, filtered by minimum year.
+     * Results are cached for 1 hour.
      */
     protected function discoverPostSitemaps(string $indexUrl): array
     {
-        try {
-            $response = Http::timeout($this->timeout)
-                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; KangwendraBot/1.0)'])
-                ->get($indexUrl);
+        $cacheKey = 'sitemap_discovered_' . md5($indexUrl);
 
-            if (!$response->successful()) {
-                return [];
-            }
+        return Cache::remember($cacheKey, 3600, function () use ($indexUrl) {
+            try {
+                $response = Http::timeout($this->timeout)
+                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; KangwendraBot/1.0)'])
+                    ->get($indexUrl);
 
-            libxml_use_internal_errors(true);
-            $xml = @simplexml_load_string($response->body());
-            libxml_clear_errors();
-
-            if (!$xml) {
-                return [];
-            }
-
-            $postSitemaps = [];
-
-            foreach ($xml->sitemap as $sitemap) {
-                $loc = trim((string) ($sitemap->loc ?? ''));
-                $lastmod = trim((string) ($sitemap->lastmod ?? ''));
-
-                // Only include post-sitemap*.xml (not category, author, page, video)
-                if (!preg_match('/post-sitemap\d*\.xml$/i', basename($loc))) {
-                    continue;
+                if (!$response->successful()) {
+                    return [];
                 }
 
-                // Filter by year from lastmod
-                $year = (int) substr($lastmod, 0, 4);
-                if ($year < (int) $this->minYear) {
-                    continue;
+                libxml_use_internal_errors(true);
+                $xml = @simplexml_load_string($response->body());
+                libxml_clear_errors();
+
+                if (!$xml) {
+                    return [];
                 }
 
-                $postSitemaps[] = [
-                    'url'     => $loc,
-                    'lastmod' => $lastmod,
-                    'year'    => $year,
-                ];
+                $postSitemaps = [];
+
+                foreach ($xml->sitemap as $sitemap) {
+                    $loc = trim((string) ($sitemap->loc ?? ''));
+                    $lastmod = trim((string) ($sitemap->lastmod ?? ''));
+
+                    // Only include post-sitemap*.xml (not category, author, page, video)
+                    if (!preg_match('/post-sitemap\d*\.xml$/i', basename($loc))) {
+                        continue;
+                    }
+
+                    // Filter by year from lastmod
+                    $year = (int) substr($lastmod, 0, 4);
+                    if ($year < (int) $this->minYear) {
+                        continue;
+                    }
+
+                    $postSitemaps[] = [
+                        'url'     => $loc,
+                        'lastmod' => $lastmod,
+                        'year'    => $year,
+                    ];
+                }
+
+                // Sort by lastmod descending (newest first)
+                usort($postSitemaps, fn($a, $b) => $b['lastmod'] <=> $a['lastmod']);
+
+                return $postSitemaps;
+            } catch (\Throwable $e) {
+                Log::warning('Sitemap discovery failed', ['url' => $indexUrl, 'error' => $e->getMessage()]);
+                return [];
             }
-
-            // Sort by lastmod descending (newest first)
-            usort($postSitemaps, fn($a, $b) => $b['lastmod'] <=> $a['lastmod']);
-
-            return array_column($postSitemaps, 'url');
-
-        } catch (\Exception $e) {
-            return [];
-        }
+        });
     }
 
     /**
@@ -530,7 +536,7 @@ class SitemapScraperService
             // Try post-sitemap296 down to post-sitemap290 (most recent)
             $sitemaps = [];
             for ($i = 296; $i >= 290; $i--) {
-                $sitemaps[] = "{$base}/post-sitemap{$i}.xml";
+                $sitemaps[] = ['url' => "{$base}/post-sitemap{$i}.xml", 'lastmod' => '', 'year' => 2026];
             }
             return $sitemaps;
         }
@@ -538,11 +544,11 @@ class SitemapScraperService
         if ($domain === 'searchenginejournal.com') {
             $sitemaps = [];
             for ($i = 10; $i >= 1; $i--) {
-                $sitemaps[] = "{$base}/post-sitemap{$i}.xml";
+                $sitemaps[] = ['url' => "{$base}/post-sitemap{$i}.xml", 'lastmod' => '', 'year' => 2026];
             }
             return $sitemaps;
         }
 
-        return ["{$base}/post-sitemap.xml"];
+        return [['url' => "{$base}/post-sitemap.xml", 'lastmod' => '', 'year' => 2022]];
     }
 }

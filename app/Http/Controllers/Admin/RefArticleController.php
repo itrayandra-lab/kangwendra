@@ -449,6 +449,59 @@ class RefArticleController extends Controller
             ->with('success', 'Post berhasil disimpan: ' . Str::limit($post->title, 50));
     }
 
+    // ── KEYWORD MANAGEMENT ────────────────────────────────────
+
+    /**
+     * List all keywords from editor_preferences
+     */
+    public function indexKeywords()
+    {
+        $page = 'Kelola Kata Kunci';
+        $keywords = EditorPreference::orderBy('created_at', 'desc')->get();
+        return view('pages.admin.ref-articles.keywords', compact('page', 'keywords'));
+    }
+
+    /**
+     * Add a new keyword
+     */
+    public function storeKeyword(Request $request)
+    {
+        $validated = $request->validate([
+            'keyword' => 'required|string|min:2|max:50|unique:editor_preferences,keyword',
+        ]);
+
+        EditorPreference::create([
+            'keyword' => trim(strtolower($validated['keyword'])),
+        ]);
+
+        return back()->with('success', "Kata kunci '{$validated['keyword']}' berhasil ditambahkan.");
+    }
+
+    /**
+     * Delete a keyword
+     */
+    public function destroyKeyword($id)
+    {
+        $pref = EditorPreference::findOrFail($id);
+        $keyword = $pref->keyword;
+        $pref->delete();
+
+        return back()->with('success', "Kata kunci '{$keyword}' berhasil dihapus.");
+    }
+
+    /**
+     * Clear all blocklists from all EditorPreference records
+     */
+    public function clearBlocklists()
+    {
+        $cleared = EditorPreference::whereNotNull('blocklist_urls')
+            ->where('blocklist_urls', '!=', '')
+            ->where('blocklist_urls', '!=', '[]')
+            ->update(['blocklist_urls' => null, 'blocklist_patterns' => null]);
+
+        return back()->with('info', "Blocklist berhasil dibersihkan dari {$cleared} record.");
+    }
+
     // ── HELPERS ───────────────────────────────────────────────
 
     protected function extractTopic(string $title): string

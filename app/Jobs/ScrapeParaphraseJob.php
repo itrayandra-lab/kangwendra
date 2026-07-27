@@ -370,26 +370,8 @@ PROMPT;
         $allTags = array_unique(array_merge(['AI', 'Teknologi'], $matchedTags, $aiTags));
         $tags = array_slice(array_values($allTags), 0, 8);
 
-        // Category priority: Keuangan/Gaya Hidup/Kesehatan/Pendidikan/Hiburan/Gaming=1, Bisnis/Sains=2, Teknologi=3
-        $categoryPriority = [
-            'Keuangan'   => 1,
-            'Gaya Hidup' => 1,
-            'Kesehatan' => 1,
-            'Pendidikan' => 1,
-            'Hiburan'   => 1,
-            'Gaming'     => 1,
-            'Bisnis'     => 2,
-            'Sains'      => 2,
-            'Teknologi'  => 3,
-        ];
-        $categoryNames = array_keys($matchedCategories);
-        usort($categoryNames, fn($a, $b) => ($categoryPriority[$a] ?? 9) <=> ($categoryPriority[$b] ?? 9));
-        $selectedCategory = $categoryNames[0] ?? 'Teknologi';
-
-        $category = PostCategory::firstOrCreate(
-            ['slug' => Str::slug($selectedCategory)],
-            ['name' => $selectedCategory, 'description' => "Berita {$selectedCategory} terbaru"]
-        );
+        // Always assign to Teknologi category for AI pipeline articles
+        $category = PostCategory::where('slug', 'teknologi')->first();
 
         // Create tag entries
         foreach ($tags as $tagName) {

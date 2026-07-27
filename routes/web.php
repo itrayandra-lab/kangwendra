@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\WebIdentityController;
 use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\RefArticleController;
 use App\Http\Controllers\Admin\RssController;
+use App\Http\Controllers\Admin\PublishScheduleController;
 
 # Auth
 Route::group(['prefix' => 'portal', 'controller' => LoginController::class], function () {
@@ -190,6 +191,10 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/batch-progress', 'batchProgress')->name('ref-articles.batch-progress');
         Route::get('/batch-status', 'batchStatus')->name('ref-articles.batch-status');
         Route::get('/recommendations/{keyword}', 'recommendations')->name('ref-articles.recommendations');
+        Route::get('/keywords', 'indexKeywords')->name('ref-articles.keywords.index');
+        Route::post('/keywords', 'storeKeyword')->name('ref-articles.keywords.store');
+        Route::delete('/keywords/{id}', 'destroyKeyword')->name('ref-articles.keywords.destroy');
+        Route::post('/clear-blocklists', 'clearBlocklists')->name('ref-articles.clear-blocklists');
         Route::get('/{refArticle}', 'show')->name('ref-articles.show');
         Route::post('/{refArticle}/generate', 'generate')->name('ref-articles.generate');
         Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
@@ -208,6 +213,15 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
     Route::group(['controller' => PostsController::class], function () {
         Route::post('/posts/{id}/unpublish', 'unpublish')->name('posts.unpublish');
         Route::post('/posts/{id}/regenerate', 'regenerate')->name('posts.regenerate');
+    });
+
+    # Publish Schedule Management
+    Route::group(['prefix' => 'schedules', 'controller' => PublishScheduleController::class], function () {
+        Route::get('/', 'index')->name('schedules.index');
+        Route::post('/', 'store')->name('schedules.store');
+        Route::put('/{id}', 'update')->name('schedules.update');
+        Route::delete('/{id}', 'destroy')->name('schedules.destroy');
+        Route::post('/toggle/{id}', 'toggle')->name('schedules.toggle');
     });
 
 });

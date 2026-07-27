@@ -15,24 +15,13 @@ Schedule::command('app:auto-pipeline --max=5')
     ->appendOutputTo(storage_path('logs/auto-pipeline.log'));
 
 // =============================================
-// PUBLISH: 3 slot per hari (Indonesia WIB)
-// Slot 1: 08:00, Slot 2: 13:00, Slot 3: 16:00
-// Max 1 post per slot
+// PUBLISH: Dynamic schedules from database
+// Command runs every minute and checks active
+// schedules in the publish_schedules table
 // =============================================
-Schedule::command('app:publish-scheduled-posts --limit=1')
-    ->dailyAt('08:00')
+Schedule::command('app:publish-scheduled-posts')
+    ->everyMinute()
     ->timezone('Asia/Jakarta')
     ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/publish-08.log'));
-
-Schedule::command('app:publish-scheduled-posts --limit=1')
-    ->dailyAt('13:00')
-    ->timezone('Asia/Jakarta')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/publish-13.log'));
-
-Schedule::command('app:publish-scheduled-posts --limit=1')
-    ->dailyAt('16:00')
-    ->timezone('Asia/Jakarta')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/publish-16.log'));
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/publish-scheduled.log'));
