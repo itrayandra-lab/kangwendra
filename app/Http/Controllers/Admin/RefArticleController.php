@@ -75,22 +75,25 @@ class RefArticleController extends Controller
 
         $keyword = trim($validated['keyword']);
 
-        // Check if already has pending recommendations
-        $existing = ResearchRecommendation::byKeyword($keyword)->pending()->count();
-        if ($existing > 0) {
-            return redirect()
-                ->route('ref-articles.recommendations', urlencode($keyword))
-                ->with('info', "Sudah ada {$existing} rekomendasi untuk keyword '{$keyword}'.");
-        }
+        // Always delete old low-quality recommendations before re-researching
+        // This ensures fresh, AI-focused results
+        $deleted = ResearchRecommendation::byKeyword($keyword)
+            ->where('confidence_score', '<', 45)
+            ->delete();
+
+        // Also reset rejected recommendations for this keyword so they can be re-fetched
+        ResearchRecommendation::byKeyword($keyword)
+            ->where('status', 'rejected')
+            ->update(['status' => 'pending']);
 
         // Dispatch research job
         KeywordResearchJob::dispatch($keyword);
 
-        Log::info('Keyword research dispatched', ['keyword' => $keyword]);
+        Log::info('Keyword research dispatched', ['keyword' => $keyword, 'deleted_low_score' => $deleted]);
 
         return redirect()
             ->route('ref-articles.recommendations', urlencode($keyword))
-            ->with('info', "Research untuk '{$keyword}' sedang diproses. Refresh dalam beberapa detik.");
+            ->with('info', "Research untuk '{$keyword}' sedang diproses. Hapus {$deleted} hasil lama yang berkualitas rendah.");
     }
 
     /**
@@ -101,14 +104,22 @@ class RefArticleController extends Controller
         $keyword = urldecode($keyword);
         $page = 'Rekomendasi Artikel';
 
+        // Show ONLY high-confidence recommendations (score >= 45)
+        // This filters out old low-quality results from before the fixes
         $recommendations = ResearchRecommendation::byKeyword($keyword)
+            ->where('confidence_score', '>=', 45)
             ->orderByDesc('confidence_score')
             ->get();
+
+        // Count old low-score recommendations separately
+        $lowScoreCount = ResearchRecommendation::byKeyword($keyword)
+            ->where('confidence_score', '<', 45)
+            ->count();
 
         $pref = EditorPreference::where('keyword', strtolower($keyword))->first();
 
         return view('pages.admin.ref-articles.recommendations', compact(
-            'page', 'keyword', 'recommendations', 'pref'
+            'page', 'keyword', 'recommendations', 'pref', 'lowScoreCount'
         ));
     }
 

@@ -42,6 +42,7 @@
 .confidence-high { background: #d1e7dd; color: #0f5132; }
 .confidence-mid  { background: #fff3cd; color: #856404; }
 .confidence-low  { background: #f8d7da; color: #842029; }
+.confidence-filtered { background: #e2e3e5; color: #41464b; }
 .domain-badge {
     background: #e9ecef;
     padding: 2px 8px;
@@ -100,11 +101,24 @@
             </div>
         @endif
 
+        @if($lowScoreCount > 0)
+        <div class="alert alert-warning" style="border-radius:8px;">
+            <strong>Peringatan:</strong> {{ $lowScoreCount }} URL dari hasil pencarian sebelumnya berkualitas rendah
+            (score &lt; 45%) dan tidak ditampilkan.
+            Klik <strong>Re-Research</strong> untuk cari artikel AI yang lebih relevan.
+        </div>
+        @endif
+
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <div>
                 <h4 style="margin:0;">Rekomendasi untuk: <strong>{{ $keyword }}</strong></h4>
                 <p style="margin:4px 0 0; color:#666; font-size:13px;">
-                    {{ $recommendations->count() }} URL ditemukan
+                    {{ $recommendations->count() }} URL AI-focused ditemukan
+                    @if($lowScoreCount > 0)
+                        <span class="badge badge-warning" style="margin-left:8px;">
+                            {{ $lowScoreCount }} hasil lama ditolak (score &lt; 45%)
+                        </span>
+                    @endif
                 </p>
             </div>
             <div>
@@ -162,9 +176,10 @@
                 <div style="text-align:right; margin-left:12px;">
                     @php
                         $score = $rec->confidence_score ?? 50;
-                        $cls = $score >= 85 ? 'confidence-high' : ($score >= 60 ? 'confidence-mid' : 'confidence-low');
+                        $cls = $score >= 65 ? 'confidence-high' : ($score >= 45 ? 'confidence-mid' : 'confidence-low');
+                        $label = $score >= 65 ? 'AI-FOCUSED' : ($score >= 45 ? 'MEDIUM' : 'LOW');
                     @endphp
-                    <span class="confidence-badge {{ $cls }}">{{ round($score) }}%</span>
+                    <span class="confidence-badge {{ $cls }}" style="font-size:11px;">{{ $label }} {{ round($score) }}%</span>
                 </div>
             </div>
 
@@ -200,7 +215,7 @@
                     <span class="badge badge-danger">Rejected (Blocklisted)</span>
                 @endif
 
-                <a href="{{ $rec->url }}" target="_blank" class="btn btn-default btn-xs">
+                <a href="{{ $rec->url }}" target="_blank" class="btn btn-info btn-xs" style="border-radius:6px;">
                     Visit URL
                 </a>
             </div>
@@ -208,13 +223,17 @@
         @empty
         <div class="panel panel-default">
             <div class="panel-body text-center" style="padding:40px; color:#888;">
-                <p>Tidak ada rekomendasi untuk keyword "{{ $keyword }}".</p>
+                <p>Tidak ada rekomendasi AI-focused untuk keyword "{{ $keyword }}" (score &gt;= 45%).</p>
+                <p style="color:#666; font-size:13px;">
+                    Pipeline akan mencari artikel dari Search Engine Land &amp; Search Engine Journal
+                    yang mengandung topik AI (ChatGPT, Gemini, Machine Learning, OpenAI, dll).
+                </p>
                 <p>
                     <form action="{{ route('ref-articles.research') }}" method="POST" style="display:inline;">
                         @csrf
                         <input type="hidden" name="keyword" value="{{ $keyword }}">
                         <button type="submit" class="btn btn-primary btn-sm">
-                            Jalankan Research Ulang
+                            Jalankan Research
                         </button>
                     </form>
                 </p>
