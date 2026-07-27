@@ -51,13 +51,23 @@ class KeywordResearchJob implements ShouldQueue
 
         Log::info('KeywordResearchJob: found ' . count($urls) . ' URLs', ['keyword' => $this->keyword]);
 
-        // Step 2: Save recommendations (NO HTTP validation here)
-        // Validation cukup dilakukan di ScrapeParaphraseJob
+        // Step 2: Save recommendations (only high-confidence AI URLs)
+        // Confidence score must be >= 50 to qualify as AI-focused
         $saved = 0;
+        $skippedLowScore = 0;
         $skippedExisting = 0;
+        $minConfidence = 45;
 
         foreach ($urls as $url) {
             if ($saved >= $this->maxUrls) break;
+
+            $confidence = $scraper->calculateConfidence($url, $this->keyword);
+
+            // Only save URLs with sufficient AI signal
+            if ($confidence < $minConfidence) {
+                $skippedLowScore++;
+                continue;
+            }
 
             // Skip if URL already saved for THIS keyword
             if (ResearchRecommendation::where('url', $url)->where('keyword', $this->keyword)->exists()) {
@@ -68,7 +78,6 @@ class KeywordResearchJob implements ShouldQueue
             try {
                 $title = $scraper->extractTitleFromSlug($url);
                 $domain = $scraper->getDomain($url);
-                $confidence = $scraper->calculateConfidence($url, $this->keyword);
 
                 ResearchRecommendation::create([
                     'keyword'           => $this->keyword,
@@ -90,6 +99,7 @@ class KeywordResearchJob implements ShouldQueue
         Log::info('KeywordResearchJob: completed', [
             'keyword'          => $this->keyword,
             'saved'            => $saved,
+            'skipped_low_score' => $skippedLowScore,
             'skipped_existing' => $skippedExisting,
         ]);
     }

@@ -11,34 +11,39 @@ class SitemapScraperService
     protected int $validateTimeout = 10;
     protected int $maxPerSitemap = 50; // Max URLs to fetch per sitemap
 
-    // Paginated post sitemaps - these contain the LATEST articles
-    protected array $baseSitemaps = [
-        'searchengineland.com' => [
-            1 => 'https://searchengineland.com/post-sitemap.xml',
-            2 => 'https://searchengineland.com/post-sitemap2.xml',
-            3 => 'https://searchengineland.com/post-sitemap3.xml',
-            4 => 'https://searchengineland.com/post-sitemap4.xml',
-            5 => 'https://searchengineland.com/post-sitemap5.xml',
-        ],
-        'searchenginejournal.com' => [
-            1 => 'https://www.searchenginejournal.com/post-sitemap.xml',
-            2 => 'https://www.searchenginejournal.com/post-sitemap2.xml',
-            3 => 'https://www.searchenginejournal.com/post-sitemap3.xml',
-            4 => 'https://www.searchenginejournal.com/post-sitemap4.xml',
-            5 => 'https://www.searchenginejournal.com/post-sitemap5.xml',
-        ],
+    // Base sitemap index URLs
+    protected array $sitemapIndices = [
+        'searchengineland.com'        => 'https://searchengineland.com/sitemap_index.xml',
+        'searchenginejournal.com'     => 'https://www.searchenginejournal.com/sitemap_index.xml',
     ];
 
+    // Minimum year for articles (AI content started appearing ~2022-2023)
+    protected string $minYear = '2022';
+
     /**
-     * Find article URLs from sitemaps (keyword-matched, no date filter
-     * since sitemap URLs are already pre-validated by search engines)
+     * Find article URLs from sitemaps - discovers newest sitemaps first
+     * and filters by minimum year to find AI-focused content
      */
     public function findUrls(string $keyword, int $limit = 10): array
     {
         $allEntries = [];
 
-        foreach ($this->baseSitemaps as $domain => $sitemaps) {
-            foreach ($sitemaps as $pageNum => $sitemapUrl) {
+        foreach ($this->sitemapIndices as $domain => $indexUrl) {
+            $postSitemaps = $this->discoverPostSitemaps($indexUrl);
+
+            if (empty($postSitemaps)) {
+                // Fallback: try old static sitemaps
+                $fallback = $this->getFallbackSitemaps($domain);
+                foreach ($fallback as $url) {
+                    $entries = $this->extractFromSitemap($url, $this->maxPerSitemap);
+                    $allEntries = array_merge($allEntries, $entries);
+                    if (count($allEntries) >= $limit * 5) break 2;
+                }
+                continue;
+            }
+
+            // Process newest sitemaps first
+            foreach ($postSitemaps as $sitemapUrl) {
                 $entries = $this->extractFromSitemap($sitemapUrl, $this->maxPerSitemap);
                 $allEntries = array_merge($allEntries, $entries);
 
@@ -67,8 +72,11 @@ class SitemapScraperService
         return $result;
     }
 
+    protected string $minArticleYear = '2022'; // Skip articles older than this
+
     /**
-     * Extract URLs from sitemap using SimpleXML (handles namespaces)
+     * Extract URLs from sitemap using SimpleXML (handles namespaces).
+     * Only includes entries with lastmod >= $minArticleYear.
      */
     protected function extractFromSitemap(string $sitemapUrl, int $limit): array
     {
@@ -104,16 +112,22 @@ class SitemapScraperService
 
                 if (!$this->isArticleUrl($url)) continue;
 
-                // Get <lastmod> for sorting (optional, not used for filtering)
+                // Get <lastmod> for filtering and sorting
                 $dateStr = trim((string) ($urlEl->lastmod ?? ''));
                 $dateTs = 0;
+                $date = '1970-01-01';
 
                 if ($dateStr) {
                     $parsed = strtotime($dateStr);
                     if ($parsed !== false) {
                         $dateTs = $parsed;
+                        $date = date('Y-m-d', $parsed);
                     }
                 }
+
+                // Skip entries without date or older than minimum year
+                if ($date === '1970-01-01') continue;
+                if ((int) substr($date, 0, 4) < (int) $this->minArticleYear) continue;
 
                 $entries[] = [
                     'url'     => $url,
@@ -150,15 +164,21 @@ class SitemapScraperService
 
                 if (!$this->isArticleUrl($url)) continue;
 
-                // Extract <lastmod> for sorting
+                // Extract <lastmod> for filtering and sorting
                 $dateTs = 0;
+                $date = '1970-01-01';
 
                 if (preg_match('/<lastmod[^>]*>([^<]+)<\/lastmod>/i', $block, $dateMatch)) {
                     $parsed = strtotime(trim($dateMatch[1]));
                     if ($parsed !== false) {
                         $dateTs = $parsed;
+                        $date = date('Y-m-d', $parsed);
                     }
                 }
+
+                // Skip entries without date or older than minimum year
+                if ($date === '1970-01-01') continue;
+                if ((int) substr($date, 0, 4) < (int) $this->minArticleYear) continue;
 
                 $entries[] = [
                     'url'     => $url,
@@ -346,5 +366,89 @@ class SitemapScraperService
         }
 
         return max(15, min(98, $score));
+    }
+
+    /**
+     * Dynamically discover post sitemaps from sitemap_index.xml,
+     * sorted newest first, filtered by minimum year
+     */
+    protected function discoverPostSitemaps(string $indexUrl): array
+    {
+        try {
+            $response = Http::timeout($this->timeout)
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; KangwendraBot/1.0)'])
+                ->get($indexUrl);
+
+            if (!$response->successful()) {
+                return [];
+            }
+
+            libxml_use_internal_errors(true);
+            $xml = @simplexml_load_string($response->body());
+            libxml_clear_errors();
+
+            if (!$xml) {
+                return [];
+            }
+
+            $postSitemaps = [];
+
+            foreach ($xml->sitemap as $sitemap) {
+                $loc = trim((string) ($sitemap->loc ?? ''));
+                $lastmod = trim((string) ($sitemap->lastmod ?? ''));
+
+                // Only include post-sitemap*.xml (not category, author, page, video)
+                if (!preg_match('/post-sitemap\d*\.xml$/i', basename($loc))) {
+                    continue;
+                }
+
+                // Filter by year from lastmod
+                $year = (int) substr($lastmod, 0, 4);
+                if ($year < (int) $this->minYear) {
+                    continue;
+                }
+
+                $postSitemaps[] = [
+                    'url'     => $loc,
+                    'lastmod' => $lastmod,
+                    'year'    => $year,
+                ];
+            }
+
+            // Sort by lastmod descending (newest first)
+            usort($postSitemaps, fn($a, $b) => $b['lastmod'] <=> $a['lastmod']);
+
+            return array_column($postSitemaps, 'url');
+
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Fallback static sitemaps for domains that don't expose sitemap_index
+     */
+    protected function getFallbackSitemaps(string $domain): array
+    {
+        $base = str_starts_with($domain, 'www.') ? "https://{$domain}" : "https://www.{$domain}";
+
+        if ($domain === 'searchengineland.com') {
+            // Try post-sitemap296 down to post-sitemap290 (most recent)
+            $sitemaps = [];
+            for ($i = 296; $i >= 290; $i--) {
+                $sitemaps[] = "{$base}/post-sitemap{$i}.xml";
+            }
+            return $sitemaps;
+        }
+
+        if ($domain === 'searchenginejournal.com') {
+            $sitemaps = [];
+            for ($i = 10; $i >= 1; $i--) {
+                $sitemaps[] = "{$base}/post-sitemap{$i}.xml";
+            }
+            return $sitemaps;
+        }
+
+        return ["{$base}/post-sitemap.xml"];
     }
 }
