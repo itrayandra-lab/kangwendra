@@ -92,15 +92,34 @@ class SitemapScraperService
             return true;
         });
 
-        // Step 4: Sort by score + recency
-        usort($allEntries, function ($a, $b) use ($keyword) {
-            $scoreA = $this->calculateConfidence($a['url'], $keyword);
-            $scoreB = $this->calculateConfidence($b['url'], $keyword);
-            if ($scoreA !== $scoreB) return $scoreB <=> $scoreA;
-            return $b['date_ts'] <=> $a['date_ts'];
+        // Step 4: Keyword-match filter — ONLY return URLs that directly contain the keyword
+        // If no URL contains the keyword, return empty (no generic AI articles)
+        $keywordParts = preg_split('/[\s,\-_]+/', strtolower($keyword));
+        $keywordMatchEntries = array_filter($allEntries, function ($e) use ($keywordParts) {
+            $urlLower = strtolower($e['url']);
+            $urlSlug = strtolower(basename($e['url'] ?? ''));
+            foreach ($keywordParts as $part) {
+                $part = trim($part);
+                if (strlen($part) < 3) continue;
+                if (stripos($urlSlug, $part) !== false) return true;
+                if (stripos($urlLower, $part) !== false) return true;
+            }
+            return false;
         });
 
-        return array_column(array_slice($allEntries, 0, $limit), 'url');
+        // If keyword match entries found, use them (sorted by score)
+        if (!empty($keywordMatchEntries)) {
+            usort($keywordMatchEntries, function ($a, $b) use ($keyword) {
+                $scoreA = $this->calculateConfidence($a['url'], $keyword);
+                $scoreB = $this->calculateConfidence($b['url'], $keyword);
+                if ($scoreA !== $scoreB) return $scoreB <=> $scoreA;
+                return $b['date_ts'] <=> $a['date_ts'];
+            });
+            return array_column(array_slice($keywordMatchEntries, 0, $limit), 'url');
+        }
+
+        // No keyword match found — return empty (don't serve generic AI articles)
+        return [];
     }
 
     protected string $minArticleYear = '2022'; // Skip articles older than this
@@ -354,20 +373,40 @@ class SitemapScraperService
 
     /**
      * Calculate confidence score.
-     * AI entity matching determines qualification (base score).
-     * User keyword matching gives bonus for ranking.
-     * Must have at least one AI keyword match to qualify.
+     *
+     * RULES:
+     * 1. URL contains search keyword -> HIGH bonus (+25)
+     * 2. URL contains AI entity -> qualifies at base score (45)
+     * 3. URL contains neither keyword NOR AI entity -> REJECT (15)
+     * 4. Ranking: keyword match > AI entity match
      */
     public function calculateConfidence(string $url, string $keyword): float
     {
         $urlLower = strtolower($url);
-        $keywordLower = strtolower($keyword);
 
-        // Step 1: AI entity match - ANY single match qualifies
-        // Each URL gets a FIXED bonus based on the BEST matching entity (not cumulative)
-        // This prevents URLs with many AI keywords from dominating
+        // Step 1: Check if URL contains the search keyword
+        $keywordParts = preg_split('/[\s,\-_]+/', strtolower($keyword));
+        $urlSlug = basename((parse_url($url, PHP_URL_PATH) ?? ''));
+        $urlSlugLower = strtolower($urlSlug);
+
+        $keywordMatch = false;
+        foreach ($keywordParts as $part) {
+            $part = trim($part);
+            if (strlen($part) < 3) continue;
+            // Match against URL slug
+            if (stripos($urlSlugLower, $part) !== false) {
+                $keywordMatch = true;
+                break;
+            }
+            // Match against full URL
+            if (stripos($urlLower, $part) !== false) {
+                $keywordMatch = true;
+                break;
+            }
+        }
+
+        // Step 2: Check AI entity match
         $aiKeywords = [
-            // Top entities (+20)
             'gemini', 'claude', 'chatgpt', 'deepseek', 'mistral', 'openai',
             'llm', 'large-language', 'artificial-intelligence', 'generative-ai',
             'ai-agent', 'agentic', 'machine-learning', 'deep-learning',
@@ -389,37 +428,32 @@ class SitemapScraperService
             }
         }
 
-        if (!$aiMatch) {
-            return 15; // does not qualify
+        // Step 3: Score determination
+        if ($keywordMatch) {
+            // URL contains the search keyword - HIGH score
+            $score = 70;
+            // Extra bonus if also AI entity
+            if ($aiMatch) $score += 5;
+            // Small bonus for domain relevance
+            if (stripos($urlLower, 'searchenginejournal')) $score += 3;
+            if (stripos($urlLower, 'searchengineland')) $score += 3;
+        } elseif ($aiMatch) {
+            // URL doesn't contain keyword but IS AI-related - MEDIUM score
+            $score = 45;
+            if (stripos($urlLower, 'searchenginejournal')) $score += 3;
+            if (stripos($urlLower, 'searchengineland')) $score += 3;
+        } else {
+            // Neither keyword nor AI match - REJECT
+            return 15;
         }
 
-        // Step 2: Base score for qualifying AI articles
-        $score = 45;
-
-        // Step 3: User keyword match bonus - small boost for relevant keywords
-        $keywordParts = preg_split('/[\s,\-_]+/', $keywordLower);
-        foreach ($keywordParts as $part) {
-            $part = trim($part);
-            if (strlen($part) < 3) continue;
-            if (stripos($urlLower, $part) !== false) {
-                $score += 5; // small bonus per keyword match (max ~20)
-            }
-        }
-
-        // Step 4: Domain bonus
-        if (stripos($urlLower, 'searchenginejournal.com') !== false) $score += 3;
-        if (stripos($urlLower, 'searchengineland.com') !== false) $score += 3;
-
-        // Step 5: Reject penalty
+        // Step 4: Reject penalties
         $reject = [
             'review' => -15, '-vs-' => -15, 'comparison' => -10,
-            'budget' => -15, 'hp-murah' => -20, 'smartphone' => -15,
-            'iphone' => -15, 'samsung' => -15, 'xiaomi' => -15, 'oppo' => -15,
+            'budget' => -10, 'hp-murah' => -15, 'smartphone' => -10,
+            'iphone' => -10, 'samsung' => -10, 'xiaomi' => -10, 'oppo' => -10,
             'wordle' => -20, 'crossword' => -20, 'nyt' => -20,
-            'yahoo' => -15, 'bing' => -10, 'youtube' => -10,
-            'facebook' => -10, 'twitter' => -10, 'instagram' => -10,
-            'shopping' => -15, 'ecommerce' => -15, 'price' => -15,
-            'amazon' => -10, 'product' => -15,
+            'yahoo' => -15,
         ];
         foreach ($reject as $pattern => $penalty) {
             if (stripos($urlLower, $pattern) !== false) $score += $penalty;
