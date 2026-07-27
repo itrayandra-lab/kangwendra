@@ -27,10 +27,14 @@
 │   ├─ SimpleXML parse (handle sitemap namespace)
 │   ├─ Filter: skip media files, wp-content paths, author/category/tag/page URLs
 │   ├─ Keyword-matched confidence scoring (sort by relevance)
+│   │   └─ Base score 30, requires AI keyword in URL slug to qualify (≥50)
 │   └─ Simpan ke research_recommendations (pending)
 |
-├─ ScrapeParaphraseJob × 5 (scrape → paraphrase → save → cleanup)
-│   └─ HTTP validation + scrape quality check di sini
+├─ ScrapeParaphraseJob × 5 (scrape → validate → paraphrase → save)
+│   ├─ Domain validation: only searchengineland.com + searchenginejournal.com
+│   ├─ Content validation: AI keywords, image required, min 200 chars
+│   ├─ Phase 2.5 quality gate: article age < 1 year + ≥2 AI keywords in content
+│   └─ RefArticle only created AFTER content passes all checks
 |
 ├─ Schedule publish:
 │   ├─ Post #1 → hari ini 08:00 WIB
