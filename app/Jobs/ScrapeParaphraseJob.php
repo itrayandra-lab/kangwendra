@@ -258,8 +258,6 @@ class ScrapeParaphraseJob implements ShouldQueue
         if (!$decoded && preg_match('/\{[\s\S]+\}/', $raw, $m)) {
             $decoded = json_decode($m[0], true);
         }
-            $decoded = json_decode($m[0], true);
-        }
 
         if (!$decoded || empty($decoded['title']) || empty($decoded['content'])) {
             throw new \Exception('DeepSeek returned invalid format: ' . Str::limit($raw, 300));
