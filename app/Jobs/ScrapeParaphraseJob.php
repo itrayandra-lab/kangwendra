@@ -72,6 +72,40 @@ class ScrapeParaphraseJob implements ShouldQueue
             throw new \Exception('Article validation failed');
         }
 
+        // ── PHASE 2.5: CONTENT QUALITY CHECK ──
+        $plainContent = strip_tags($article['content'] ?? '');
+        $titleLower = strtolower($article['title'] ?? '');
+        $contentLower = strtolower($plainContent);
+        $contentDate = $article['published_at'] ?? null;
+
+        // Reject articles older than 1 year (likely outdated topics)
+        if ($contentDate) {
+            $daysOld = now()->diffInDays(\Carbon\Carbon::parse($contentDate));
+            if ($daysOld > 365) {
+                Log::warning('ScrapeParaphraseJob: article too old', ['url' => $this->url, 'days_old' => $daysOld]);
+                $this->markRecommendationRejected("Article too old ({$daysOld} days)");
+                $this->recordRejection();
+                throw new \Exception("Article too old: {$daysOld} days");
+            }
+        }
+
+        // Require strong AI signal: at least 2 AI keywords in content (not just title)
+        $aiKeywords = ['ai', 'artificial intelligence', 'machine learning', 'deep learning',
+            'llm', 'large language model', 'generative ai', 'gen ai',
+            'openai', 'chatgpt', 'gpt', 'gemini', 'claude', 'deepseek', 'mistral',
+            'neural', 'transformer', 'rag', 'copilot', 'anthropic', 'agentic',
+            'foundation model', 'nlp', 'computer vision', 'data science'];
+        $aiCount = 0;
+        foreach ($aiKeywords as $kw) {
+            $aiCount += substr_count($contentLower, $kw);
+        }
+        if ($aiCount < 2) {
+            Log::warning('ScrapeParaphraseJob: weak AI signal in content', ['url' => $this->url, 'ai_count' => $aiCount]);
+            $this->markRecommendationRejected('Weak AI signal in content');
+            $this->recordRejection();
+            throw new \Exception('Weak AI signal in content (found ' . $aiCount . ' AI keywords)');
+        }
+
         // ── PHASE 3: SAVE REFARTICLE (full content for now) ──
         $ref = RefArticle::create([
             'source_url'         => $this->url,

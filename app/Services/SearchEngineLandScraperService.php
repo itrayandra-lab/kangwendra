@@ -50,6 +50,19 @@ class SearchEngineLandScraperService
     {
         $domain = parse_url($url, PHP_URL_HOST);
 
+        // ONLY scrape allowed domains - reject everything else
+        $allowed = false;
+        foreach ($this->allowedDomains as $d) {
+            if (stripos($domain, $d) !== false) {
+                $allowed = true;
+                break;
+            }
+        }
+        if (!$allowed) {
+            Log::warning('SELScraper: rejected - domain not allowed', ['url' => $url, 'domain' => $domain]);
+            return null;
+        }
+
         try {
             $response = Http::timeout(60)
                 ->withHeaders($this->browserHeaders())

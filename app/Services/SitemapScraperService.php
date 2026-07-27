@@ -293,56 +293,58 @@ class SitemapScraperService
     }
 
     /**
-     * Calculate confidence score
+     * Calculate confidence score - MUST have AI keyword match to qualify
      */
     public function calculateConfidence(string $url, string $keyword): float
     {
         $urlLower = strtolower($url);
-        $score = 50;
+        $score = 30; // Start lower - base 50 was too permissive
 
-        // Keyword match
-        $parts = preg_split('/[\s,\-_]+/', strtolower($keyword));
-        foreach ($parts as $part) {
-            $part = trim($part);
-            if (strlen($part) < 2) continue;
-            if (stripos($urlLower, $part) !== false) $score += 15;
-        }
-
-        // AI keyword bonus
+        // AI keyword bonus (REQUIRED for high scores)
         $aiBonus = [
             'ai-agent' => 20, 'agentic-ai' => 20, 'generative-ai' => 18,
-            'machine-learning' => 15, 'deep-learning' => 15,
-            'large-language' => 18, 'llm' => 18,
-            'openai' => 12, 'chatgpt' => 12, 'gemini' => 12,
+            'machine-learning' => 18, 'deep-learning' => 18,
+            'large-language' => 20, 'llm' => 18,
+            'openai' => 15, 'chatgpt' => 15, 'gemini' => 15,
+            'deepseek' => 15, 'claude' => 15, 'mistral' => 15,
             'google-ai' => 12, 'microsoft-ai' => 12, 'meta-ai' => 12,
             'neural-network' => 15, 'transformer' => 15, 'rag-' => 15,
             'seo-ai' => 18, 'search-ai' => 18,
-            'artificial-intelligence' => 15, 'nlp' => 12,
+            'artificial-intelligence' => 18, 'nlp' => 12,
             'enterprise-ai' => 12, 'ai-regulation' => 12,
             'ai-chip' => 10, 'automation' => 8, 'robotics' => 8,
+            'anthropic' => 15, 'foundation-model' => 15,
+            'ai-startup' => 10, 'ai-funding' => 10,
         ];
+        $hasAiMatch = false;
         foreach ($aiBonus as $kw => $bonus) {
-            if (stripos($urlLower, $kw) !== false) $score += $bonus;
+            if (stripos($urlLower, $kw) !== false) {
+                $score += $bonus;
+                $hasAiMatch = true;
+            }
         }
 
-        // SEO keyword bonus
-        if (stripos($urlLower, 'seo') !== false) $score += 8;
-        if (stripos($urlLower, 'google-algorithm') !== false) $score += 8;
-        if (stripos($urlLower, 'google-update') !== false) $score += 8;
+        // Domain bonus (only if also has AI match)
+        if ($hasAiMatch) {
+            if (stripos($urlLower, 'searchenginejournal.com') !== false) $score += 5;
+            if (stripos($urlLower, 'searchengineland.com') !== false) $score += 5;
+        }
 
-        // Domain bonus
-        if (stripos($urlLower, 'searchenginejournal.com') !== false) $score += 5;
-        if (stripos($urlLower, 'searchengineland.com') !== false) $score += 5;
-
-        // Reject penalty
-        $reject = ['review' => -10, '-vs-' => -15, 'comparison' => -10,
-                    'budget' => -10, 'hp-murah' => -15, 'smartphone' => -10,
-                    'iphone' => -8, 'samsung' => -8, 'xiaomi' => -8,
-                    'wordle' => -20, 'crossword' => -20];
+        // Reject penalty - heavy penalties for non-AI content
+        $reject = [
+            'review' => -20, '-vs-' => -20, 'comparison' => -15,
+            'budget' => -15, 'hp-murah' => -20, 'smartphone' => -15,
+            'iphone' => -15, 'samsung' => -15, 'xiaomi' => -15, 'oppo' => -15,
+            'wordle' => -30, 'crossword' => -30, 'nyt' => -30,
+            'yahoo' => -15, 'bing' => -10, 'youtube' => -10,
+            'facebook' => -10, 'twitter' => -10, 'instagram' => -10,
+            'shopping' => -15, 'ecommerce' => -15, 'price' => -15,
+            'amazon' => -10, 'product' => -15,
+        ];
         foreach ($reject as $pattern => $penalty) {
             if (stripos($urlLower, $pattern) !== false) $score += $penalty;
         }
 
-        return max(30, min(98, $score));
+        return max(15, min(98, $score));
     }
 }
