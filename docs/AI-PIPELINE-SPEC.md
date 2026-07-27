@@ -23,11 +23,12 @@
 08:00 WIB (SETIAP PAGI) — AUTOMATED
 |
 ├─ KeywordResearchJob (sitemap scraping)
-│   ├─ HTTP GET post-sitemap.xml (SEL + SEJ, paginated)
-│   ├─ SimpleXML parse (handle sitemap namespace)
+│   ├─ Dynamic sitemap discovery: parse sitemap_index.xml → extract post-sitemap*.xml from 2022+
+│   ├─ Process newest sitemaps first (sorted by lastmod descending)
+│   ├─ Per-entry date filter: skip articles older than 2022
 │   ├─ Filter: skip media files, wp-content paths, author/category/tag/page URLs
 │   ├─ Keyword-matched confidence scoring (sort by relevance)
-│   │   └─ Base score 30, requires AI keyword in URL slug to qualify (≥50)
+│   │   └─ Base score 30, requires AI keyword in URL slug to qualify (≥45)
 │   └─ Simpan ke research_recommendations (pending)
 |
 ├─ ScrapeParaphraseJob × 5 (scrape → validate → paraphrase → save)
