@@ -28,7 +28,7 @@
         "@id": "{{ request()->url() }}"
     },
     "articleSection": "{{ $post->category?->name ?? 'Uncategorized' ?? 'Berita' }}",
-    "keywords": "{{ $post->tags ? (is_array($post->tags) ? implode(', ', $post->tags) : implode(', ', json_decode($post->tags, true) ?? [])) : '' }}",
+    "keywords": "{{ is_array($post->tags) ? implode(', ', $post->tags) : implode(', ', json_decode($post->tags, true) ?? []) }}",
     "wordCount": {{ str_word_count(strip_tags($post->content ?? '')) }},
     "url": "{{ request()->url() }}"
 }
@@ -106,11 +106,14 @@
                     
                     <footer class="entry-footer">
                         @if ($post->tags)
+                            @php $tags = is_array($post->tags) ? $post->tags : (json_decode($post->tags, true) ?? []); @endphp
+                            @if(!empty($tags))
                             <ul class="tag-list">
-                                @foreach ($post->tags ?? [] as $tag)
+                                @foreach ($tags as $tag)
                                     <li><a href="/tag/{{ Str::slug($tag) }}">#{{ $tag }}</a></li>
                                 @endforeach
                             </ul>
+                            @endif
                         @endif
                         <ul class="post-social-share">
                             <li class="facebook">
