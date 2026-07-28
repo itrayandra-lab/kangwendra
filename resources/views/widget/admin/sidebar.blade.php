@@ -134,11 +134,6 @@
                     </li>
                 @endif
 
-                <!-- ═══ AI PIPELINE ═══ -->
-                <li class="nav-header" style="padding: 10px 20px 4px; font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 1px;">
-                    AI Pipeline
-                </li>
-
                 <!-- Submenu: AI Research & Generate -->
                 <li class="has_sub">
                     <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Artikel Referensi', 'Rekomendasi', 'Kata Kunci', 'Postingan AI']) }}">

@@ -106,22 +106,29 @@ class RefArticleController extends Controller
      */
     public function recommendations(?string $keyword = null)
     {
-        $keyword = urldecode($keyword);
-        $page = 'Rekomendasi Artikel';
+        $keyword = $keyword ? urldecode($keyword) : null;
+        $page = 'Rekomendasi';
 
-        // Show ONLY high-confidence recommendations (score >= 45)
-        // This filters out old low-quality results from before the fixes
-        $recommendations = ResearchRecommendation::byKeyword($keyword)
-            ->where('confidence_score', '>=', 45)
-            ->orderByDesc('confidence_score')
-            ->get();
+        // Show ALL recommendations if no keyword, OR filter by keyword
+        $query = ResearchRecommendation::where('confidence_score', '>=', 45)
+            ->orderByDesc('confidence_score');
+
+        if ($keyword) {
+            $query->where('keyword', strtolower($keyword));
+        }
+
+        $recommendations = $query->get();
 
         // Count old low-score recommendations separately
-        $lowScoreCount = ResearchRecommendation::byKeyword($keyword)
-            ->where('confidence_score', '<', 45)
-            ->count();
+        $lowScoreQuery = ResearchRecommendation::where('confidence_score', '<', 45);
+        if ($keyword) {
+            $lowScoreQuery->where('keyword', strtolower($keyword));
+        }
+        $lowScoreCount = $lowScoreQuery->count();
 
-        $pref = EditorPreference::where('keyword', strtolower($keyword))->first();
+        $pref = $keyword
+            ? EditorPreference::where('keyword', strtolower($keyword))->first()
+            : null;
 
         return view('pages.admin.ref-articles.recommendations', compact(
             'page', 'keyword', 'recommendations', 'pref', 'lowScoreCount'
