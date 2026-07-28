@@ -190,7 +190,7 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/', 'index')->name('ref-articles.index');
         Route::get('/batch-progress', 'batchProgress')->name('ref-articles.batch-progress');
         Route::get('/batch-status', 'batchStatus')->name('ref-articles.batch-status');
-        Route::get('/recommendations/{keyword}', 'recommendations')->name('ref-articles.recommendations');
+        Route::get('/recommendations/{keyword?}', 'recommendations')->name('ref-articles.recommendations');
         Route::get('/keywords', 'indexKeywords')->name('ref-articles.keywords.index');
         Route::post('/keywords', 'storeKeyword')->name('ref-articles.keywords.store');
         Route::delete('/keywords/{id}', 'destroyKeyword')->name('ref-articles.keywords.destroy');

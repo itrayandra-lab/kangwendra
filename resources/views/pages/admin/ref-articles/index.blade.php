@@ -179,9 +179,6 @@
                             </button>
                         </form>
                     @endforeach
-                    <a href="{{ route('ref-articles.keywords.index') }}" class="btn btn-outline-secondary btn-sm" style="border-radius:15px; padding:2px 10px; font-size:11px; margin:2px; text-decoration:none;" title="Kelola Kata Kunci">
-                        Kelola Kata Kunci
-                    </a>
                 </div>
 
                 {{-- Manual Keyword Search --}}

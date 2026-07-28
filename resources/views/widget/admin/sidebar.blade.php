@@ -134,10 +134,45 @@
                     </li>
                 @endif
 
-                <!-- Menu Artikel Referensi & AI -->
+                <!-- ═══ AI PIPELINE ═══ -->
+                <li class="nav-header" style="padding: 10px 20px 4px; font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 1px;">
+                    AI Pipeline
+                </li>
+
+                <!-- Submenu: AI Research & Generate -->
+                <li class="has_sub">
+                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Artikel Referensi', 'Rekomendasi', 'Kata Kunci', 'Postingan AI']) }}">
+                        <i class="fa fa-magic"></i> <span>AI Generate</span>
+                        <span class="pull-right"><i class="mdi mdi-plus"></i></span>
+                    </a>
+                    <ul class="list-unstyled">
+                        <li>
+                            <a class="{{ isActive($page, 'Artikel Referensi') }}" href="{{ route('ref-articles.index') }}">
+                                <i class="fa fa-list-ul" style="font-size:11px;"></i> Ref Articles
+                            </a>
+                        </li>
+                        <li>
+                            <a class="{{ isActive($page, 'Rekomendasi') }}" href="{{ route('ref-articles.recommendations', 'all') }}">
+                                <i class="fa fa-thumbs-up" style="font-size:11px;"></i> Rekomendasi
+                            </a>
+                        </li>
+                        <li>
+                            <a class="{{ isActive($page, 'Kata Kunci') }}" href="{{ route('ref-articles.keywords.index') }}">
+                                <i class="fa fa-key" style="font-size:11px;"></i> Kelola Kata Kunci
+                            </a>
+                        </li>
+                        <li>
+                            <a class="{{ isActive($page, 'Postingan AI') }}" href="{{ route('posts.index') }}?source=ai">
+                                <i class="fa fa-robot" style="font-size:11px;"></i> Postingan AI
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Menu Konfigurasi Scraping -->
                 <li>
-                    <a href="{{ route('ref-articles.index') }}" class="waves-effect {{ isActive($page, 'Artikel Referensi') }}">
-                        <i class="fa fa-magic"></i><span>Scrape & AI Generate</span>
+                    <a href="{{ route('admin.scraper-config.index') }}" class="waves-effect {{ isActive($page, 'Konfigurasi Scraping') }}">
+                        <i class="fa fa-cogs"></i><span>Konfigurasi Scraping</span>
                     </a>
                 </li>
 
@@ -145,13 +180,6 @@
                 <li>
                     <a href="{{ route('schedules.index') }}" class="waves-effect {{ isActive($page, 'Jadwal Publish') }}">
                         <i class="fa fa-clock-o"></i><span>Jadwal Publish</span>
-                    </a>
-                </li>
-
-                <!-- Menu Konfigurasi Scraping -->
-                <li>
-                    <a href="{{ route('admin.scraper-config.index') }}" class="waves-effect {{ isActive($page, 'Konfigurasi Scraping') }}">
-                        <i class="fa fa-cogs"></i><span>Konfigurasi Scraping</span>
                     </a>
                 </li>
 

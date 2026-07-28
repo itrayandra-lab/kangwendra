@@ -104,7 +104,7 @@ class RefArticleController extends Controller
     /**
      * Show research recommendations for a keyword
      */
-    public function recommendations(string $keyword)
+    public function recommendations(?string $keyword = null)
     {
         $keyword = urldecode($keyword);
         $page = 'Rekomendasi Artikel';
