@@ -107,7 +107,7 @@ class RefArticleController extends Controller
     public function recommendations(?string $keyword = null)
     {
         $keyword = $keyword ? urldecode($keyword) : null;
-        $page = 'Ref Articles';
+        $page = $keyword ? 'Ref Articles' : 'Semua Ref';
 
         // Show ONLY results that have been moved to Ref Articles
         $query = ResearchRecommendation::whereNotNull('ref_article_id')

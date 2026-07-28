@@ -102,7 +102,7 @@
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <div>
-                <h4 style="margin:0;">Ref Articles</h4>
+                <h4 style="margin:0;">{{ $keyword ? 'Ref Articles' : 'Semua Ref Articles' }}</h4>
                 <p style="margin:4px 0 0; color:#666; font-size:13px;">
                     {{ $recommendations->count() }} artikel dipindahkan dari hasil scrape
                     @if($keyword)

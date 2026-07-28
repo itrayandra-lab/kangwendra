@@ -141,7 +141,7 @@
 
                 <!-- Submenu: AI Research & Generate -->
                 <li class="has_sub">
-                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Artikel Referensi', 'Hasil Scrape', 'Kata Kunci']) }}">
+                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Artikel Referensi', 'Hasil Scrape', 'Kata Kunci', 'Semua Ref']) }}">
                         <i class="fa fa-magic"></i> <span>AI Generate</span>
                         <span class="pull-right"><i class="mdi mdi-plus"></i></span>
                     </a>
@@ -154,6 +154,11 @@
                         <li>
                             <a class="{{ isActive($page, 'Hasil Scrape') }}" href="{{ route('admin.scrape-results.index') }}">
                                 <i class="fa fa-search" style="font-size:11px;"></i> Hasil Scrape
+                            </a>
+                        </li>
+                        <li>
+                            <a class="{{ isActive($page, 'Semua Ref') }}" href="{{ route('ref-articles.recommendations') }}">
+                                <i class="fa fa-th" style="font-size:11px;"></i> Semua Ref Articles
                             </a>
                         </li>
                         <li>

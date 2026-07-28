@@ -71,35 +71,61 @@ class ScrapeResultController extends Controller
      */
     public function moveToRefArticles(Request $request)
     {
-        $ids = $request->input('ids', []);
+        // Support both single IDs and arrays
+        $input = $request->all();
+        $ids = [];
+
+        if (isset($input['ids'])) {
+            $ids = is_array($input['ids']) ? $input['ids'] : [$input['ids']];
+        }
+
+        // Also check for individual id parameter
+        if ($request->has('id') && empty($ids)) {
+            $ids = [(string) $request->input('id')];
+        }
+
         if (empty($ids)) {
-            return back()->with('error', 'Pilih至少 satu hasil scrape.');
+            return back()->with('error', 'Tidak ada data yang dipilih.');
         }
 
         $moved = 0;
-        foreach ($ids as $id) {
+        $skipped = 0;
+        $errors = [];
+
+        foreach ($ids as $rawId) {
+            $id = is_numeric($rawId) ? (int) $rawId : null;
+            if (!$id) continue;
+
             $rec = ResearchRecommendation::find($id);
-            if (!$rec) continue;
+            if (!$rec) { $skipped++; continue; }
 
-            // Skip if already has ref_article
-            if ($rec->ref_article_id) continue;
+            // Skip if already moved
+            if ($rec->ref_article_id) { $skipped++; continue; }
 
-            // Create RefArticle from this scrape result
-            $refArticle = RefArticle::create([
-                'title'           => $rec->title,
-                'source_url'      => $rec->url,
-                'source_domain'   => $rec->domain,
-                'source_keyword'  => $rec->keyword,
-                'image_url'       => null,
-                'content_snippet' => $rec->snippet,
-                'ai_research_status' => 'idle',
-            ]);
+            // Create RefArticle
+            try {
+                $refArticle = RefArticle::create([
+                    'title'           => $rec->title,
+                    'source_url'      => $rec->url,
+                    'source_domain'   => $rec->domain,
+                    'source_keyword'  => $rec->keyword,
+                    'image_url'       => null,
+                    'content_snippet' => $rec->snippet,
+                    'ai_research_status' => 'idle',
+                ]);
 
-            $rec->update(['ref_article_id' => $refArticle->id]);
-            $moved++;
+                $rec->update(['ref_article_id' => $refArticle->id]);
+                $moved++;
+            } catch (\Throwable $e) {
+                $errors[] = "ID {$id}: " . $e->getMessage();
+            }
         }
 
-        return back()->with('success', "{$moved} hasil scrape dipindahkan ke Ref Articles.");
+        $msg = "{$moved} hasil scrape dipindahkan ke Ref Articles.";
+        if ($skipped > 0) $msg .= " {$skipped} dilewati.";
+        if (!empty($errors)) $msg .= " Errors: " . implode('; ', $errors);
+
+        return back()->with('success', $msg);
     }
 
     /**
