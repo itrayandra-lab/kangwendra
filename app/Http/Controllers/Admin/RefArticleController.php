@@ -79,8 +79,8 @@ class RefArticleController extends Controller
                 $article->source_keyword ?? 'general',
                 $article->batch_id ?? Str::uuid()->toString(),
                 $article->ai_confidence ?? 50,
-                null,
-                $article->id
+                0,
+                false
             );
             $dispatched++;
         }
@@ -105,8 +105,8 @@ class RefArticleController extends Controller
             $refArticle->source_keyword ?? 'general',
             $refArticle->batch_id ?? Str::uuid()->toString(),
             $refArticle->ai_confidence ?? 50,
-            null,
-            $refArticle->id
+            0,
+            false
         );
 
         return back()->with('success', 'Generate job dispatched. Periksa halaman Postingan AI.');
@@ -129,8 +129,8 @@ class RefArticleController extends Controller
             $refArticle->source_keyword ?? 'general',
             $refArticle->batch_id ?? Str::uuid()->toString(),
             $refArticle->ai_confidence ?? 50,
-            null,
-            $refArticle->id
+            0,
+            false
         );
 
         return back()->with('success', 'Retry job dispatched. Periksa halaman Postingan AI.');
