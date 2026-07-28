@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Log;
 
 class SitemapScraperService
 {
-    protected int $timeout = 30;
-    protected int $validateTimeout = 10;
+    protected int $timeout = 120;   // 2 min for sitemap/article fetch
+    protected int $validateTimeout = 15; // 15s for validation (was 10s)
     protected int $maxPerSitemap = 50; // Max URLs to fetch per sitemap
 
     // Base sitemap index URLs
