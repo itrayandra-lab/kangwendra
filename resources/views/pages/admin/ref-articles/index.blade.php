@@ -165,44 +165,19 @@
                 <span class="pipeline-step">08:00 / 13:00 / 16:00 WIB</span>
             </div>
 
-            {{-- Keyword Research Form --}}
-            <div>
-                {{-- Scrape All Button --}}
-                <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                    <form action="{{ route('ref-articles.research-all') }}" method="POST" style="display:inline;">
-                        @csrf
-                        <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px; padding:6px 16px; font-weight:600;"
-                            onclick="return confirm('Scrape semua keyword sekarang? Proses ini akan memakan waktu beberapa menit.')">
-                            <i class="fa fa-bolt"></i> Scrape Semua Keyword
-                        </button>
-                    </form>
-                    <span style="font-size:12px; color:#888;">← klik untuk scrape semua keyword sekaligus, atau pilih satu per satu di bawah</span>
-                </div>
+            {{-- Info Banner - Research moved to Scraping page --}}
+            <div style="background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#2e7d32;">
+                <strong>Flow:</strong> Scraping (menu) → Research keyword → Hasil Scraping → Pindahkan → <strong>Ref Articles</strong> (halaman ini) → Approve
+            </div>
 
-                {{-- Quick Topic Buttons --}}
-                <div style="margin-bottom:10px;">
-                    <span style="font-size:12px; color:#888; margin-right:8px;">Pilih topik:</span>
-                    @foreach(App\Models\ScraperConfig::getKeywords() as $topic)
-                        <form action="{{ route('ref-articles.research') }}" method="POST" style="display:inline;">
-                            @csrf
-                            <input type="hidden" name="keyword" value="{{ $topic }}">
-                            <button type="submit" class="btn btn-outline-primary btn-sm" style="border-radius:15px; padding:2px 10px; font-size:11px; margin:2px;">
-                                {{ $topic }}
-                            </button>
-                        </form>
-                    @endforeach
-                </div>
-
-                {{-- Manual Keyword Search --}}
-                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                    <form action="{{ route('ref-articles.research') }}" method="POST" style="display:flex; gap:8px; flex:1; max-width:400px;">
-                        @csrf
-                        <input type="text" name="keyword" class="form-control" placeholder="Atau ketik topik AI baru (contoh: Grok, Perplexity, AI coding, Claude Code)" required style="border-radius:8px;">
-                        <button type="submit" class="action-btn btn-research">
-                            Research
-                        </button>
-                    </form>
-                </div>
+            {{-- Link to Scraping Page --}}
+            <div style="margin-bottom:12px;">
+                <a href="{{ route('admin.scraping.index') }}" class="btn btn-primary btn-sm" style="border-radius:8px; padding:6px 16px; font-weight:600;">
+                    <i class="fa fa-search"></i> Ke Halaman Scraping / Research
+                </a>
+                <span style="font-size:12px; color:#888; margin-left:8px;">
+                    Halaman Scraping digunakan untuk research URL dari sitemap.
+                </span>
             </div>
 
             {{-- AI Stats --}}
