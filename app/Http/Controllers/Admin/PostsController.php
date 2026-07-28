@@ -32,11 +32,11 @@ class PostsController extends Controller
                       ->orWhereNotNull('source');
                 });
             } elseif ($request->get('source') === 'manual') {
-                // Show only manual/editor posts
-                $posts->where(function ($q) {
-                    $q->where('published_by', '!=', 'system')
-                      ->orWhereNull('published_by');
-                });
+                // Manual posts: NOT published_by='system' AND no source URL
+                $posts->where('published_by', '!=', 'system')
+                      ->where(function ($q) {
+                          $q->whereNull('source')->orWhere('source', '');
+                      });
             }
 
             $posts->latest();

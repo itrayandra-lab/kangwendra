@@ -92,7 +92,7 @@
                                 </li>
                                 <li>
                                     <a class="{{ isActive($page, 'Postingan AI') }}" href="{{ route('posts.index') }}?source=ai">
-                                        <i class="fa fa-robot" style="font-size:11px;"></i> Postingan AI
+                                        Postingan AI
                                     </a>
                                 </li>
                             @endcan

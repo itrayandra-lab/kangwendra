@@ -28,7 +28,7 @@
         "@id": "{{ request()->url() }}"
     },
     "articleSection": "{{ $post->category?->name ?? 'Uncategorized' ?? 'Berita' }}",
-    "keywords": "{{ $post->tags ? implode(', ', $post->tags) : '' }}",
+    "keywords": "{{ $post->tags ? (is_array($post->tags) ? implode(', ', $post->tags) : implode(', ', json_decode($post->tags, true) ?? [])) : '' }}",
     "wordCount": {{ str_word_count(strip_tags($post->content ?? '')) }},
     "url": "{{ request()->url() }}"
 }
