@@ -21,7 +21,7 @@ class RefArticleController extends Controller
 {
     public function index(Request $request)
     {
-        $page   = 'Manajemen Artikel AI';
+        $page   = 'Scraping';
         $status = $request->input('status');
         $domain = $request->input('domain');
 
@@ -108,7 +108,7 @@ class RefArticleController extends Controller
     public function recommendations(?string $keyword = null)
     {
         $keyword = $keyword ? urldecode($keyword) : null;
-        $page = $keyword ? 'Ref Articles' : 'Semua Ref';
+        $page = $keyword ? 'Ref Articles' : 'Ref Articles';
 
         // Show ONLY results that have been moved to Ref Articles
         $query = ResearchRecommendation::whereNotNull('ref_article_id')

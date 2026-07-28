@@ -96,15 +96,15 @@
         @endif
 
         {{-- Info Banner --}}
-        <div style="background:#e3f2fd; border:1px solid #1565c0; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#1565c0;">
-            <strong>Flow:</strong> Research → <a href="{{ route('admin.scrape-results.index') }}" style="color:#1565c0;">Hasil Scrape</a> → "Pindahkan ke Ref Articles" → halaman ini → Approve → Generate Post
+            <div style="background:#e3f2fd; border:1px solid #1565c0; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#1565c0;">
+            <strong>Flow:</strong> Scraping → Research (klik keyword) → Hasil Scraping → Pindahkan ke Ref Articles → halaman ini → Approve/Edit → Generate Post
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <div>
-                <h4 style="margin:0;">{{ $keyword ? 'Ref Articles' : 'Semua Ref Articles' }}</h4>
+                <h4 style="margin:0;">Ref Articles</h4>
                 <p style="margin:4px 0 0; color:#666; font-size:13px;">
-                    {{ $recommendations->count() }} artikel dipindahkan dari hasil scrape
+                    {{ $recommendations->count() }} artikel
                     @if($keyword)
                         untuk keyword <strong>"{{ $keyword }}"</strong>
                     @endif

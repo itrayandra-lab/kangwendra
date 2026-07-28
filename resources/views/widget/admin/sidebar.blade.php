@@ -139,26 +139,36 @@
                     </li>
                 @endif
 
-                <!-- Submenu: AI Research & Generate -->
+                <!-- Submenu: Scraping -->
                 <li class="has_sub">
-                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Artikel Referensi', 'Hasil Scrape', 'Kata Kunci', 'Semua Ref']) }}">
-                        <i class="fa fa-magic"></i> <span>AI Generate</span>
+                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Scraping', 'Hasil Scraping']) }}">
+                        <i class="fa fa-search"></i> <span>Scraping</span>
                         <span class="pull-right"><i class="mdi mdi-plus"></i></span>
                     </a>
                     <ul class="list-unstyled">
                         <li>
-                            <a class="{{ isActive($page, 'Artikel Referensi') }}" href="{{ route('ref-articles.index') }}">
-                                <i class="fa fa-list-ul" style="font-size:11px;"></i> Ref Articles
+                            <a class="{{ isActive($page, 'Scraping') }}" href="{{ route('ref-articles.index') }}">
+                                <i class="fa fa-crosshairs" style="font-size:11px;"></i> Research
                             </a>
                         </li>
                         <li>
-                            <a class="{{ isActive($page, 'Hasil Scrape') }}" href="{{ route('admin.scrape-results.index') }}">
-                                <i class="fa fa-search" style="font-size:11px;"></i> Hasil Scrape
+                            <a class="{{ isActive($page, 'Hasil Scraping') }}" href="{{ route('admin.scrape-results.index') }}">
+                                <i class="fa fa-list" style="font-size:11px;"></i> Hasil Scraping
                             </a>
                         </li>
+                    </ul>
+                </li>
+
+                <!-- Submenu: Ref Articles -->
+                <li class="has_sub">
+                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Ref Articles', 'Kata Kunci']) }}">
+                        <i class="fa fa-book"></i> <span>Ref Articles</span>
+                        <span class="pull-right"><i class="mdi mdi-plus"></i></span>
+                    </a>
+                    <ul class="list-unstyled">
                         <li>
-                            <a class="{{ isActive($page, 'Semua Ref') }}" href="{{ route('ref-articles.recommendations') }}">
-                                <i class="fa fa-th" style="font-size:11px;"></i> Semua Ref Articles
+                            <a class="{{ isActive($page, 'Ref Articles') }}" href="{{ route('ref-articles.recommendations') }}">
+                                <i class="fa fa-th" style="font-size:11px;"></i> Semua
                             </a>
                         </li>
                         <li>
@@ -167,13 +177,6 @@
                             </a>
                         </li>
                     </ul>
-                </li>
-
-                <!-- Menu Konfigurasi Scraping -->
-                <li>
-                    <a href="{{ route('admin.scraper-config.index') }}" class="waves-effect {{ isActive($page, 'Konfigurasi Scraping') }}">
-                        <i class="fa fa-cogs"></i><span>Konfigurasi Scraping</span>
-                    </a>
                 </li>
 
                 <!-- Menu Jadwal Publish -->

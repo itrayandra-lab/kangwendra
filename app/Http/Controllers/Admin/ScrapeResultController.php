@@ -17,7 +17,7 @@ class ScrapeResultController extends Controller
      */
     public function index(Request $request)
     {
-        $page = 'Hasil Scrape';
+        $page = 'Hasil Scraping';
 
         $keyword = $request->get('keyword');
         $status = $request->get('status'); // pending, success, failed, moved

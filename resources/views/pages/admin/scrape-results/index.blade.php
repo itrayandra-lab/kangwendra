@@ -1,5 +1,5 @@
 @extends('layouts.admin.app')
-@section('title', 'Hasil Scrape')
+@section('title', $page)
 
 @push('styles')
 <style>
@@ -40,7 +40,7 @@
 
         {{-- Info Banner --}}
         <div style="background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#2e7d32;">
-            <strong>Flow:</strong> Research → Hasil Scrape → (pilih + "Pindahkan ke Ref Articles") → Ref Articles → Approve → Generate Post
+            <strong>Flow:</strong> Scraping → Research (klik keyword) → hasil URL di sini → pilih → <strong>"Pindahkan ke Ref Articles"</strong>
         </div>
 
         {{-- Keyword Stats --}}
