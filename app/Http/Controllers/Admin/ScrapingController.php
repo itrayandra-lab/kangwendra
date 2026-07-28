@@ -22,9 +22,8 @@ class ScrapingController extends Controller
         $keywords = ScraperConfig::getKeywords();
         $stats = [
             'total'    => ResearchRecommendation::count(),
-            'pending'  => ResearchRecommendation::where('status', 'pending')->count(),
-            'success'  => ResearchRecommendation::where('status', 'scrape_success')->count(),
-            'failed'   => ResearchRecommendation::where('status', 'scrape_failed')->count(),
+            'pending'  => ResearchRecommendation::pending()->count(),
+            'moved'    => ResearchRecommendation::whereNotNull('ref_article_id')->count(),
         ];
 
         return view('pages.admin.scraping.index', compact('page', 'keywords', 'stats'));
@@ -56,6 +55,25 @@ class ScrapingController extends Controller
         $job->handle(app(\App\Services\SitemapScraperService::class));
 
         $count = ResearchRecommendation::byKeyword($keyword)->count();
+
+        if ($count === 0) {
+            // Check if keyword exists in config at all
+            $allKeywords = ScraperConfig::getKeywords();
+            $inConfig = in_array($keyword, $allKeywords);
+
+            $msg = "Research selesai! 0 URL ditemukan untuk '{$keyword}'.";
+            if ($inConfig) {
+                $msg .= " Keyword ini ada di ScraperConfig tapi tidak ditemukan di sitemap SEJ/SEL. ";
+                $msg .= "Coba lagi nanti atau ganti dengan keyword lain.";
+            } else {
+                $msg .= " Keyword ini BELUM ada di ScraperConfig. ";
+                $msg .= "Pergi ke Ref Articles > Kelola Kata Kunci untuk menambahnya.";
+            }
+
+            return redirect()
+                ->route('admin.hasil-scraping.index', ['keyword' => $keyword])
+                ->with('warning', $msg);
+        }
 
         return redirect()
             ->route('admin.hasil-scraping.index', ['keyword' => $keyword])

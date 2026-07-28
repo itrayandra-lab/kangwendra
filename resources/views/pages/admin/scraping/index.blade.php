@@ -98,13 +98,9 @@
                         <div style="font-size:22px; font-weight:700; color:#856404;">{{ $stats['pending'] }}</div>
                         <div style="font-size:11px; color:#856404;">Pending</div>
                     </div>
-                    <div style="background:#d4edda; border-radius:8px; padding:10px 16px; text-align:center;">
-                        <div style="font-size:22px; font-weight:700; color:#155724;">{{ $stats['success'] }}</div>
-                        <div style="font-size:11px; color:#155724;">Sukses</div>
-                    </div>
-                    <div style="background:#f8d7da; border-radius:8px; padding:10px 16px; text-align:center;">
-                        <div style="font-size:22px; font-weight:700; color:#721c24;">{{ $stats['failed'] }}</div>
-                        <div style="font-size:11px; color:#721c24;">Gagal</div>
+                    <div style="background:#d1ecf1; border-radius:8px; padding:10px 16px; text-align:center;">
+                        <div style="font-size:22px; font-weight:700; color:#0c5460;">{{ $stats['moved'] }}</div>
+                        <div style="font-size:11px; color:#0c5460;">Dipindahkan</div>
                     </div>
                 </div>
 

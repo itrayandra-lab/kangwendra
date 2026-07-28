@@ -20,41 +20,38 @@ class ScrapeResultController extends Controller
         $page = 'Hasil Scraping';
 
         $keyword = $request->get('keyword');
-        $status = $request->get('status'); // pending, success, failed, moved
+        $status = $request->get('status'); // pending, moved
 
         $query = ResearchRecommendation::orderByDesc('created_at');
 
+        // Keyword filter - CRITICAL: always filter if keyword is set
         if ($keyword) {
-            $query->where('keyword', strtolower($keyword));
+            $query->where('keyword', strtolower(trim($keyword)));
         }
 
-        // Status filter
-        if ($status === 'success') {
-            $query->where('status', 'scrape_success');
-        } elseif ($status === 'failed') {
-            $query->where('status', 'scrape_failed');
-        } elseif ($status === 'moved') {
+        // Status filter - only real statuses
+        if ($status === 'moved') {
             $query->whereNotNull('ref_article_id');
-        } elseif ($status === 'pending') {
-            $query->where('status', 'pending');
+        } else {
+            // Default: show pending (not yet moved)
+            $query->whereNull('ref_article_id');
         }
 
         $results = $query->paginate(20);
 
-        // Stats per keyword
+        // Stats per keyword - only for the filtered keyword (or all if no filter)
         $keywordStats = [];
-        $keywords = ResearchRecommendation::selectRaw('keyword, status, COUNT(*) as total')
-            ->groupBy('keyword', 'status')
-            ->get()
-            ->groupBy('keyword');
+        $statsQuery = ResearchRecommendation::query();
+        if ($keyword) {
+            $statsQuery->where('keyword', strtolower(trim($keyword)));
+        }
 
-        foreach ($keywords as $kw => $items) {
+        $allForStats = $statsQuery->get()->groupBy('keyword');
+        foreach ($allForStats as $kw => $items) {
             $keywordStats[$kw] = [
-                'total'    => $items->sum('total'),
-                'pending'  => $items->where('status', 'pending')->sum('total'),
-                'success'  => $items->where('status', 'scrape_success')->sum('total'),
-                'failed'   => $items->where('status', 'scrape_failed')->sum('total'),
-                'moved'    => $items->filter(fn($i) => $i->status !== 'pending' && $i->status !== 'scrape_success' && $i->status !== 'scrape_failed')->sum('total'),
+                'total'   => $items->count(),
+                'pending' => $items->where('status', 'pending')->count(),
+                'moved'   => $items->filter(fn($i) => $i->ref_article_id !== null)->count(),
             ];
         }
 
@@ -118,16 +115,17 @@ class ScrapeResultController extends Controller
                     'moved_from_scrape'  => true,
                 ]);
 
-                $rec->update(['ref_article_id' => $refArticle->id]);
+                // Delete the scrape result after successful move
+                $rec->delete();
                 $moved++;
             } catch (\Throwable $e) {
-                $errors[] = "ID {$id}: duplicate or error";
+                $errors[] = "ID {$id}: {$e->getMessage()}";
             }
         }
 
-        $msg = "{$moved} hasil scrape dipindahkan ke Ref Articles.";
-        if ($skipped > 0) $msg .= " {$skipped} dilewati.";
-        if (!empty($errors)) $msg .= " Errors: " . implode('; ', $errors);
+        $msg = "{$moved} hasil dipindahkan ke Ref Articles dan dihapus dari sini.";
+        if ($skipped > 0) $msg .= " {$skipped} dilewati (sudah dipindahkan atau duplikat).";
+        if (!empty($errors)) $msg .= " Error: " . implode('; ', $errors);
 
         return back()->with('success', $msg);
     }

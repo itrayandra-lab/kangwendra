@@ -3,7 +3,7 @@
 
 @push('styles')
 <style>
-    .status-badge { display: inline-block; border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
+    .status-badge { display:inline-block; border-radius:6px; padding:3px 10px; font-size:12px; font-weight:600; }
     .status-pending { background:#fff3cd; color:#856404; }
     .status-success { background:#d4edda; color:#155724; }
     .status-failed { background:#f8d7da; color:#721c24; }
@@ -13,11 +13,10 @@
     .stat-card .label { font-size:11px; color:#888; }
     .result-row:hover { background:#f8f9fa; }
     .keyword-chip { display:inline-block; background:#e3f2fd; color:#1565c0; border-radius:20px; padding:2px 10px; font-size:12px; margin:2px; }
-    .filter-tabs { margin-bottom:16px; }
+    .keyword-filter-bar { background:#fff8e1; border:1px solid #ffc107; border-radius:8px; padding:12px 16px; margin-bottom:16px; }
     .filter-tab { display:inline-block; padding:5px 14px; border-radius:20px; margin-right:4px; text-decoration:none; color:#666; font-size:13px; border:1px solid #ddd; }
     .filter-tab:hover { border-color:#1565c0; color:#1565c0; }
     .filter-tab.active { background:#1565c0; color:#fff; border-color:#1565c0; }
-    .select-all { cursor:pointer; }
 </style>
 @endpush
 
@@ -31,17 +30,36 @@
     </div>
     <div class="panel-body">
 
+        {{-- Flash messages --}}
         @if(session('success'))
             <div class="alert alert-success" style="border-radius:8px;">{{ session('success') }}</div>
+        @endif
+        @if(session('warning'))
+            <div class="alert alert-warning" style="border-radius:8px;">{{ session('warning') }}</div>
         @endif
         @if(session('error'))
             <div class="alert alert-danger" style="border-radius:8px;">{{ session('error') }}</div>
         @endif
 
-        {{-- Info Banner --}}
-        <div style="background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#2e7d32;">
-            <strong>Flow:</strong> Scraping → Research (klik keyword) → hasil URL di sini → pilih → <strong>"Pindahkan ke Ref Articles"</strong>
-        </div>
+        {{-- Keyword Filter Bar --}}
+        @if($keyword)
+            <div class="keyword-filter-bar">
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <strong><i class="fa fa-filter"></i> Filter Keyword:</strong>
+                        <span style="background:#fff; border:1px solid #ffc107; border-radius:20px; padding:4px 12px; margin-left:8px; font-weight:600; color:#856404;">
+                            {{ $keyword }}
+                        </span>
+                        <span style="color:#888; font-size:12px; margin-left:8px;">
+                            — menampilkan hasil hanya untuk keyword ini
+                        </span>
+                    </div>
+                    <a href="{{ route('admin.hasil-scraping.index') }}" class="btn btn-warning btn-sm">
+                        <i class="fa fa-times"></i> Tampilkan Semua
+                    </a>
+                </div>
+            </div>
+        @endif
 
         {{-- Keyword Stats --}}
         @if(!empty($keywordStats))
@@ -49,31 +67,38 @@
                 <span style="font-size:12px; color:#888; margin-right:8px;">Per Keyword:</span>
                 @foreach($keywordStats as $kw => $stat)
                     <span class="keyword-chip">
-                        {{ $kw }}: {{ $stat['total'] }} total
-                        <span style="color:#856404;">({{ $stat['pending'] }} pending)</span>
-                        <span style="color:#155724;">({{ $stat['success'] }} sukses)</span>
-                        <span style="color:#721c24;">({{ $stat['failed'] }} gagal)</span>
+                        {{ $kw }}:
+                        <strong>{{ $stat['total'] }}</strong> total,
+                        <span style="color:#856404;">{{ $stat['pending'] }} pending</span>,
+                        <span style="color:#0c5460;">{{ $stat['moved'] }} dipindahkan</span>
                     </span>
                 @endforeach
             </div>
         @endif
 
-        {{-- Filter Tabs --}}
-        <div class="filter-tabs">
-            <a href="{{ route('admin.hasil-scraping.index') }}" class="filter-tab {{ !$status ? 'active' : '' }}">Semua</a>
-            <a href="{{ route('admin.hasil-scraping.index', ['status' => 'pending']) }}" class="filter-tab {{ $status === 'pending' ? 'active' : '' }}">Pending</a>
-            <a href="{{ route('admin.hasil-scraping.index', ['status' => 'success']) }}" class="filter-tab {{ $status === 'success' ? 'active' : '' }}">Sukses</a>
-            <a href="{{ route('admin.hasil-scraping.index', ['status' => 'failed']) }}" class="filter-tab {{ $status === 'failed' ? 'active' : '' }}">Gagal</a>
-            <a href="{{ route('admin.hasil-scraping.index', ['status' => 'moved']) }}" class="filter-tab {{ $status === 'moved' ? 'active' : '' }}">Dipindahkan</a>
+        {{-- Status Filter Tabs --}}
+        <div style="margin-bottom:16px;">
+            <a href="{{ $keyword ? route('admin.hasil-scraping.index', ['keyword' => $keyword]) : route('admin.hasil-scraping.index') }}"
+               class="filter-tab {{ !$status ? 'active' : '' }}">
+                Semua
+            </a>
+            <a href="{{ $keyword ? route('admin.hasil-scraping.index', ['keyword' => $keyword, 'status' => 'pending']) : route('admin.hasil-scraping.index', ['status' => 'pending']) }}"
+               class="filter-tab {{ $status === 'pending' ? 'active' : '' }}">
+                Pending
+            </a>
+            <a href="{{ $keyword ? route('admin.hasil-scraping.index', ['keyword' => $keyword, 'status' => 'moved']) : route('admin.hasil-scraping.index', ['status' => 'moved']) }}"
+               class="filter-tab {{ $status === 'moved' ? 'active' : '' }}">
+                Dipindahkan
+            </a>
         </div>
 
-        {{-- Bulk Actions + Table in one form (no nesting) --}}
-            <form id="bulkForm" method="POST" action="{{ route('admin.hasil-scraping.move') }}">
+        {{-- Bulk Actions --}}
+        <form id="bulkForm" method="POST" action="{{ route('admin.hasil-scraping.move') }}">
             @csrf
             <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                 <input type="checkbox" id="selectAll" style="margin-right:6px;">
                 <label for="selectAll" style="font-size:13px; color:#666; margin-right:8px; cursor:pointer;">Pilih Semua</label>
-                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Pindahkan yang dipilih ke Ref Articles?')">
+                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Pindahkan yang dipilih ke Ref Articles? Data akan dihapus dari sini setelah dipindahkan.')">
                     <i class="fa fa-arrow-right"></i> Pindahkan ke Ref Articles
                 </button>
                 <button type="button" class="btn btn-danger btn-sm" onclick="bulkDelete()">
@@ -105,7 +130,7 @@
                                 <span class="keyword-chip">{{ $result->keyword }}</span>
                             </td>
                             <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ $result->url }}">
-                                {{ $result->title ?? substr($result->url, 0, 50) }}
+                                {{ Str::limit($result->title ?? $result->url, 60) }}
                             </td>
                             <td>
                                 @if($result->confidence_score >= 70)
@@ -120,14 +145,6 @@
                                 @if($result->ref_article_id)
                                     <span class="status-badge status-moved">
                                         <i class="fa fa-check"></i> Dipindahkan
-                                    </span>
-                                @elseif($result->status === 'scrape_success')
-                                    <span class="status-badge status-success">
-                                        <i class="fa fa-check"></i> Sukses
-                                    </span>
-                                @elseif($result->status === 'scrape_failed')
-                                    <span class="status-badge status-failed">
-                                        <i class="fa fa-times"></i> Gagal
                                     </span>
                                 @else
                                     <span class="status-badge status-pending">
@@ -149,14 +166,6 @@
                                         onclick="submitDelete({{ $result->id }})">
                                         <i class="fa fa-trash"></i>
                                     </button>
-                                            <form method="POST" action="{{ route('admin.hasil-scraping.destroy') }}" style="display:inline;">
-                                                @csrf
-                                                <input type="hidden" name="ids[]" value="{{ $result->id }}">
-                                                <button type="submit" class="btn btn-xs btn-danger" title="Hapus"
-                                                    onclick="return confirm('Hapus?')">
-                                                    <i class="fa fa-trash"></i>
-                                                </button>
-                                            </form>
                                 @endif
                             </td>
                         </tr>
@@ -164,12 +173,19 @@
                         <tr>
                             <td colspan="7" class="text-center" style="padding:40px; color:#999;">
                                 <i class="fa fa-inbox" style="font-size:40px;"></i>
-                                <p style="margin-top:8px;">Belum ada hasil scrape. Klik keyword di Ref Articles untuk memulai research.</p>
+                                <p style="margin-top:8px;">
+                                    @if($keyword)
+                                        Belum ada hasil untuk keyword <strong>"{{ $keyword }}"</strong>.
+                                        <br><span style="font-size:12px;">Coba keyword lain atau tambah keyword baru di ScraperConfig.</span>
+                                    @else
+                                        Belum ada hasil scrape.
+                                    @endif
+                                </p>
                             </td>
                         </tr>
                     @endforelse
-                    </tbody>
-                </table>
+                </tbody>
+            </table>
             </div>
 
             <div style="margin-top:12px;">
@@ -204,7 +220,7 @@
 
     // Submit move form
     function submitMove(id) {
-        if (!confirm('Pindahkan ke Ref Articles?')) return;
+        if (!confirm('Pindahkan ke Ref Articles? Data akan dihapus dari sini setelah dipindahkan.')) return;
         var container = document.getElementById('moveIdsContainer');
         container.innerHTML = '<input type="hidden" name="ids[]" value="' + id + '">';
         document.getElementById('moveForm').submit();
@@ -222,7 +238,7 @@
     function bulkDelete() {
         if (!confirm('Hapus yang dipilih?')) return;
         var checked = document.querySelectorAll('.row-check:checked');
-        if (checked.length === 0) { alert('Pilih至少 satu.'); return; }
+        if (checked.length === 0) { alert('Pilih setidaknya satu.'); return; }
         var container = document.getElementById('deleteItemIdsContainer');
         container.innerHTML = '';
         checked.forEach(function(cb) {
