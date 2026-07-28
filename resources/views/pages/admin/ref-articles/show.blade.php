@@ -77,40 +77,50 @@
                                         <td>
                                             @php
                                                 $badgeMap = [
-                                                    'pending'    => 'warning',
-                                                    'processing' => 'info',
-                                                    'done'       => 'success',
-                                                    'failed'     => 'danger',
+                                                    'idle'       => 'warning',
+                                                    'researching' => 'info',
+                                                    'done'        => 'success',
+                                                    'failed'      => 'danger',
                                                 ];
-                                                $badge = $badgeMap[$refArticle->ai_status] ?? 'default';
+                                                $badge = $badgeMap[$refArticle->ai_research_status] ?? 'default';
                                             @endphp
                                             <span class="badge badge-{{ $badge }}">
-                                                {{ ucfirst($refArticle->ai_status) }}
+                                                @if($refArticle->ai_research_status === 'researching')
+                                                    <i class="fa fa-spinner fa-spin"></i>
+                                                @endif
+                                                {{ ucfirst($refArticle->ai_research_status ?? 'idle') }}
                                             </span>
-                                            @if($refArticle->ai_error)
+                                            @if($refArticle->ai_research_status === 'researching')
+                                                <br><small class="text-info"><i class="fa fa-spinner fa-spin"></i> Sedang scrape article...</small>
+                                            @endif
+                                            @if($refArticle->ai_research_status === 'failed' && $refArticle->ai_error)
                                                 <br>
-                                                <small class="text-danger">{{ $refArticle->ai_error }}</small>
+                                                <small class="text-danger" title="{{ $refArticle->ai_error }}">
+                                                    {{ Str::limit($refArticle->ai_error, 60) }}
+                                                </small>
                                             @endif
                                         </td>
                                     </tr>
                                 </table>
 
                                 {{-- Action buttons --}}
-                                @if($refArticle->ai_status === 'pending')
+                                @if(in_array($refArticle->ai_research_status, [null, 'idle']))
                                     <form action="{{ route('ref-articles.generate', $refArticle) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="btn btn-success btn-sm">
                                             <i class="fa fa-magic"></i> Generate Artikel AI Sekarang
                                         </button>
                                     </form>
-                                @elseif($refArticle->ai_status === 'failed')
+                                @elseif($refArticle->ai_research_status === 'researching')
+                                    <span class="badge badge-info"><i class="fa fa-spinner fa-spin"></i> Sedang diproses...</span>
+                                @elseif($refArticle->ai_research_status === 'failed')
                                     <form action="{{ route('ref-articles.retry', $refArticle) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="btn btn-warning btn-sm">
                                             <i class="fa fa-refresh"></i> Retry Generate AI
                                         </button>
                                     </form>
-                                @elseif($refArticle->ai_status === 'done' && $refArticle->generatedPost)
+                                @elseif($refArticle->ai_research_status === 'done' && $refArticle->generated_post_id)
                                     <a href="{{ route('posts.edit', $refArticle->generated_post_id) }}"
                                        class="btn btn-success btn-sm">
                                         <i class="fa fa-edit"></i> Lihat Artikel yang Dihasilkan
@@ -131,7 +141,7 @@
 
                     {{-- Kolom kanan: artikel hasil generate --}}
                     <div class="col-md-6">
-                        @if($refArticle->ai_status === 'done' && $refArticle->generatedPost)
+                        @if($refArticle->ai_research_status === 'done' && $refArticle->generated_post_id)
                             @php $post = $refArticle->generatedPost; @endphp
                             <div class="panel panel-success">
                                 <div class="panel-heading">
@@ -181,20 +191,32 @@
                     </div>
                 </div>
 
-                {{-- Isi Artikel Referensi --}}
-                <div class="panel panel-default mt-3">
-                    <div class="panel-heading">
-                        <strong><i class="fa fa-file-text"></i> Isi Artikel Referensi</strong>
+                {{-- Isi Artikel (conditionally shown) --}}
+                @if($refArticle->ai_research_status === 'researching')
+                    <div class="panel panel-info mt-3">
+                        <div class="panel-heading">
+                            <strong><i class="fa fa-spinner fa-spin"></i> Sedang Scrape Article...</strong>
+                        </div>
+                        <div class="panel-body text-center text-muted" style="padding:40px;">
+                            <i class="fa fa-spinner fa-spin fa-2x"></i>
+                            <p class="mt-2">Article sedang discrape dari sumber...</p>
+                        </div>
                     </div>
-                    <div class="panel-body" style="max-height:400px; overflow-y:auto; background:#f9f9f9; white-space:pre-wrap; font-size:13px;">
-                        {{ $refArticle->content ?: 'Konten tidak tersedia.' }}
+                @else
+                    <div class="panel panel-default mt-3">
+                        <div class="panel-heading">
+                            <strong><i class="fa fa-file-text"></i> Isi Artikel Sumber</strong>
+                        </div>
+                        <div class="panel-body" style="max-height:400px; overflow-y:auto; background:#f9f9f9; white-space:pre-wrap; font-size:13px;">
+                            {{ $refArticle->content ? Str::limit(strip_tags($refArticle->content), 500) . '...' : 'Konten tidak tersedia.' }}
+                        </div>
                     </div>
-                </div>
+                @endif
 
-                @if($refArticle->ai_status === 'done' && $refArticle->generatedPost)
+                @if($refArticle->ai_research_status === 'done' && $refArticle->generatedPost)
                     <div class="panel panel-success mt-3">
                         <div class="panel-heading">
-                            <strong><i class="fa fa-magic"></i> Isi Artikel Hasil AI</strong>
+                            <strong><i class="fa fa-magic"></i> Isi Artikel Hasil AI (Bahasa Indonesia)</strong>
                         </div>
                         <div class="panel-body" style="max-height:400px; overflow-y:auto;">
                             {!! $refArticle->generatedPost->content !!}
