@@ -209,7 +209,7 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/scrape-config', [App\Http\Controllers\Admin\ScraperConfigController::class, 'index'])->name('admin.scraping.scrape-config');
         Route::put('/scrape-config/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'update'])->name('admin.scraping.scrape-config.update');
         Route::post('/scrape-config/add-item/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'addItem'])->name('admin.scraping.scrape-config.add-item');
-        Route::post('/scrape-config/remove-item/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'removeItem'])->name('admin.scraping.scrape-config.remove-item');
+        Route::get('/scrape-config/remove-item/{key}/{item?}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'removeItem'])->name('admin.scraping.scrape-config.remove-item');
         Route::post('/scrape-config/flush-cache', [App\Http\Controllers\Admin\ScraperConfigController::class, 'flushCache'])->name('admin.scraping.scrape-config.flush-cache');
         Route::get('/keywords', 'indexKeywords')->name('admin.scraping.keywords.index');
         Route::post('/keywords', 'storeKeyword')->name('admin.scraping.keywords.store');

@@ -83,8 +83,8 @@ class ScraperConfigController extends Controller
         return back()->with('success', 'Item berhasil ditambahkan.');
     }
 
-    // Remove single item from an array config
-    public function removeItem(Request $request, string $key)
+    // Remove single item from an array config (GET with route params)
+    public function removeItem(string $key, ?string $item = null)
     {
         $config = ScraperConfig::where('key', $key)->first();
         if (!$config) {
@@ -94,11 +94,9 @@ class ScraperConfigController extends Controller
         $items = $config->typed_value;
         if (!is_array($items)) $items = [];
 
-        if ($key === 'source_urls') {
-            $domain = $request->input('domain');
-            unset($items[$domain]);
-        } else {
-            $item = $request->input('item');
+        if ($key === 'source_urls' && $item) {
+            unset($items[$item]);
+        } elseif ($item) {
             $items = array_values(array_filter($items, fn($i) => $i !== $item));
         }
 

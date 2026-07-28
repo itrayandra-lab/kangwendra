@@ -47,7 +47,7 @@
         @foreach(($grouped['keywords']?->typed_value ?? []) as $kw)
             <span class="tag">
                 {{ $kw }}
-                <a href="{{ route('admin.scraper-config.remove-item', ['key' => 'keywords', 'item' => $kw]) }}"
+                <a href="{{ route('admin.scraping.scrape-config.remove-item', ['key' => 'keywords', 'item' => $kw]) }}"
                    class="remove" title="Hapus"
                    onclick="return confirm('Hapus keyword &quot;{{ $kw }}&quot;?')">&times;</a>
             </span>
@@ -57,7 +57,7 @@
         @endif
     </div>
 
-    <form action="{{ route('admin.scraper-config.add-item', 'keywords') }}" method="POST" class="row">
+    <form action="{{ route('admin.scraping.scrape-config.add-item', 'keywords') }}" method="POST" class="row">
         @csrf
         <div class="col-md-8">
             <input type="text" name="item" class="form-control" placeholder="Ketik keyword baru, tekan Enter untuk tambah..." autocomplete="off">
@@ -79,7 +79,7 @@
         <div class="source-item">
             <span class="domain">{{ $domain }}</span>
             <span class="url">{{ $url }}</span>
-            <a href="{{ route('admin.scraper-config.remove-item', ['key' => 'source_urls', 'domain' => $domain]) }}"
+                <a href="{{ route('admin.scraping.scrape-config.remove-item', ['key' => 'source_urls', 'item' => $domain]) }}"
                class="remove-btn" title="Hapus"
                onclick="return confirm('Hapus domain &quot;{{ $domain }}&quot;?')">&times;</a>
         </div>
@@ -88,7 +88,7 @@
         <p style="color:#999; font-style:italic;">Belum ada source URL.</p>
     @endif
 
-    <form action="{{ route('admin.scraper-config.add-item', 'source_urls') }}" method="POST" class="row" style="margin-top:12px;">
+    <form action="{{ route('admin.scraping.scrape-config.add-item', 'source_urls') }}" method="POST" class="row" style="margin-top:12px;">
         @csrf
         <div class="col-md-3">
             <input type="text" name="domain" class="form-control" placeholder="Domain" autocomplete="off">
@@ -118,7 +118,7 @@
                 <span class="num-badge">{{ $grouped['min_year']?->typed_value ?? 2022 }}</span>
             </div>
 
-            <form action="{{ route('admin.scraper-config.update', 'min_year') }}" method="POST">
+            <form action="{{ route('admin.scraping.scrape-config.update', 'min_year') }}" method="POST">
                 @csrf @method('PUT')
                 <div class="row" style="margin-top:12px;">
                     <div class="col-8">
@@ -147,7 +147,7 @@
                 <span class="num-badge">{{ $grouped['confidence_threshold']?->typed_value ?? 45 }}%</span>
             </div>
 
-            <form action="{{ route('admin.scraper-config.update', 'confidence_threshold') }}" method="POST">
+            <form action="{{ route('admin.scraping.scrape-config.update', 'confidence_threshold') }}" method="POST">
                 @csrf @method('PUT')
                 <div class="row" style="margin-top:12px;">
                     <div class="col-8">
@@ -176,7 +176,7 @@
                 <span class="num-badge">{{ $grouped['daily_limit']?->typed_value ?? 5 }} / hari</span>
             </div>
 
-            <form action="{{ route('admin.scraper-config.update', 'daily_limit') }}" method="POST">
+            <form action="{{ route('admin.scraping.scrape-config.update', 'daily_limit') }}" method="POST">
                 @csrf @method('PUT')
                 <div class="row" style="margin-top:12px;">
                     <div class="col-8">
@@ -203,7 +203,7 @@
             </p>
         </div>
         <div class="col-md-4" style="text-align:right;">
-            <form action="{{ route('admin.scraper-config.flush-cache') }}" method="POST" style="display:inline;">
+            <form action="{{ route('admin.scraping.scrape-config.flush-cache') }}" method="POST" style="display:inline;">
                 @csrf
                 <button type="submit" class="btn btn-warning" onclick="return confirm('Flush cache sitemap?')">
                     <i class="fa fa-refresh"></i> Flush Cache
