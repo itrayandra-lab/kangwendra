@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\ScrapeParaphraseJob;
+use App\Jobs\GenerateFromRefArticleJob;
 use App\Models\EditorPreference;
 use App\Models\Posts;
 use App\Models\PostCategory;
@@ -69,19 +69,7 @@ class RefArticleController extends Controller
 
         $dispatched = 0;
         foreach ($idleArticles as $article) {
-            if (!$article->source_url) continue;
-
-            $article->update(['ai_research_status' => 'researching']);
-
-            ScrapeParaphraseJob::dispatch(
-                $article->source_url,
-                $article->source_domain ?? parse_url($article->source_url, PHP_URL_HOST),
-                $article->source_keyword ?? 'general',
-                $article->batch_id ?? Str::uuid()->toString(),
-                $article->ai_confidence ?? 50,
-                0,
-                false
-            );
+            GenerateFromRefArticleJob::dispatch($article->id);
             $dispatched++;
         }
 
@@ -97,17 +85,7 @@ class RefArticleController extends Controller
             return back()->with('error', 'Source URL tidak tersedia.');
         }
 
-        $refArticle->update(['ai_research_status' => 'researching']);
-
-        ScrapeParaphraseJob::dispatch(
-            $refArticle->source_url,
-            $refArticle->source_domain ?? parse_url($refArticle->source_url, PHP_URL_HOST),
-            $refArticle->source_keyword ?? 'general',
-            $refArticle->batch_id ?? Str::uuid()->toString(),
-            $refArticle->ai_confidence ?? 50,
-            0,
-            false
-        );
+        GenerateFromRefArticleJob::dispatch($refArticle->id);
 
         return back()->with('success', 'Generate job dispatched. Periksa halaman Postingan AI.');
     }
@@ -121,17 +99,7 @@ class RefArticleController extends Controller
             return back()->with('error', 'Source URL tidak tersedia.');
         }
 
-        $refArticle->update(['ai_research_status' => 'researching', 'ai_error' => null]);
-
-        ScrapeParaphraseJob::dispatch(
-            $refArticle->source_url,
-            $refArticle->source_domain ?? parse_url($refArticle->source_url, PHP_URL_HOST),
-            $refArticle->source_keyword ?? 'general',
-            $refArticle->batch_id ?? Str::uuid()->toString(),
-            $refArticle->ai_confidence ?? 50,
-            0,
-            false
-        );
+        GenerateFromRefArticleJob::dispatch($refArticle->id);
 
         return back()->with('success', 'Retry job dispatched. Periksa halaman Postingan AI.');
     }
