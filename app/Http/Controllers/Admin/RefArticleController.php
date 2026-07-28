@@ -103,6 +103,45 @@ class RefArticleController extends Controller
     }
 
     /**
+     * Research ALL predefined keywords from ScraperConfig at once
+     */
+    public function researchAll()
+    {
+        $keywords = \App\Models\ScraperConfig::getKeywords();
+        $totalCount = 0;
+        $results = [];
+
+        foreach ($keywords as $keyword) {
+            $kw = strtolower(trim($keyword));
+
+            // Delete old low-score recommendations
+            ResearchRecommendation::byKeyword($kw)
+                ->where('confidence_score', '<', 45)
+                ->delete();
+
+            // Reset rejected recommendations
+            ResearchRecommendation::byKeyword($kw)
+                ->where('status', 'rejected')
+                ->update(['status' => 'pending']);
+
+            // Run research synchronously
+            $job = new \App\Jobs\KeywordResearchJob($kw);
+            $job->handle(app(\App\Services\SitemapScraperService::class));
+
+            $count = ResearchRecommendation::byKeyword($kw)->count();
+            $totalCount += $count;
+            $results[$keyword] = $count;
+
+            Log::info('ResearchAll: keyword completed', ['keyword' => $kw, 'count' => $count]);
+        }
+
+        $msg = "Research All selesai! {$totalCount} URL ditemukan dari " . count($keywords) . " keyword.";
+        return redirect()
+            ->route('admin.scrape-results.index')
+            ->with('success', $msg);
+    }
+
+    /**
      * Show research recommendations for a keyword
      */
     public function recommendations(?string $keyword = null)

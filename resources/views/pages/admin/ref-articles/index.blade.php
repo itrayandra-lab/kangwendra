@@ -167,9 +167,21 @@
 
             {{-- Keyword Research Form --}}
             <div>
+                {{-- Scrape All Button --}}
+                <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <form action="{{ route('ref-articles.research-all') }}" method="POST" style="display:inline;">
+                        @csrf
+                        <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px; padding:6px 16px; font-weight:600;"
+                            onclick="return confirm('Scrape semua keyword sekarang? Proses ini akan memakan waktu beberapa menit.')">
+                            <i class="fa fa-bolt"></i> Scrape Semua Keyword
+                        </button>
+                    </form>
+                    <span style="font-size:12px; color:#888;">← klik untuk scrape semua keyword sekaligus, atau pilih satu per satu di bawah</span>
+                </div>
+
                 {{-- Quick Topic Buttons --}}
                 <div style="margin-bottom:10px;">
-                    <span style="font-size:12px; color:#888; margin-right:8px;">Topik AI:</span>
+                    <span style="font-size:12px; color:#888; margin-right:8px;">Pilih topik:</span>
                     @foreach(App\Models\ScraperConfig::getKeywords() as $topic)
                         <form action="{{ route('ref-articles.research') }}" method="POST" style="display:inline;">
                             @csrf

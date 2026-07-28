@@ -206,6 +206,7 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
         // Research & recommendations
         Route::post('/research', 'research')->name('ref-articles.research');
+        Route::post('/research-all', 'researchAll')->name('ref-articles.research-all');
         Route::post('/recommendation/{id}/approve', 'approveRecommendation')->name('ref-articles.recommendation.approve');
         Route::post('/recommendation/{id}/reject', 'rejectRecommendation')->name('ref-articles.recommendation.reject');
         Route::post('/{id}/scrape-paraphrase', 'scrapeAndParaphrase')->name('ref-articles.scrape-paraphrase');
