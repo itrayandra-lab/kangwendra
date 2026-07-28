@@ -20,10 +20,20 @@ class ScrapingController extends Controller
     {
         $page = 'Scraping';
         $keywords = ScraperConfig::getKeywords();
+
+        // Stats: only count items that have NOT been moved yet
+        // (research_recommendations items are auto-deleted after approve,
+        //  so any remaining items with ref_article_id are orphaned leftovers)
         $stats = [
-            'total'    => ResearchRecommendation::count(),
-            'pending'  => ResearchRecommendation::pending()->count(),
-            'moved'    => ResearchRecommendation::whereNotNull('ref_article_id')->count(),
+            // Pending = awaiting approve/reject in hasil-scraping (no ref_article_id)
+            'pending'   => ResearchRecommendation::whereNull('ref_article_id')
+                           ->where('status', 'pending')->count(),
+            // All research_recommendations that exist (should be 0 for pending-only workflow)
+            'total'     => ResearchRecommendation::count(),
+            // Moved = has ref_article_id (already approved — orphaned/pre-migration leftovers)
+            'moved'     => ResearchRecommendation::whereNotNull('ref_article_id')->count(),
+            // Total in ref_articles (the actual pipeline after approve)
+            'ref_articles_total' => RefArticle::count(),
         ];
 
         return view('pages.admin.scraping.index', compact('page', 'keywords', 'stats'));

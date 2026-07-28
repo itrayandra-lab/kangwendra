@@ -88,19 +88,19 @@
                     </div>
                 </div>
 
-                {{-- Quick Stats --}}
+                {{-- Quick Stats (Scraping pipeline only) --}}
                 <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:20px; padding-top:16px; border-top:1px solid #eee;">
                     <div style="background:#f8f9fa; border-radius:8px; padding:10px 16px; text-align:center;">
-                        <div style="font-size:22px; font-weight:700; color:#333;">{{ $stats['total'] }}</div>
-                        <div style="font-size:11px; color:#888;">Total Scraped</div>
+                        <div style="font-size:22px; font-weight:700; color:#333;">{{ $stats['pending'] }}</div>
+                        <div style="font-size:11px; color:#888;">Menunggu Approve/Reject</div>
                     </div>
                     <div style="background:#fff3cd; border-radius:8px; padding:10px 16px; text-align:center;">
-                        <div style="font-size:22px; font-weight:700; color:#856404;">{{ $stats['pending'] }}</div>
-                        <div style="font-size:11px; color:#856404;">Pending</div>
+                        <div style="font-size:22px; font-weight:700; color:#856404;">{{ $stats['moved'] }}</div>
+                        <div style="font-size:11px; color:#856404;">Sudah Dipindahkan</div>
                     </div>
                     <div style="background:#d1ecf1; border-radius:8px; padding:10px 16px; text-align:center;">
-                        <div style="font-size:22px; font-weight:700; color:#0c5460;">{{ $stats['moved'] }}</div>
-                        <div style="font-size:11px; color:#0c5460;">Dipindahkan</div>
+                        <div style="font-size:22px; font-weight:700; color:#0c5460;">{{ $stats['ref_articles_total'] }}</div>
+                        <div style="font-size:11px; color:#0c5460;">Total Ref Articles</div>
                     </div>
                 </div>
 

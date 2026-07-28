@@ -59,10 +59,14 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    var ajaxUrl = '{{ route("posts.index") }}' + window.location.search;
     $('#posts-table').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '{{ route('posts.index') }}',
+        ajax: {
+            url: ajaxUrl,
+            type: 'GET',
+        },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'link', name: 'link', orderable: false, searchable: false },
@@ -74,14 +78,14 @@ $(document).ready(function() {
             { data: 'tags', name: 'tags', orderable: false },
             { data: 'created_by', name: 'created_by' },
             { data: 'updated_by', name: 'updated_by' },
+            { data: 'published_by', name: 'published_by', orderable: false, searchable: false },
             { data: 'published_at', name: 'published_at' },
             { data: 'created_at', name: 'created_at' },
             { data: 'updated_at', name: 'updated_at' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
-        order: [[11, 'desc']] // urutkan default berdasarkan created_at desc
+        order: [[12, 'desc']]
     });
 });
 </script>
 @endpush
-
