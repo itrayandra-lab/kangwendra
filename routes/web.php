@@ -187,45 +187,57 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::delete('/{id}', 'destroy')->name('domain-share.destroy')->middleware('permission:delete domain-share');
     });
 
-    # Artikel Referensi (AI Pipeline: Paraphase/Generate only)
+    # Artikel Referensi (AI Pipeline: Generate Paraphrase only)
     Route::group(['prefix' => 'ref-articles', 'controller' => RefArticleController::class], function () {
         Route::get('/', 'index')->name('ref-articles.index');
         Route::get('/batch-progress', 'batchProgress')->name('ref-articles.batch-progress');
         Route::get('/batch-status', 'batchStatus')->name('ref-articles.batch-status');
-        Route::get('/recommendations/{keyword?}', 'recommendations')->name('ref-articles.recommendations');
-        Route::get('/keywords', 'indexKeywords')->name('ref-articles.keywords.index');
-        Route::post('/keywords', 'storeKeyword')->name('ref-articles.keywords.store');
-        Route::delete('/keywords/{id}', 'destroyKeyword')->name('ref-articles.keywords.destroy');
-        Route::post('/clear-blocklists', 'clearBlocklists')->name('ref-articles.clear-blocklists');
-        Route::get('/scrape-config', [App\Http\Controllers\Admin\ScraperConfigController::class, 'index'])->name('admin.scraper-config.index');
-        Route::put('/scrape-config/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'update'])->name('admin.scraper-config.update');
-        Route::post('/scrape-config/add-item/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'addItem'])->name('admin.scraper-config.add-item');
-        Route::post('/scrape-config/remove-item/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'removeItem'])->name('admin.scraper-config.remove-item');
-        Route::post('/scrape-config/flush-cache', [App\Http\Controllers\Admin\ScraperConfigController::class, 'flushCache'])->name('admin.scraper-config.flush-cache');
         Route::get('/{refArticle}', 'show')->name('ref-articles.show');
+        Route::post('/generate-all', 'generateAll')->name('ref-articles.generate-all');
         Route::post('/{refArticle}/generate', 'generate')->name('ref-articles.generate');
         Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
-        Route::post('/recommendation/{id}/approve', 'approveRecommendation')->name('ref-articles.recommendation.approve');
-        Route::post('/recommendation/{id}/reject', 'rejectRecommendation')->name('ref-articles.recommendation.reject');
-        Route::post('/{id}/scrape-paraphrase', 'scrapeAndParaphrase')->name('ref-articles.scrape-paraphrase');
         Route::get('/{refArticle}/edit-post', 'editPost')->name('ref-articles.edit-post');
         Route::put('/{refArticle}/update-post', 'updatePost')->name('ref-articles.update-post');
         Route::delete('/{refArticle}', 'destroy')->name('ref-articles.destroy');
     });
 
-    # Scraping - Research URL from sitemap
+    # Scraping - Research + Keyword Config
     Route::group(['prefix' => 'scraping', 'controller' => ScrapingController::class], function () {
         Route::get('/', 'index')->name('admin.scraping.index');
         Route::post('/research', 'research')->name('admin.scraping.research');
         Route::post('/research-all', 'researchAll')->name('admin.scraping.research-all');
+        Route::get('/scrape-config', [App\Http\Controllers\Admin\ScraperConfigController::class, 'index'])->name('admin.scraping.scrape-config');
+        Route::put('/scrape-config/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'update'])->name('admin.scraping.scrape-config.update');
+        Route::post('/scrape-config/add-item/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'addItem'])->name('admin.scraping.scrape-config.add-item');
+        Route::post('/scrape-config/remove-item/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'removeItem'])->name('admin.scraping.scrape-config.remove-item');
+        Route::post('/scrape-config/flush-cache', [App\Http\Controllers\Admin\ScraperConfigController::class, 'flushCache'])->name('admin.scraping.scrape-config.flush-cache');
+        Route::get('/keywords', 'indexKeywords')->name('admin.scraping.keywords.index');
+        Route::post('/keywords', 'storeKeyword')->name('admin.scraping.keywords.store');
+        Route::delete('/keywords/{id}', 'destroyKeyword')->name('admin.scraping.keywords.destroy');
+        Route::post('/keywords/clear-blocklists', 'clearBlocklists')->name('admin.scraping.keywords.clear-blocklists');
     });
 
-    # Hasil Scraping - Table of scraped URLs
+    # Hasil Scraping - Approve + Reject scraped URLs
     Route::group(['prefix' => 'hasil-scraping', 'controller' => ScrapeResultController::class], function () {
         Route::get('/', 'index')->name('admin.hasil-scraping.index');
-        Route::post('/move', 'moveToRefArticles')->name('admin.hasil-scraping.move');
+        Route::post('/approve', 'approve')->name('admin.hasil-scraping.approve');
+        Route::post('/reject', 'reject')->name('admin.hasil-scraping.reject');
         Route::post('/destroy', 'destroySelected')->name('admin.hasil-scraping.destroy');
         Route::post('/retry', 'retryFailed')->name('admin.hasil-scraping.retry');
+    });
+
+    # Ref Articles - Generate Paraphrase + View (NO research/recommendations here)
+    Route::group(['prefix' => 'ref-articles', 'controller' => RefArticleController::class], function () {
+        Route::get('/', 'index')->name('ref-articles.index');
+        Route::get('/batch-progress', 'batchProgress')->name('ref-articles.batch-progress');
+        Route::get('/batch-status', 'batchStatus')->name('ref-articles.batch-status');
+        Route::post('/generate-all', 'generateAll')->name('ref-articles.generate-all');
+        Route::get('/{refArticle}', 'show')->name('ref-articles.show');
+        Route::post('/{refArticle}/generate', 'generate')->name('ref-articles.generate');
+        Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
+        Route::get('/{refArticle}/edit-post', 'editPost')->name('ref-articles.edit-post');
+        Route::put('/{refArticle}/update-post', 'updatePost')->name('ref-articles.update-post');
+        Route::delete('/{refArticle}', 'destroy')->name('ref-articles.destroy');
     });
 
     // Posts - Unpublish & Regenerate

@@ -3,33 +3,32 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Bus;
 use App\Jobs\ScrapeParaphraseJob;
-use App\Jobs\UpdateEditorPreferenceJob;
 use App\Models\EditorPreference;
 use App\Models\Posts;
 use App\Models\PostCategory;
 use App\Models\PostTags;
 use App\Models\RefArticle;
 use App\Models\ResearchRecommendation;
-use App\Services\EditorPreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RefArticleController extends Controller
 {
+    /**
+     * Index: Show all RefArticles that were manually moved from scrape results.
+     */
     public function index(Request $request)
     {
-        $page   = 'Scraping';
+        $page   = 'Ref Articles';
         $status = $request->input('status');
         $domain = $request->input('domain');
 
-        // Only show RefArticles that were manually moved from scrape results
         $query = RefArticle::where('moved_from_scrape', true)->latest();
 
         if ($status) {
-            $query->where('ai_status', $status);
+            $query->where('ai_research_status', $status);
         }
         if ($domain) {
             $query->where('source_domain', 'like', "%{$domain}%");
@@ -39,323 +38,58 @@ class RefArticleController extends Controller
 
         $stats = [
             'total'      => RefArticle::where('moved_from_scrape', true)->count(),
-            'pending'    => RefArticle::where('moved_from_scrape', true)->where('ai_status', 'pending')->count(),
-            'processing' => RefArticle::where('moved_from_scrape', true)->where('ai_status', 'processing')->count(),
-            'done'       => RefArticle::where('moved_from_scrape', true)->where('ai_status', 'done')->count(),
-            'failed'     => RefArticle::where('moved_from_scrape', true)->where('ai_status', 'failed')->count(),
-        ];
-
-        // Pending recommendations
-        $pendingRecommendations = ResearchRecommendation::pending()
-            ->orderByDesc('confidence_score')
-            ->limit(10)
-            ->get();
-
-        // Pipeline stats
-        $prefStats = [
-            'total_keywords' => EditorPreference::count(),
-            'avg_confidence' => round(EditorPreference::avg('confidence') ?? 0, 1),
-            'high_confidence' => EditorPreference::hasConfidence(85)->count(),
+            'idle'      => RefArticle::where('moved_from_scrape', true)->where(fn($q) => $q->whereNull('ai_research_status')->orWhere('ai_research_status', 'idle'))->count(),
+            'pending'   => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'pending')->count(),
+            'processing'=> RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'processing')->count(),
+            'done'      => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'done')->count(),
+            'failed'    => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'failed')->count(),
         ];
 
         return view('pages.admin.ref-articles.index', compact(
-            'page', 'articles', 'stats', 'status', 'domain', 'pendingRecommendations', 'prefStats'
+            'page', 'articles', 'stats', 'status', 'domain'
         ));
     }
 
-    // ── RESEARCH & RECOMMENDATIONS ─────────────────────────────
+    // ── GENERATE PARAPHRASE ──────────────────────────────────
 
     /**
-     * Dispatch keyword research job SYNCHRONOUSLY so results appear immediately
+     * Generate All Pending RefArticles (max 5 per batch).
      */
-    public function research(Request $request)
+    public function generateAll()
     {
-        $validated = $request->validate([
-            'keyword' => 'required|string|min:2|max:255',
-        ]);
-
-        $keyword = strtolower(trim($validated['keyword']));
-
-        // Always delete old low-quality recommendations before re-researching
-        $deleted = ResearchRecommendation::byKeyword($keyword)
-            ->where('confidence_score', '<', 45)
-            ->delete();
-
-        // Reset rejected recommendations so they can be re-fetched
-        ResearchRecommendation::byKeyword($keyword)
-            ->where('status', 'rejected')
-            ->update(['status' => 'pending']);
-
-        // Run research SYNCHRONOUSLY so results appear immediately
-        $job = new \App\Jobs\KeywordResearchJob($keyword);
-        $job->handle(app(\App\Services\SitemapScraperService::class));
-
-        Log::info('Keyword research completed synchronously', [
-            'keyword' => $keyword,
-            'deleted_low_score' => $deleted,
-        ]);
-
-        $count = ResearchRecommendation::byKeyword($keyword)->count();
-
-        return redirect()
-            ->route('admin.scrape-results.index', ['keyword' => $keyword])
-            ->with('success', "Research selesai! {$count} URL ditemukan untuk '{$keyword}'. Lihat hasil scrape, lalu pindahkan yang sesuai ke Ref Articles.");
-    }
-
-    /**
-     * Research ALL predefined keywords from ScraperConfig at once
-     */
-    public function researchAll()
-    {
-        $keywords = \App\Models\ScraperConfig::getKeywords();
-        $totalCount = 0;
-        $results = [];
-
-        foreach ($keywords as $keyword) {
-            $kw = strtolower(trim($keyword));
-
-            // Delete old low-score recommendations
-            ResearchRecommendation::byKeyword($kw)
-                ->where('confidence_score', '<', 45)
-                ->delete();
-
-            // Reset rejected recommendations
-            ResearchRecommendation::byKeyword($kw)
-                ->where('status', 'rejected')
-                ->update(['status' => 'pending']);
-
-            // Run research synchronously
-            $job = new \App\Jobs\KeywordResearchJob($kw);
-            $job->handle(app(\App\Services\SitemapScraperService::class));
-
-            $count = ResearchRecommendation::byKeyword($kw)->count();
-            $totalCount += $count;
-            $results[$keyword] = $count;
-
-            Log::info('ResearchAll: keyword completed', ['keyword' => $kw, 'count' => $count]);
-        }
-
-        $msg = "Research All selesai! {$totalCount} URL ditemukan dari " . count($keywords) . " keyword.";
-        return redirect()
-            ->route('admin.scrape-results.index')
-            ->with('success', $msg);
-    }
-
-    /**
-     * Show research recommendations for a keyword
-     */
-    public function recommendations(?string $keyword = null)
-    {
-        $keyword = $keyword ? urldecode($keyword) : null;
-        $page = $keyword ? 'Ref Articles' : 'Ref Articles';
-
-        // Show ONLY results that have been moved to Ref Articles
-        $query = ResearchRecommendation::whereNotNull('ref_article_id')
-            ->orderByDesc('created_at');
-
-        if ($keyword) {
-            $query->where('keyword', strtolower($keyword));
-        }
-
-        $recommendations = $query->get();
-
-        $pref = $keyword
-            ? EditorPreference::where('keyword', strtolower($keyword))->first()
-            : null;
-
-        return view('pages.admin.ref-articles.recommendations', compact(
-            'page', 'keyword', 'recommendations', 'pref'
-        ));
-    }
-
-    /**
-     * Approve + scrape a single recommendation
-     */
-    public function approveRecommendation(Request $request, int $id)
-    {
-        $rec = ResearchRecommendation::findOrFail($id);
-        $rec->update(['status' => 'approved']);
-
-        // Dispatch scrape + paraphrase
-        ScrapeParaphraseJob::dispatch(
-            $rec->url,
-            $rec->domain ?? parse_url($rec->url, PHP_URL_HOST),
-            $rec->keyword,
-            Str::uuid()->toString(),
-            $rec->confidence_score ?? 50,
-            $rec->id,
-            false // not auto mode
-        );
-
-        // Record AI learning
-        UpdateEditorPreferenceJob::dispatch('approval', [
-            'keyword' => $rec->keyword,
-            'url'     => $rec->url,
-            'topic'   => $this->extractTopic($rec->title ?? ''),
-        ]);
-
-        Log::info('Recommendation approved + dispatched', ['rec_id' => $id, 'url' => $rec->url]);
-
-        return back()->with('success', "Scraping + Paraphrase untuk '{$rec->title}' sedang diproses.");
-    }
-
-    /**
-     * Reject a recommendation
-     */
-    public function rejectRecommendation(Request $request, int $id)
-    {
-        $rec = ResearchRecommendation::findOrFail($id);
-        $rec->update(['status' => 'rejected']);
-
-        // Record rejection in AI learning
-        UpdateEditorPreferenceJob::dispatch('rejection', [
-            'keyword' => $rec->keyword,
-            'url'     => $rec->url,
-            'topic'   => $this->extractTopic($rec->title ?? ''),
-        ]);
-
-        Log::info('Recommendation rejected', ['rec_id' => $id, 'url' => $rec->url]);
-
-        return back()->with('success', "URL ditolak dan masuk blocklist.");
-    }
-
-    /**
-     * Approve all pending recommendations for a keyword
-     */
-    public function approveAll(Request $request, string $keyword)
-    {
-        $keyword = urldecode($keyword);
-
-        $recs = ResearchRecommendation::byKeyword($keyword)
-            ->pending()
-            ->orderByDesc('confidence_score')
+        $idleArticles = RefArticle::where('moved_from_scrape', true)
+            ->where(fn($q) => $q->whereNull('ai_research_status')->orWhere('ai_research_status', 'idle'))
+            ->orderBy('created_at')
             ->limit(5)
             ->get();
 
-        if ($recs->isEmpty()) {
-            return back()->with('error', 'Tidak ada rekomendasi yang bisa disetujui.');
+        if ($idleArticles->isEmpty()) {
+            return back()->with('info', 'Tidak ada Ref Article yang idle. Semua sudah diproses.');
         }
 
-        $count = 0;
-        foreach ($recs as $rec) {
-            $rec->update(['status' => 'approved']);
+        $dispatched = 0;
+        foreach ($idleArticles as $article) {
+            if (!$article->source_url) continue;
+
+            $article->update(['ai_research_status' => 'pending']);
+
             ScrapeParaphraseJob::dispatch(
-                $rec->url,
-                $rec->domain ?? parse_url($rec->url, PHP_URL_HOST),
-                $rec->keyword,
-                Str::uuid()->toString(),
-                $rec->confidence_score ?? 50,
-                $rec->id,
-                false
+                $article->source_url,
+                $article->source_domain ?? parse_url($article->source_url, PHP_URL_HOST),
+                $article->source_keyword ?? 'general',
+                $article->batch_id ?? Str::uuid()->toString(),
+                $article->ai_confidence ?? 50,
+                null,
+                $article->id
             );
-            $count++;
+            $dispatched++;
         }
 
-        return back()->with('success', "{$count} artikel sedang diproses.");
-    }
-
-    // ── SCRAPE & PARAPHRASE ──────────────────────────────────
-
-    /**
-     * Manual scrape + paraphrase for a specific URL (for future use)
-     */
-    public function scrapeAndParaphrase(Request $request, int $id)
-    {
-        $rec = ResearchRecommendation::findOrFail($id);
-
-        if ($rec->status === 'scraped') {
-            return back()->with('error', 'URL ini sudah discrape sebelumnya.');
-        }
-
-        ScrapeParaphraseJob::dispatch(
-            $rec->url,
-            $rec->domain ?? parse_url($rec->url, PHP_URL_HOST),
-            $rec->keyword,
-            Str::uuid()->toString(),
-            $rec->confidence_score ?? 50,
-            $rec->id,
-            false
-        );
-
-        return back()->with('success', "Scrape + Paraphrase untuk '{$rec->title}' sedang diproses.");
-    }
-
-    // ── BATCH PROGRESS ───────────────────────────────────────
-
-    public function batchStatus(Request $request)
-    {
-        $batchId = $request->get('batch_id');
-        if (!$batchId) {
-            return response()->json(['error' => 'no batch_id']);
-        }
-
-        $total      = RefArticle::where('batch_id', $batchId)->count();
-        $done       = RefArticle::where('batch_id', $batchId)->whereIn('ai_status', ['done', 'failed'])->count();
-        $success    = RefArticle::where('batch_id', $batchId)->where('ai_status', 'done')->count();
-        $failed     = RefArticle::where('batch_id', $batchId)->where('ai_status', 'failed')->count();
-        $processing = RefArticle::where('batch_id', $batchId)->where('ai_status', 'processing')->count();
-
-        $failedArticles = RefArticle::where('batch_id', $batchId)
-            ->where('ai_status', 'failed')
-            ->select('id', 'title', 'ai_error')
-            ->limit(10)
-            ->get();
-
-        return response()->json([
-            'batch_id'   => $batchId,
-            'total'     => $total,
-            'done'      => $done,
-            'success'   => $success,
-            'failed'    => $failed,
-            'processing'=> $processing,
-            'errors'    => $failedArticles->map(fn($a) => ['title' => $a->title, 'error' => $a->ai_error]),
-            'status'    => $total > 0 && $done >= $total ? 'completed' : 'running',
-        ]);
-    }
-
-    public function batchProgress(Request $request)
-    {
-        $batchId = $request->get('batch_id');
-
-        if (!$batchId) {
-            return redirect()->route('ref-articles.index');
-        }
-
-        $page = 'Progress Generate AI';
-
-        $total      = RefArticle::where('batch_id', $batchId)->count();
-        $done       = RefArticle::where('batch_id', $batchId)->whereIn('ai_status', ['done', 'failed'])->count();
-        $success    = RefArticle::where('batch_id', $batchId)->where('ai_status', 'done')->count();
-        $failed     = RefArticle::where('batch_id', $batchId)->where('ai_status', 'failed')->count();
-        $processing = RefArticle::where('batch_id', $batchId)->where('ai_status', 'processing')->count();
-
-        $failedArticles = RefArticle::where('batch_id', $batchId)
-            ->where('ai_status', 'failed')
-            ->select('id', 'title', 'ai_error')
-            ->limit(10)
-            ->get();
-
-        return view('pages.admin.ref-articles.batch-progress', compact(
-            'page', 'batchId', 'total', 'done', 'success', 'failed', 'processing', 'failedArticles'
-        ));
-    }
-
-    // ── REF ARTICLE CRUD ──────────────────────────────────────
-
-    public function destroy(RefArticle $refArticle)
-    {
-        $refArticle->delete();
-        return back()->with('success', 'Dihapus.');
-    }
-
-    public function show(RefArticle $refArticle)
-    {
-        $page = 'Detail Referensi';
-        return view('pages.admin.ref-articles.show', compact('page', 'refArticle'));
+        return back()->with('success', "{$dispatched} job paraphrase di-queue. Periksa halaman Postingan AI untuk hasilnya.");
     }
 
     /**
-     * Generate/paraphrase article from a RefArticle (for pending status)
+     * Generate/paraphrase a single RefArticle.
      */
     public function generate(RefArticle $refArticle)
     {
@@ -363,7 +97,7 @@ class RefArticleController extends Controller
             return back()->with('error', 'Source URL tidak tersedia.');
         }
 
-        $refArticle->update(['ai_status' => 'pending']);
+        $refArticle->update(['ai_research_status' => 'pending']);
 
         ScrapeParaphraseJob::dispatch(
             $refArticle->source_url,
@@ -375,11 +109,11 @@ class RefArticleController extends Controller
             $refArticle->id
         );
 
-        return back()->with('success', 'Generate job dispatched.');
+        return back()->with('success', 'Generate job dispatched. Periksa halaman Postingan AI.');
     }
 
     /**
-     * Retry generate after failed status
+     * Retry generate after failed status.
      */
     public function retry(RefArticle $refArticle)
     {
@@ -387,7 +121,7 @@ class RefArticleController extends Controller
             return back()->with('error', 'Source URL tidak tersedia.');
         }
 
-        $refArticle->update(['ai_status' => 'pending', 'ai_error' => null]);
+        $refArticle->update(['ai_research_status' => 'pending', 'ai_error' => null]);
 
         ScrapeParaphraseJob::dispatch(
             $refArticle->source_url,
@@ -399,10 +133,26 @@ class RefArticleController extends Controller
             $refArticle->id
         );
 
-        return back()->with('success', 'Retry job dispatched.');
+        return back()->with('success', 'Retry job dispatched. Periksa halaman Postingan AI.');
     }
 
-    // ── EDIT POST (from generated post) ───────────────────────
+    // ── VIEW DETAIL ───────────────────────────────────────────
+
+    public function show(RefArticle $refArticle)
+    {
+        $page = 'Detail Referensi';
+        return view('pages.admin.ref-articles.show', compact('page', 'refArticle'));
+    }
+
+    // ── DELETE ───────────────────────────────────────────────
+
+    public function destroy(RefArticle $refArticle)
+    {
+        $refArticle->delete();
+        return back()->with('success', 'Dihapus.');
+    }
+
+    // ── EDIT GENERATED POST ──────────────────────────────────
 
     public function editPost(RefArticle $refArticle)
     {
@@ -489,75 +239,19 @@ class RefArticleController extends Controller
             ->with('success', 'Post berhasil disimpan: ' . Str::limit($post->title, 50));
     }
 
-    // ── KEYWORD MANAGEMENT ────────────────────────────────────
-
-    /**
-     * List all keywords from editor_preferences
-     */
-    public function indexKeywords()
-    {
-        $page = 'Kelola Kata Kunci';
-        $keywords = EditorPreference::orderBy('created_at', 'desc')->get();
-        return view('pages.admin.ref-articles.keywords', compact('page', 'keywords'));
-    }
-
-    /**
-     * Add a new keyword
-     */
-    public function storeKeyword(Request $request)
-    {
-        $validated = $request->validate([
-            'keyword' => 'required|string|min:2|max:50|unique:editor_preferences,keyword',
-        ]);
-
-        EditorPreference::create([
-            'keyword' => trim(strtolower($validated['keyword'])),
-        ]);
-
-        return back()->with('success', "Kata kunci '{$validated['keyword']}' berhasil ditambahkan.");
-    }
-
-    /**
-     * Delete a keyword
-     */
-    public function destroyKeyword($id)
-    {
-        $pref = EditorPreference::findOrFail($id);
-        $keyword = $pref->keyword;
-        $pref->delete();
-
-        return back()->with('success', "Kata kunci '{$keyword}' berhasil dihapus.");
-    }
-
-    /**
-     * Clear all blocklists from all EditorPreference records
-     */
-    public function clearBlocklists()
-    {
-        $cleared = EditorPreference::whereNotNull('blocklist_urls')
-            ->where('blocklist_urls', '!=', '')
-            ->where('blocklist_urls', '!=', '[]')
-            ->update(['blocklist_urls' => null, 'blocklist_patterns' => null]);
-
-        return back()->with('info', "Blocklist berhasil dibersihkan dari {$cleared} record.");
-    }
-
     // ── HELPERS ───────────────────────────────────────────────
 
     protected function extractTopic(string $title): string
     {
-        $aiTopics = ['ai', 'llm', 'machine learning', 'deep learning', 'openai', 'gemini', 'chatgpt', 'neural', 'generative', 'agentic'];
+        $aiTopics = ['ai', 'llm', 'machine learning', 'deep learning', 'openai',
+            'gemini', 'chatgpt', 'neural', 'generative', 'agentic', 'claude', 'deepseek'];
         foreach ($aiTopics as $topic) {
-            if (stripos($title, $topic) !== false) {
-                return 'AI & Teknologi';
-            }
+            if (stripos($title, $topic) !== false) return 'AI & Teknologi';
         }
 
         $seoTopics = ['seo', 'search', 'google', 'algorithm', 'serp'];
         foreach ($seoTopics as $topic) {
-            if (stripos($title, $topic) !== false) {
-                return 'SEO & Search';
-            }
+            if (stripos($title, $topic) !== false) return 'SEO & Search';
         }
 
         return 'Teknologi';

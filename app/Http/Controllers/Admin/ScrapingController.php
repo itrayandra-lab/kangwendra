@@ -67,7 +67,7 @@ class ScrapingController extends Controller
                 $msg .= "Coba lagi nanti atau ganti dengan keyword lain.";
             } else {
                 $msg .= " Keyword ini BELUM ada di ScraperConfig. ";
-                $msg .= "Pergi ke Ref Articles > Kelola Kata Kunci untuk menambahnya.";
+                $msg .= "Pergi ke Scraper Config di menu Scraping untuk menambahnya.";
             }
 
             return redirect()
@@ -109,5 +109,58 @@ class ScrapingController extends Controller
         return redirect()
             ->route('admin.hasil-scraping.index')
             ->with('success', "{$dispatched} keyword di-queue untuk scraping. Hasil akan muncul di halaman Hasil Scraping.");
+    }
+
+    // ── KEYWORD MANAGEMENT (moved from RefArticleController) ────────────
+
+    /**
+     * List all keywords from editor_preferences
+     */
+    public function indexKeywords()
+    {
+        $page = 'Kelola Kata Kunci';
+        $keywords = EditorPreference::orderBy('created_at', 'desc')->get();
+        return view('pages.admin.scraping.keywords', compact('page', 'keywords'));
+    }
+
+    /**
+     * Add a new keyword
+     */
+    public function storeKeyword(Request $request)
+    {
+        $validated = $request->validate([
+            'keyword' => 'required|string|min:2|max:50|unique:editor_preferences,keyword',
+        ]);
+
+        EditorPreference::create([
+            'keyword' => trim(strtolower($validated['keyword'])),
+        ]);
+
+        return back()->with('success', "Kata kunci '{$validated['keyword']}' berhasil ditambahkan.");
+    }
+
+    /**
+     * Delete a keyword
+     */
+    public function destroyKeyword($id)
+    {
+        $pref = EditorPreference::findOrFail($id);
+        $keyword = $pref->keyword;
+        $pref->delete();
+
+        return back()->with('success', "Kata kunci '{$keyword}' berhasil dihapus.");
+    }
+
+    /**
+     * Clear all blocklists from all EditorPreference records
+     */
+    public function clearBlocklists()
+    {
+        $cleared = EditorPreference::whereNotNull('blocklist_urls')
+            ->where('blocklist_urls', '!=', '')
+            ->where('blocklist_urls', '!=', '[]')
+            ->update(['blocklist_urls' => null, 'blocklist_patterns' => null]);
+
+        return back()->with('info', "Blocklist berhasil dibersihkan dari {$cleared} record.");
     }
 }

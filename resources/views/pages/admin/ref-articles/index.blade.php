@@ -139,14 +139,11 @@
             <a href="{{ route('ref-articles.index') }}" class="filter-tab {{ !$status ? 'active' : '' }}">
                 Semua <span class="cnt">{{ $stats['total'] }}</span>
             </a>
-            <a href="{{ route('ref-articles.index', ['status' => 'pending']) }}" class="filter-tab {{ $status === 'pending' ? 'active' : '' }}">
-                Pending <span class="cnt">{{ $stats['pending'] }}</span>
-            </a>
-            <a href="{{ route('ref-articles.index', ['status' => 'processing']) }}" class="filter-tab {{ $status === 'processing' ? 'active' : '' }}">
-                Processing <span class="cnt">{{ $stats['processing'] }}</span>
+            <a href="{{ route('ref-articles.index', ['status' => 'idle']) }}" class="filter-tab {{ $status === 'idle' ? 'active' : '' }}">
+                Idle <span class="cnt">{{ $stats['idle'] }}</span>
             </a>
             <a href="{{ route('ref-articles.index', ['status' => 'done']) }}" class="filter-tab {{ $status === 'done' ? 'active' : '' }}">
-                Done <span class="cnt">{{ $stats['done'] }}</span>
+                Selesai <span class="cnt">{{ $stats['done'] }}</span>
             </a>
             <a href="{{ route('ref-articles.index', ['status' => 'failed']) }}" class="filter-tab {{ $status === 'failed' ? 'active' : '' }}">
                 Failed <span class="cnt">{{ $stats['failed'] }}</span>
@@ -156,63 +153,61 @@
         {{-- Action Panel --}}
         <div class="action-panel">
             <div class="pipeline-flow" style="margin-bottom:12px;">
-                <span class="pipeline-step">1. Research</span>
+                <span class="pipeline-step">1. Scraping</span>
                 <span class="pipeline-arrow">&rarr;</span>
-                <span class="pipeline-step">2. Scrape + Paraphrase</span>
+                <span class="pipeline-step">2. Research</span>
                 <span class="pipeline-arrow">&rarr;</span>
-                <span class="pipeline-step">3. Auto Publish</span>
+                <span class="pipeline-step">3. Approve</span>
+                <span class="pipeline-arrow">&rarr;</span>
+                <span class="pipeline-step">4. Generate</span>
+                <span class="pipeline-arrow">&rarr;</span>
+                <span class="pipeline-step">Auto Publish</span>
                 <span class="pipeline-arrow">&rarr;</span>
                 <span class="pipeline-step">08:00 / 13:00 / 16:00 WIB</span>
             </div>
 
-            {{-- Info Banner - Research moved to Scraping page --}}
+            {{-- Flow Banner --}}
             <div style="background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#2e7d32;">
-                <strong>Flow:</strong> Scraping (menu) → Research keyword → Hasil Scraping → Pindahkan → <strong>Ref Articles</strong> (halaman ini) → Approve
+                <strong>Flow:</strong> Scraping → Research keyword → Hasil Scraping → <strong>[Approve]</strong> →
+                <strong>Ref Articles</strong> (halaman ini) → <strong>[Generate]</strong> → Auto Publish
             </div>
 
-            {{-- Link to Scraping Page --}}
-            <div style="margin-bottom:12px;">
+            {{-- Links & Generate All --}}
+            <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                 <a href="{{ route('admin.scraping.index') }}" class="btn btn-primary btn-sm" style="border-radius:8px; padding:6px 16px; font-weight:600;">
-                    <i class="fa fa-search"></i> Ke Halaman Scraping / Research
+                    <i class="fa fa-search"></i> Ke Halaman Scraping
                 </a>
-                <span style="font-size:12px; color:#888; margin-left:8px;">
-                    Halaman Scraping digunakan untuk research URL dari sitemap.
-                </span>
+
+                @if($stats['idle'] > 0)
+                    <form action="{{ route('ref-articles.generate-all') }}" method="POST" style="display:inline;">
+                        @csrf
+                        <button type="submit" class="btn btn-warning btn-sm" style="border-radius:8px; padding:6px 16px; font-weight:600;"
+                            onclick="return confirm('Generate semua Ref Articles idle? Maksimal 5 per batch.')">
+                            <i class="fa fa-bolt"></i> Generate All Idle ({{ $stats['idle'] }})
+                        </button>
+                    </form>
+                @endif
             </div>
 
             {{-- AI Stats --}}
             <div class="ai-stats-row">
                 <div class="ai-stat-box">
                     <div class="num">{{ $stats['total'] }}</div>
-                    <div class="lbl">Total Ref Articles</div>
+                    <div class="lbl">Total</div>
                 </div>
                 <div class="ai-stat-box">
-                    <div class="num">{{ $stats['pending'] }}</div>
-                    <div class="lbl">Pending</div>
+                    <div class="num" style="color:#ffc107;">{{ $stats['idle'] }}</div>
+                    <div class="lbl">Idle (siap Generate)</div>
                 </div>
                 <div class="ai-stat-box">
-                    <div class="num">{{ $stats['processing'] }}</div>
-                    <div class="lbl">Processing</div>
+                    <div class="num" style="color:#0d6efd;">{{ $stats['done'] }}</div>
+                    <div class="lbl">Selesai</div>
                 </div>
                 <div class="ai-stat-box">
-                    <div class="num">{{ $stats['done'] }}</div>
-                    <div class="lbl">Published</div>
-                </div>
-                <div class="ai-stat-box">
-                    <div class="num">{{ $prefStats['avg_confidence'] ?? 0 }}%</div>
-                    <div class="lbl">Avg Confidence</div>
-                </div>
-                <div class="ai-stat-box">
-                    <div class="num">{{ $prefStats['high_confidence'] ?? 0 }}</div>
-                    <div class="lbl">High Confidence</div>
+                    <div class="num" style="color:#dc3545;">{{ $stats['failed'] }}</div>
+                    <div class="lbl">Gagal</div>
                 </div>
             </div>
-
-            @if($stats['failed'] > 0)
-            <div style="background:#f8d7da; padding:8px 14px; border-radius:8px; font-size:13px; color:#842029; margin-top:10px;">
-                {{ $stats['failed'] }} gagal - klik tab Failed untuk detail
-            </div>
-            @endif
         </div>
 
         {{-- Table --}}
@@ -262,55 +257,56 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge-status badge-{{ $article->ai_status }}">
-                                        @if($article->ai_status === 'pending') Pending
-                                        @elseif($article->ai_status === 'processing') Processing
-                                        @elseif($article->ai_status === 'done') Done
-                                        @elseif($article->ai_status === 'failed') Failed
-                                        @endif
-                                    </span>
-                                    @if($article->ai_status === 'done' && $article->generated_post_id)
+                                    @php $aiStatus = $article->ai_research_status; @endphp
+                                    @if(in_array($aiStatus, ['pending', 'processing']))
+                                        <span class="badge-status badge-processing">{{ ucfirst($aiStatus) }}</span>
+                                    @elseif($aiStatus === 'done')
+                                        <span class="badge-status badge-done">Done</span>
+                                    @elseif($aiStatus === 'failed')
+                                        <span class="badge-status badge-failed">Failed</span>
+                                    @else
+                                        <span class="badge-status badge-pending">Idle</span>
+                                    @endif
+                                    @if($aiStatus === 'done' && $article->generated_post_id)
                                         <br>
                                         <small>
                                             <a href="{{ route('posts.edit', $article->generated_post_id) }}" target="_blank" class="text-success">
                                                 Edit Post
                                             </a>
                                         </small>
-                                        <br>
-                                        <small>
-                                            <a href="{{ route('ref-articles.edit-post', $article) }}" class="text-primary">
-                                                Edit Cepat
-                                            </a>
-                                        </small>
                                     @endif
-                                    @if($article->ai_status === 'failed' && $article->ai_error)
+                                    @if($aiStatus === 'failed' && $article->ai_error)
                                         <br>
                                         <small class="text-danger" title="{{ $article->ai_error }}">
-                                            {{ Str::limit($article->ai_error, 40) }}
+                                            {{ Str::limit($article->ai_error, 30) }}
                                         </small>
                                     @endif
                                 </td>
                                 <td>
-                                    @if($article->ai_status === 'done')
-                                        <a href="{{ route('ref-articles.show', $article) }}" class="btn btn-info btn-xs">
-                                            Detail
-                                        </a>
-                                    @elseif($article->ai_status === 'failed')
-                                        <form action="{{ route('ref-articles.show', $article) }}" method="GET" style="display:inline;">
-                                            <button type="submit" class="btn btn-warning btn-xs">
-                                                Lihat Error
+                                    @if(in_array($aiStatus, [null, 'idle', 'failed']))
+                                        <form action="{{ route('ref-articles.generate', $article) }}" method="POST" style="display:inline;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-warning btn-xs"
+                                                onclick="return confirm('Generate paraphrase untuk artikel ini?')">
+                                                <i class="fa fa-bolt"></i> Generate
                                             </button>
                                         </form>
-                                    @else
-                                        <a href="{{ route('ref-articles.show', $article) }}" class="btn btn-info btn-xs">
-                                            Detail
-                                        </a>
                                     @endif
-
+                                    @if($aiStatus === 'failed')
+                                        <form action="{{ route('ref-articles.retry', $article) }}" method="POST" style="display:inline;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-outline-warning btn-xs">
+                                                <i class="fa fa-refresh"></i> Retry
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('ref-articles.show', $article) }}" class="btn btn-info btn-xs">
+                                        Detail
+                                    </a>
                                     <form action="{{ route('ref-articles.destroy', $article) }}" method="POST" style="display:inline;">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-danger btn-xs"
-                                            onclick="return confirm('Hapus?')">
+                                            onclick="return confirm('Hapus Ref Article ini?')">
                                             Hapus
                                         </button>
                                     </form>
@@ -319,8 +315,8 @@
                             @empty
                             <tr>
                                 <td colspan="7" class="text-center text-muted" style="padding:30px;">
-                                    Belum ada artikel referensi.<br>
-                                    <strong>Ketik keyword di atas dan klik "Research" untuk mulai.</strong>
+                                    Belum ada Ref Article.<br>
+                                    <strong>Pergi ke menu Scraping untuk research keyword, lalu Approve di Hasil Scraping.</strong>
                                 </td>
                             </tr>
                             @endforelse

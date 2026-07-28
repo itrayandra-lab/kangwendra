@@ -156,10 +156,15 @@
                                 <i class="fa fa-list" style="font-size:11px;"></i> Hasil Scraping
                             </a>
                         </li>
+                        <li>
+                            <a class="{{ isActive($page, 'Scraper Config') }}" href="{{ route('admin.scraping.scrape-config') }}">
+                                <i class="fa fa-cog" style="font-size:11px;"></i> Scraper Config
+                            </a>
+                        </li>
                     </ul>
                 </li>
 
-                <!-- Submenu: Ref Articles (Paraphase) -->
+                <!-- Submenu: Ref Articles -->
                 <li class="has_sub">
                     <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Ref Articles', 'Kata Kunci']) }}">
                         <i class="fa fa-book"></i> <span>Ref Articles</span>
@@ -172,7 +177,7 @@
                             </a>
                         </li>
                         <li>
-                            <a class="{{ isActive($page, 'Kata Kunci') }}" href="{{ route('ref-articles.keywords.index') }}">
+                            <a class="{{ isActive($page, 'Kata Kunci') }}" href="{{ route('admin.scraping.keywords.index') }}">
                                 <i class="fa fa-key" style="font-size:11px;"></i> Kelola Kata Kunci
                             </a>
                         </li>

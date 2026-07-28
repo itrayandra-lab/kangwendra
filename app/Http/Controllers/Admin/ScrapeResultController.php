@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ResearchRecommendation;
-use App\Models\RefArticle;
+use App\Jobs\ScrapeParaphraseJob;
+use App\Jobs\UpdateEditorPreferenceJob;
 use App\Models\EditorPreference;
-use App\Models\Posts;
+use App\Models\RefArticle;
+use App\Models\ResearchRecommendation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ScrapeResultController extends Controller
 {
@@ -20,11 +22,11 @@ class ScrapeResultController extends Controller
         $page = 'Hasil Scraping';
 
         $keyword = $request->get('keyword');
-        $status = $request->get('status'); // pending, moved
+        $status = $request->get('status');
 
         $query = ResearchRecommendation::orderByDesc('created_at');
 
-        // Keyword filter - CRITICAL: always filter if keyword is set
+        // Keyword filter
         if ($keyword) {
             $query->where('keyword', strtolower(trim($keyword)));
         }
@@ -39,7 +41,7 @@ class ScrapeResultController extends Controller
 
         $results = $query->paginate(20);
 
-        // Stats per keyword - only for the filtered keyword (or all if no filter)
+        // Stats per keyword
         $keywordStats = [];
         $statsQuery = ResearchRecommendation::query();
         if ($keyword) {
@@ -64,33 +66,25 @@ class ScrapeResultController extends Controller
     }
 
     /**
-     * Move selected scrape results to Ref Articles.
+     * Approve selected scrape results:
+     * - Move to ref_articles
+     * - Boost AI confidence (+5 per keyword approval)
+     * - Delete from research_recommendations
      */
-    public function moveToRefArticles(Request $request)
+    public function approve(Request $request)
     {
-        // Support both single IDs and arrays
-        $input = $request->all();
-        $ids = [];
-
-        if (isset($input['ids'])) {
-            $ids = is_array($input['ids']) ? $input['ids'] : [$input['ids']];
-        }
-
-        // Also check for individual id parameter
-        if ($request->has('id') && empty($ids)) {
-            $ids = [(string) $request->input('id')];
-        }
+        $ids = $request->input('ids', []);
 
         if (empty($ids)) {
-            return back()->with('error', 'Tidak ada data yang dipilih.');
+            return back()->with('error', 'Pilih至少 satu URL untuk di-approve.');
         }
 
-        $moved = 0;
+        $approved = 0;
         $skipped = 0;
         $errors = [];
 
-            foreach ($ids as $rawId) {
-            $id = is_numeric($rawId) ? (int) $rawId : null;
+        foreach ((array) $ids as $id) {
+            $id = (int) $id;
             if (!$id) continue;
 
             $rec = ResearchRecommendation::find($id);
@@ -99,13 +93,16 @@ class ScrapeResultController extends Controller
             // Skip if already moved
             if ($rec->ref_article_id) { $skipped++; continue; }
 
-            // Skip if RefArticle with this source_url already exists (unique constraint)
-            if (RefArticle::where('source_url', $rec->url)->exists()) { $skipped++; continue; }
+            // Skip if RefArticle with this source_url already exists
+            if (RefArticle::where('source_url', $rec->url)->exists()) {
+                $skipped++;
+                continue;
+            }
 
-            // Create RefArticle
             try {
+                // Create RefArticle
                 $refArticle = RefArticle::create([
-                    'title'              => $rec->title,
+                    'title'               => $rec->title,
                     'source_url'          => $rec->url,
                     'source_domain'       => $rec->domain,
                     'source_keyword'      => $rec->keyword,
@@ -115,23 +112,77 @@ class ScrapeResultController extends Controller
                     'moved_from_scrape'  => true,
                 ]);
 
-                // Delete the scrape result after successful move
+                // Record AI learning: boost confidence for this keyword
+                UpdateEditorPreferenceJob::dispatch('approval', [
+                    'keyword' => $rec->keyword,
+                    'url'     => $rec->url,
+                    'topic'   => $this->extractTopic($rec->title ?? ''),
+                ]);
+
+                // Delete the scrape result (migrated)
                 $rec->delete();
-                $moved++;
+                $approved++;
+
             } catch (\Throwable $e) {
                 $errors[] = "ID {$id}: {$e->getMessage()}";
             }
         }
 
-        $msg = "{$moved} hasil dipindahkan ke Ref Articles dan dihapus dari sini.";
-        if ($skipped > 0) $msg .= " {$skipped} dilewati (sudah dipindahkan atau duplikat).";
+        $msg = "{$approved} URL di-approve dan dipindahkan ke Ref Articles. Confidence keyword dinaikkan.";
+        if ($skipped > 0) $msg .= " {$skipped} dilewati.";
         if (!empty($errors)) $msg .= " Error: " . implode('; ', $errors);
 
         return back()->with('success', $msg);
     }
 
     /**
-     * Delete selected scrape results.
+     * Reject selected scrape results:
+     * - Delete from research_recommendations
+     * - Add URL to blocklist for AI learning
+     * - NOT permanent — can be re-discovered on next research
+     */
+    public function reject(Request $request)
+    {
+        $ids = $request->input('ids', []);
+
+        if (empty($ids)) {
+            return back()->with('error', 'Pilih至少 satu URL untuk di-reject.');
+        }
+
+        $rejected = 0;
+        $errors = [];
+
+        foreach ((array) $ids as $id) {
+            $id = (int) $id;
+            if (!$id) continue;
+
+            $rec = ResearchRecommendation::find($id);
+            if (!$rec) { continue; }
+
+            try {
+                // Record rejection in AI learning (blocklist URL)
+                UpdateEditorPreferenceJob::dispatch('rejection', [
+                    'keyword' => $rec->keyword,
+                    'url'     => $rec->url,
+                    'topic'   => $this->extractTopic($rec->title ?? ''),
+                ]);
+
+                $rec->delete();
+                $rejected++;
+
+            } catch (\Throwable $e) {
+                $errors[] = "ID {$id}: {$e->getMessage()}";
+            }
+        }
+
+        $msg = "{$rejected} URL di-reject dan dihapus dari database.";
+        if (!empty($errors)) $msg .= " Error: " . implode('; ', $errors);
+
+        return back()->with('warning', $msg);
+    }
+
+    /**
+     * Delete selected scrape results (no AI learning).
      */
     public function destroySelected(Request $request)
     {
@@ -140,7 +191,7 @@ class ScrapeResultController extends Controller
             return back()->with('error', 'Pilih至少 satu hasil.');
         }
 
-        $deleted = ResearchRecommendation::whereIn('id', $ids)->delete();
+        $deleted = ResearchRecommendation::whereIn('ids', $ids)->delete();
         return back()->with('success', "{$deleted} hasil dihapus.");
     }
 
@@ -155,16 +206,39 @@ class ScrapeResultController extends Controller
         }
 
         $retried = 0;
-        foreach ($ids as $id) {
+        foreach ((array) $ids as $id) {
             $rec = ResearchRecommendation::find($id);
             if (!$rec) continue;
 
-            // Dispatch scrape job for this URL
             $rec->update(['status' => 'pending']);
-            \App\Jobs\ScrapeParaphraseJob::dispatch($rec->url, $rec->keyword, $rec->id);
+            ScrapeParaphraseJob::dispatch(
+                $rec->url,
+                $rec->domain ?? parse_url($rec->url, PHP_URL_HOST),
+                $rec->keyword,
+                Str::uuid()->toString(),
+                $rec->confidence_score ?? 50,
+                $rec->id,
+                false
+            );
             $retried++;
         }
 
         return back()->with('success', "{$retried} job di-queue untuk retry.");
+    }
+
+    protected function extractTopic(string $title): string
+    {
+        $aiTopics = ['ai', 'llm', 'machine learning', 'deep learning', 'openai',
+            'gemini', 'chatgpt', 'neural', 'generative', 'agentic', 'claude', 'deepseek'];
+        foreach ($aiTopics as $topic) {
+            if (stripos($title, $topic) !== false) return 'AI & Teknologi';
+        }
+
+        $seoTopics = ['seo', 'search', 'google', 'algorithm', 'serp'];
+        foreach ($seoTopics as $topic) {
+            if (stripos($title, $topic) !== false) return 'SEO & Search';
+        }
+
+        return 'Teknologi';
     }
 }
