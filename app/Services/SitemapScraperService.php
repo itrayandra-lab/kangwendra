@@ -288,14 +288,13 @@ class SitemapScraperService
             if (stripos($url, $pattern) !== false) return false;
         }
 
-        // Must be from allowed domains
+        // Must be from allowed domains (dynamic from ScraperConfig)
         $host = parse_url($url, PHP_URL_HOST);
         $path = parse_url($url, PHP_URL_PATH) ?? '';
-        $allowed = ['searchengineland.com', 'www.searchengineland.com',
-                    'searchenginejournal.com', 'www.searchenginejournal.com'];
+        $allowedDomains = array_keys($this->sitemapIndices);
         $validHost = false;
-        foreach ($allowed as $domain) {
-            if (stripos($host, $domain) !== false) {
+        foreach ($allowedDomains as $domain) {
+            if (stripos($host, $domain) !== false || stripos($host, 'www.' . $domain) !== false) {
                 $validHost = true;
                 break;
             }

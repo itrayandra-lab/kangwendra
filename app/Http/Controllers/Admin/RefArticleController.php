@@ -73,7 +73,7 @@ class RefArticleController extends Controller
             'keyword' => 'required|string|min:2|max:255',
         ]);
 
-        $keyword = trim($validated['keyword']);
+        $keyword = strtolower(trim($validated['keyword']));
 
         // Always delete old low-quality recommendations before re-researching
         $deleted = ResearchRecommendation::byKeyword($keyword)

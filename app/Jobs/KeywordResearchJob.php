@@ -28,16 +28,20 @@ class KeywordResearchJob implements ShouldQueue
 
     public function handle(SitemapScraperService $scraper): void
     {
-        Log::info('KeywordResearchJob: starting', ['keyword' => $this->keyword]);
+        // Normalize keyword to lowercase
+        $keyword = strtolower(trim($this->keyword));
+        $this->keyword = $keyword;
+
+        Log::info('KeywordResearchJob: starting', ['keyword' => $keyword]);
 
         // Initialize editor preference
         EditorPreference::firstOrCreate(
-            ['keyword' => strtolower(trim($this->keyword))],
+            ['keyword' => $keyword],
             ['score' => 0, 'confidence' => 50]
         );
 
         // Update research status on ref_articles
-        \App\Models\RefArticle::where('source_keyword', $this->keyword)
+        \App\Models\RefArticle::where('source_keyword', $keyword)
             ->where('ai_research_status', 'researching')
             ->update(['ai_research_status' => 'idle']);
 
