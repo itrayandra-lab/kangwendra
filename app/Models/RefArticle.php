@@ -23,6 +23,7 @@ class RefArticle extends Model
         'ai_research_status',
         'source_keyword',
         'research_notes',
+        'moved_from_scrape',
     ];
 
     protected $casts = [

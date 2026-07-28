@@ -25,7 +25,8 @@ class RefArticleController extends Controller
         $status = $request->input('status');
         $domain = $request->input('domain');
 
-        $query = RefArticle::latest();
+        // Only show RefArticles that were manually moved from scrape results
+        $query = RefArticle::where('moved_from_scrape', true)->latest();
 
         if ($status) {
             $query->where('ai_status', $status);
@@ -37,11 +38,11 @@ class RefArticleController extends Controller
         $articles = $query->paginate(15)->withQueryString();
 
         $stats = [
-            'total'      => RefArticle::count(),
-            'pending'    => RefArticle::where('ai_status', 'pending')->count(),
-            'processing' => RefArticle::where('ai_status', 'processing')->count(),
-            'done'       => RefArticle::where('ai_status', 'done')->count(),
-            'failed'     => RefArticle::where('ai_status', 'failed')->count(),
+            'total'      => RefArticle::where('moved_from_scrape', true)->count(),
+            'pending'    => RefArticle::where('moved_from_scrape', true)->where('ai_status', 'pending')->count(),
+            'processing' => RefArticle::where('moved_from_scrape', true)->where('ai_status', 'processing')->count(),
+            'done'       => RefArticle::where('moved_from_scrape', true)->where('ai_status', 'done')->count(),
+            'failed'     => RefArticle::where('moved_from_scrape', true)->where('ai_status', 'failed')->count(),
         ];
 
         // Pending recommendations

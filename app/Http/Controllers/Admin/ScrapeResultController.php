@@ -102,20 +102,21 @@ class ScrapeResultController extends Controller
             // Skip if already moved
             if ($rec->ref_article_id) { $skipped++; continue; }
 
-            // Create RefArticle
-            try {
-                $refArticle = RefArticle::create([
-                    'title'           => $rec->title,
-                    'source_url'      => $rec->url,
-                    'source_domain'   => $rec->domain,
-                    'source_keyword'  => $rec->keyword,
-                    'image_url'       => null,
-                    'content_snippet' => $rec->snippet,
-                    'ai_research_status' => 'idle',
-                ]);
+                // Create RefArticle
+                try {
+                    $refArticle = RefArticle::create([
+                        'title'              => $rec->title,
+                        'source_url'          => $rec->url,
+                        'source_domain'       => $rec->domain,
+                        'source_keyword'      => $rec->keyword,
+                        'image_url'          => null,
+                        'content_snippet'    => $rec->snippet,
+                        'ai_research_status' => 'idle',
+                        'moved_from_scrape'  => true,
+                    ]);
 
-                $rec->update(['ref_article_id' => $refArticle->id]);
-                $moved++;
+                    $rec->update(['ref_article_id' => $refArticle->id]);
+                    $moved++;
             } catch (\Throwable $e) {
                 $errors[] = "ID {$id}: " . $e->getMessage();
             }
