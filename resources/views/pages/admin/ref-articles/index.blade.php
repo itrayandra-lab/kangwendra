@@ -258,7 +258,7 @@
                                 </td>
                                 <td>
                                     @php $aiStatus = $article->ai_research_status; @endphp
-                                    @if(in_array($aiStatus, ['pending', 'processing']))
+                                    @if(in_array($aiStatus, ['researching', 'processing']))
                                         <span class="badge-status badge-processing">{{ ucfirst($aiStatus) }}</span>
                                     @elseif($aiStatus === 'done')
                                         <span class="badge-status badge-done">Done</span>

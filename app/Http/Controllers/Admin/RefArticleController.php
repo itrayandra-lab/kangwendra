@@ -39,7 +39,7 @@ class RefArticleController extends Controller
         $stats = [
             'total'      => RefArticle::where('moved_from_scrape', true)->count(),
             'idle'      => RefArticle::where('moved_from_scrape', true)->where(fn($q) => $q->whereNull('ai_research_status')->orWhere('ai_research_status', 'idle'))->count(),
-            'pending'   => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'pending')->count(),
+            'researching'   => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'researching')->count(),
             'processing'=> RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'processing')->count(),
             'done'      => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'done')->count(),
             'failed'    => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'failed')->count(),
@@ -71,7 +71,7 @@ class RefArticleController extends Controller
         foreach ($idleArticles as $article) {
             if (!$article->source_url) continue;
 
-            $article->update(['ai_research_status' => 'pending']);
+            $article->update(['ai_research_status' => 'researching']);
 
             ScrapeParaphraseJob::dispatch(
                 $article->source_url,
@@ -97,7 +97,7 @@ class RefArticleController extends Controller
             return back()->with('error', 'Source URL tidak tersedia.');
         }
 
-        $refArticle->update(['ai_research_status' => 'pending']);
+        $refArticle->update(['ai_research_status' => 'researching']);
 
         ScrapeParaphraseJob::dispatch(
             $refArticle->source_url,
@@ -121,7 +121,7 @@ class RefArticleController extends Controller
             return back()->with('error', 'Source URL tidak tersedia.');
         }
 
-        $refArticle->update(['ai_research_status' => 'pending', 'ai_error' => null]);
+        $refArticle->update(['ai_research_status' => 'researching', 'ai_error' => null]);
 
         ScrapeParaphraseJob::dispatch(
             $refArticle->source_url,
