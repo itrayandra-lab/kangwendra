@@ -86,7 +86,7 @@
 
                             @can('view posts')
                                 <li>
-                                    <a class="{{ isActive($page, 'posts') }}" href="{{ route('posts.index') }}">
+                                    <a class="{{ isActive($page, 'posts') }}" href="{{ route('posts.index', ['source' => 'manual']) }}">
                                         Postingan Mandiri
                                     </a>
                                 </li>

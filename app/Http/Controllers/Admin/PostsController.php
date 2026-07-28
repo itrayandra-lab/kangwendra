@@ -21,110 +21,89 @@ class PostsController extends Controller
 {
     public function index(Request $request)
     {
+        $source = $request->get('source');
+
+        // Build base query
+        $posts = Posts::with(['category', 'createdBy', 'updatedBy'])->select('posts.*');
+
+        // Apply source filter
+        if ($source === 'ai') {
+            $posts->where(function ($q) { $q->where('published_by', 'system')->orWhereNotNull('source'); });
+            $page = 'Postingan AI';
+        } elseif ($source === 'manual') {
+            $posts->where('published_by', '!=', 'system')
+                  ->where(function ($q) { $q->whereNull('source')->orWhere('source', ''); });
+            $page = 'posts';
+        } else {
+            $page = 'Postingan';
+        }
+        $posts->latest();
+
+        // AJAX: return DataTables
         if ($request->ajax()) {
-            $posts = Posts::with(['category', 'createdBy', 'updatedBy'])
-                ->select('posts.*');
-
-            // Filter: show only AI posts if ?source=ai
-            if ($request->get('source') === 'ai') {
-                $posts->where(function ($q) {
-                    $q->where('published_by', 'system')
-                      ->orWhereNotNull('source');
-                });
-            } elseif ($request->get('source') === 'manual') {
-                // Manual posts: NOT published_by='system' AND no source URL
-                $posts->where('published_by', '!=', 'system')
-                      ->where(function ($q) {
-                          $q->whereNull('source')->orWhere('source', '');
-                      });
-            }
-
-            $posts->latest();
-
             return DataTables::of($posts)
                 ->addIndexColumn()
-                ->addColumn('link', fn($post) => '<a href="/'.$post->category?->slug.'/'.$post->slug.'" target="_blank"><i class="fa fa-external-link"></i> Lihat</a>')
-                ->addColumn('image', function ($post) {
-                    return $post->image
-                        ? '<img src="'.getFile($post->image).'" class="img-thumbnail" style="width:60px;height:40px;object-fit:cover;">'
-                        : '<span class="text-muted">Tidak ada</span>';
+                ->addColumn('link', fn($p) => '<a href="/'.$p->category?->slug.'/'.$p->slug.'" target="_blank"><i class="fa fa-external-link"></i> Lihat</a>')
+                ->addColumn('image', fn($p) => $p->image ? '<img src="'.getFile($p->image).'" class="img-thumbnail" style="width:60px;height:40px;object-fit:cover;">' : '<span class="text-muted">-</span>')
+                ->editColumn('counter', fn($p) => number_format($p->counter ?? 0))
+                ->editColumn('status', function($p) {
+                    $pub = $p->status === 'active' && $p->published_at && $p->published_at <= now();
+                    return $pub ? '<span class="label label-success">Published</span>' : '<span class="label label-warning">Draft</span>';
                 })
-                ->editColumn('counter', fn($post) => number_format($post->counter))
-                
-                ->editColumn('status', function($post) {
-                    $isPublished = $post->status === 'active' 
-                                    && $post->published_at 
-                                    && $post->published_at <= now();
-
-                    return $isPublished
-                        ? '<span class="label label-success">Published</span>'
-                        : '<span class="label label-warning">Draft</span>';
+                ->addColumn('category', fn($p) => $p->category?->name ?? '-')
+                ->addColumn('tags', function($p) {
+                    $ids = is_array($p->tags) ? $p->tags : json_decode($p->tags ?? '[]', true);
+                    $ids = array_filter($ids ?? []);
+                    if (empty($ids)) return '<span class="text-muted">-</span>';
+                    $names = PostTags::whereIn('id', $ids)->pluck('name')->take(5)->toArray();
+                    if (empty($names)) return '<span class="text-muted">-</span>';
+                    $html = '';
+                    foreach ($names as $n) $html .= '<span class="label label-default" style="margin-right:4px;">'.$n.'</span>';
+                    return $html;
                 })
-
-                ->addColumn('category', fn($post) => $post->category?->name ?? '-')
-                ->addColumn('tags', function ($post) {
-                    if (!$post->tags) return '<span class="text-muted">Tidak ada</span>';
-                    $tagIds = is_array($post->tags) ? $post->tags : ($post->tags ? json_decode($post->tags, true) : []);
-                    if (empty($tagIds)) return '<span class="text-muted">Tidak ada</span>';
-
-                    $tagNames = PostTags::whereIn('id', $tagIds)->pluck('name')->take(5)->implode(', ');
-                    return $tagNames ?: '<span class="text-muted">Tidak ada</span>';
-                })
-                ->addColumn('created_by', fn($post) => $post->createdBy?->name ?? '-')
-                ->addColumn('updated_by', fn($post) => $post->updatedBy?->name ?? '-')
-                ->addColumn('published_by', function ($post) {
-                    if ($post->published_by === 'system') {
-                        return '<span class="label label-info">AI</span>';
+                ->addColumn('created_by', fn($p) => $p->createdBy?->name ?? '-')
+                ->addColumn('updated_by', fn($p) => $p->updatedBy?->name ?? '-')
+                ->addColumn('published_by', fn($p) => $p->published_by === 'system'
+                    ? '<span class="label label-info">AI</span>'
+                    : '<span class="label label-default">Editor</span>')
+                ->editColumn('published_at', fn($p) => $p->published_at ? $p->published_at->translatedFormat('d M Y H:i') : '<span class="text-muted">-</span>')
+                ->editColumn('created_at', fn($p) => $p->created_at->translatedFormat('d M Y H:i'))
+                ->editColumn('updated_at', fn($p) => $p->updated_at->translatedFormat('d M Y H:i'))
+                ->addColumn('action', function($p) {
+                    $edit = '<a href="'.route('posts.edit', $p->id).'" class="btn btn-primary btn-xs"><i class="fa fa-edit"></i></a> ';
+                    $unpub = '';
+                    if ($p->status === 'active' && $p->published_at && $p->published_at <= now()) {
+                        $unpub = '<form action="'.route('posts.unpublish', $p->id).'" method="POST" style="display:inline">'
+                            .csrf_field().'<button type="submit" class="btn btn-warning btn-xs" onclick="return confirm(\'Unpublish post ini?\')"><i class="fa fa-ban"></i></button></form> ';
                     }
-                    return '<span class="label label-default">Editor</span>';
-                })
-                ->editColumn('published_at', fn($post) => $post->published_at
-                    ? $post->published_at->translatedFormat('d M Y H:i')
-                    : '<span class="text-muted">Belum</span>')
-                ->editColumn('created_at', fn($post) => $post->created_at->translatedFormat('d M Y H:i'))
-                ->editColumn('updated_at', fn($post) => $post->updated_at->translatedFormat('d M Y H:i'))
-                ->addColumn('action', function ($post) {
-                    $edit = '<a href="'.route('posts.edit', $post->id).'" class="btn btn-primary btn-xs"><i class="fa fa-edit"></i></a>';
-
-                    // Unpublish button for active/published posts
-                    $unpublish = '';
-                    if ($post->status === 'active' && $post->published_at && $post->published_at <= now()) {
-                        $unpublish = '<form action="'.route('posts.unpublish', $post->id).'" method="POST" style="display:inline" onsubmit="return confirm(\'Unpublish post ini? Post akan jadi draft.\')">
-                            '.csrf_field().'
-                            <button type="submit" class="btn btn-warning btn-xs"><i class="fa fa-ban"></i></button>
-                        </form>';
+                    $regen = '';
+                    if ($p->published_by === 'system' || $p->source) {
+                        $regen = '<form action="'.route('posts.regenerate', $p->id).'" method="POST" style="display:inline">'
+                            .csrf_field().'<button type="submit" class="btn btn-info btn-xs" onclick="return confirm(\'Regenerate?\')"><i class="fa fa-refresh"></i></button></form> ';
                     }
-
-                    // Regenerate button for AI-generated posts
-                    $regenerate = '';
-                    if ($post->published_by === 'system' || $post->source) {
-                        $regenerate = '<form action="'.route('posts.regenerate', $post->id).'" method="POST" style="display:inline" onsubmit="return confirm(\'Regenerate post ini dari source URL?\')">
-                            '.csrf_field().'
-                            <button type="submit" class="btn btn-info btn-xs"><i class="fa fa-refresh"></i></button>
-                        </form>';
-                    }
-
-                    $delete = '<form action="'.route('posts.destroy', $post->id).'" method="POST" style="display:inline" onsubmit="return confirm(\'Yakin hapus?\')">
-                                '.csrf_field().method_field('DELETE').'
-                                <button type="submit" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i></button>
-                        </form>';
-
-                    return '<div class="text-center">'.$edit.' '.$unpublish.' '.$regenerate.' '.$delete.'</div>';
+                    $del = '<form action="'.route('posts.destroy', $p->id).'" method="POST" style="display:inline">'
+                        .csrf_field().method_field('DELETE')
+                        .'<button type="submit" class="btn btn-danger btn-xs" onclick="return confirm(\'Yakin hapus?\')"><i class="fa fa-trash"></i></button></form>';
+                    return '<div class="text-center">'.$edit.$unpub.$regen.$del.'</div>';
                 })
-                ->rawColumns(['link', 'image', 'status', 'tags', 'published_at', 'published_by', 'action'])
+                ->rawColumns(['link', 'image', 'status', 'tags', 'published_by', 'action'])
                 ->make(true);
         }
 
-        return view('pages.admin.posts.index')->with('page', 'Postingan');
+        // Non-AJAX: return view with filtered data
+        return view('pages.admin.posts.index', [
+            'page' => $page,
+            'postsData' => $posts->get(),
+        ]);
     }
 
     public function create()
     {
         $webIdentity = WebIdentity::first();
         $isMaster = $webIdentity ? $webIdentity->is_master : false;
-        
+
         $domain = $isMaster ? ShareDomain::where('status', 'active')->get() : collect();
-        
+
         $data = [
             'domains' => $domain,
             'categories' => PostCategory::orderBy('id', 'desc')->get(),
@@ -234,7 +213,7 @@ class PostsController extends Controller
     {
         $webIdentity = WebIdentity::first();
         $isMaster = $webIdentity ? $webIdentity->is_master : false;
-        
+
         $data = [
             'categories' => PostCategory::orderBy('id', 'desc')->get(),
             'tags' => PostTags::orderBy('id', 'desc')->get(),
@@ -293,9 +272,6 @@ class PostsController extends Controller
         return redirect()->route('posts.index')->with('success', 'Postingan deleted successfully');
     }
 
-    /**
-     * Unpublish a post (set status to draft/inactive)
-     */
     public function unpublish(Request $request, $id)
     {
         try {
@@ -305,7 +281,7 @@ class PostsController extends Controller
 
             $post->update([
                 'status'            => 'inactive',
-                'unpublished_at'    => now(),
+                'unpublished_at'   => now(),
                 'unpublished_reason' => $reason,
             ]);
 
@@ -330,9 +306,6 @@ class PostsController extends Controller
         }
     }
 
-    /**
-     * Regenerate a post from its source URL (re-scrape + re-paraphrase)
-     */
     public function regenerate(Request $request, $id)
     {
         try {
@@ -366,13 +339,13 @@ class PostsController extends Controller
 
                 // Update ref_article with fresh content
                 $ref->update([
-                    'content'           => $article['content'],
-                    'image_url'         => $article['image_url'],
-                    'title'             => $article['title'],
-                    'author'            => $article['author'],
-                    'published_at'       => $article['published_at'],
-                    'tags'               => $article['tags'] ?? [],
-                    'ai_status'          => 'pending',
+                    'content'         => $article['content'],
+                    'image_url'       => $article['image_url'],
+                    'title'           => $article['title'],
+                    'author'          => $article['author'],
+                    'published_at'   => $article['published_at'],
+                    'tags'            => $article['tags'] ?? [],
+                    'ai_status'      => 'pending',
                 ]);
             }
 
