@@ -112,10 +112,10 @@
             </div>
             <div>
                 @if($keyword)
-                    <a href="{{ route('admin.scrape-results.index', ['keyword' => $keyword]) }}" class="btn btn-outline-primary btn-sm" style="border-radius:8px;">
+                    <a href="{{ route('admin.hasil-scraping.index', ['keyword' => $keyword]) }}" class="btn btn-outline-primary btn-sm" style="border-radius:8px;">
                         <i class="fa fa-search"></i> Lihat Hasil Scrape
                     </a>
-                    <form action="{{ route('ref-articles.research') }}" method="POST" style="display:inline;">
+                    <form action="{{ route('admin.scraping.research') }}" method="POST" style="display:inline;">
                         @csrf
                         <input type="hidden" name="keyword" value="{{ $keyword }}">
                         <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px;">
@@ -223,7 +223,7 @@
                     yang mengandung topik AI (ChatGPT, Gemini, Machine Learning, OpenAI, dll).
                 </p>
                 <p>
-                    <form action="{{ route('ref-articles.research') }}" method="POST" style="display:inline;">
+                    <form action="{{ route('admin.scraping.research') }}" method="POST" style="display:inline;">
                         @csrf
                         <input type="hidden" name="keyword" value="{{ $keyword }}">
                         <button type="submit" class="btn btn-primary btn-sm">

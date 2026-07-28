@@ -60,15 +60,15 @@
 
         {{-- Filter Tabs --}}
         <div class="filter-tabs">
-            <a href="{{ route('admin.scrape-results.index') }}" class="filter-tab {{ !$status ? 'active' : '' }}">Semua</a>
-            <a href="{{ route('admin.scrape-results.index', ['status' => 'pending']) }}" class="filter-tab {{ $status === 'pending' ? 'active' : '' }}">Pending</a>
-            <a href="{{ route('admin.scrape-results.index', ['status' => 'success']) }}" class="filter-tab {{ $status === 'success' ? 'active' : '' }}">Sukses</a>
-            <a href="{{ route('admin.scrape-results.index', ['status' => 'failed']) }}" class="filter-tab {{ $status === 'failed' ? 'active' : '' }}">Gagal</a>
-            <a href="{{ route('admin.scrape-results.index', ['status' => 'moved']) }}" class="filter-tab {{ $status === 'moved' ? 'active' : '' }}">Dipindahkan</a>
+            <a href="{{ route('admin.hasil-scraping.index') }}" class="filter-tab {{ !$status ? 'active' : '' }}">Semua</a>
+            <a href="{{ route('admin.hasil-scraping.index', ['status' => 'pending']) }}" class="filter-tab {{ $status === 'pending' ? 'active' : '' }}">Pending</a>
+            <a href="{{ route('admin.hasil-scraping.index', ['status' => 'success']) }}" class="filter-tab {{ $status === 'success' ? 'active' : '' }}">Sukses</a>
+            <a href="{{ route('admin.hasil-scraping.index', ['status' => 'failed']) }}" class="filter-tab {{ $status === 'failed' ? 'active' : '' }}">Gagal</a>
+            <a href="{{ route('admin.hasil-scraping.index', ['status' => 'moved']) }}" class="filter-tab {{ $status === 'moved' ? 'active' : '' }}">Dipindahkan</a>
         </div>
 
         {{-- Bulk Actions + Table in one form (no nesting) --}}
-        <form id="bulkForm" method="POST" action="{{ route('admin.scrape-results.move') }}">
+            <form id="bulkForm" method="POST" action="{{ route('admin.hasil-scraping.move') }}">
             @csrf
             <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                 <input type="checkbox" id="selectAll" style="margin-right:6px;">
@@ -149,7 +149,7 @@
                                         onclick="submitDelete({{ $result->id }})">
                                         <i class="fa fa-trash"></i>
                                     </button>
-                                            <form method="POST" action="{{ route('admin.scrape-results.destroy') }}" style="display:inline;">
+                                            <form method="POST" action="{{ route('admin.hasil-scraping.destroy') }}" style="display:inline;">
                                                 @csrf
                                                 <input type="hidden" name="ids[]" value="{{ $result->id }}">
                                                 <button type="submit" class="btn btn-xs btn-danger" title="Hapus"
@@ -178,11 +178,11 @@
         </form>
 
         {{-- Hidden forms for individual actions --}}
-        <form id="moveForm" method="POST" action="{{ route('admin.scrape-results.move') }}" style="display:none;">
+        <form id="moveForm" method="POST" action="{{ route('admin.hasil-scraping.move') }}" style="display:none;">
             @csrf
             <div id="moveIdsContainer"></div>
         </form>
-        <form id="deleteItemForm" method="POST" action="{{ route('admin.scrape-results.destroy') }}" style="display:none;">
+        <form id="deleteItemForm" method="POST" action="{{ route('admin.hasil-scraping.destroy') }}" style="display:none;">
             @csrf
             <div id="deleteItemIdsContainer"></div>
         </form>

@@ -147,19 +147,19 @@
                     </a>
                     <ul class="list-unstyled">
                         <li>
-                            <a class="{{ isActive($page, 'Scraping') }}" href="{{ route('ref-articles.index') }}">
+                            <a class="{{ isActive($page, 'Scraping') }}" href="{{ route('admin.scraping.index') }}">
                                 <i class="fa fa-crosshairs" style="font-size:11px;"></i> Research
                             </a>
                         </li>
                         <li>
-                            <a class="{{ isActive($page, 'Hasil Scraping') }}" href="{{ route('admin.scrape-results.index') }}">
+                            <a class="{{ isActive($page, 'Hasil Scraping') }}" href="{{ route('admin.hasil-scraping.index') }}">
                                 <i class="fa fa-list" style="font-size:11px;"></i> Hasil Scraping
                             </a>
                         </li>
                     </ul>
                 </li>
 
-                <!-- Submenu: Ref Articles -->
+                <!-- Submenu: Ref Articles (Paraphase) -->
                 <li class="has_sub">
                     <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Ref Articles', 'Kata Kunci']) }}">
                         <i class="fa fa-book"></i> <span>Ref Articles</span>
@@ -167,7 +167,7 @@
                     </a>
                     <ul class="list-unstyled">
                         <li>
-                            <a class="{{ isActive($page, 'Ref Articles') }}" href="{{ route('ref-articles.recommendations') }}">
+                            <a class="{{ isActive($page, 'Ref Articles') }}" href="{{ route('ref-articles.index') }}">
                                 <i class="fa fa-th" style="font-size:11px;"></i> Semua
                             </a>
                         </li>

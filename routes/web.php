@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\RefArticleController;
 use App\Http\Controllers\Admin\RssController;
 use App\Http\Controllers\Admin\PublishScheduleController;
+use App\Http\Controllers\Admin\ScrapingController;
 use App\Http\Controllers\Admin\ScrapeResultController;
 
 # Auth
@@ -186,7 +187,7 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::delete('/{id}', 'destroy')->name('domain-share.destroy')->middleware('permission:delete domain-share');
     });
 
-    # Artikel Referensi (AI Pipeline: Research + Scrape + Paraphrase)
+    # Artikel Referensi (AI Pipeline: Paraphase/Generate only)
     Route::group(['prefix' => 'ref-articles', 'controller' => RefArticleController::class], function () {
         Route::get('/', 'index')->name('ref-articles.index');
         Route::get('/batch-progress', 'batchProgress')->name('ref-articles.batch-progress');
@@ -204,24 +205,27 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/{refArticle}', 'show')->name('ref-articles.show');
         Route::post('/{refArticle}/generate', 'generate')->name('ref-articles.generate');
         Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
-        // Research & recommendations
-        Route::post('/research', 'research')->name('ref-articles.research');
-        Route::post('/research-all', 'researchAll')->name('ref-articles.research-all');
         Route::post('/recommendation/{id}/approve', 'approveRecommendation')->name('ref-articles.recommendation.approve');
         Route::post('/recommendation/{id}/reject', 'rejectRecommendation')->name('ref-articles.recommendation.reject');
         Route::post('/{id}/scrape-paraphrase', 'scrapeAndParaphrase')->name('ref-articles.scrape-paraphrase');
-        // Post editing
         Route::get('/{refArticle}/edit-post', 'editPost')->name('ref-articles.edit-post');
         Route::put('/{refArticle}/update-post', 'updatePost')->name('ref-articles.update-post');
         Route::delete('/{refArticle}', 'destroy')->name('ref-articles.destroy');
     });
 
-    // Scrape Results - raw scrape data with status
-    Route::group(['prefix' => 'scrape-results', 'controller' => ScrapeResultController::class], function () {
-        Route::get('/', 'index')->name('admin.scrape-results.index');
-        Route::post('/move', 'moveToRefArticles')->name('admin.scrape-results.move');
-        Route::post('/destroy', 'destroySelected')->name('admin.scrape-results.destroy');
-        Route::post('/retry', 'retryFailed')->name('admin.scrape-results.retry');
+    # Scraping - Research URL from sitemap
+    Route::group(['prefix' => 'scraping', 'controller' => ScrapingController::class], function () {
+        Route::get('/', 'index')->name('admin.scraping.index');
+        Route::post('/research', 'research')->name('admin.scraping.research');
+        Route::post('/research-all', 'researchAll')->name('admin.scraping.research-all');
+    });
+
+    # Hasil Scraping - Table of scraped URLs
+    Route::group(['prefix' => 'hasil-scraping', 'controller' => ScrapeResultController::class], function () {
+        Route::get('/', 'index')->name('admin.hasil-scraping.index');
+        Route::post('/move', 'moveToRefArticles')->name('admin.hasil-scraping.move');
+        Route::post('/destroy', 'destroySelected')->name('admin.hasil-scraping.destroy');
+        Route::post('/retry', 'retryFailed')->name('admin.hasil-scraping.retry');
     });
 
     // Posts - Unpublish & Regenerate
