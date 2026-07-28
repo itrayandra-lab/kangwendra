@@ -22,7 +22,7 @@ class ScraperConfigController extends Controller
             'daily_limit' => $configs->where('key', 'daily_limit')->first(),
         ];
 
-        return view('pages.admin.scraper-config.index', compact('grouped'));
+        return view('pages.admin.scraper-config.index', compact('grouped'))->with('page', 'Konfigurasi Scraping');
     }
 
     // Update single config
