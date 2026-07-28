@@ -64,7 +64,7 @@
                 <!-- Menu dropdown untuk post -->
                 @if (auth()->user()->hasAnyPermission(['view categories', 'view tags', 'view posts']))
                     <li class="has_sub">
-                        <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Kategori', 'Tags', 'posts']) }}">
+                        <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Kategori', 'Tags', 'posts', 'Postingan AI']) }}">
                             <i class="fa fa-newspaper-o"></i> <span>Berita</span> <span class="pull-right"><i class="mdi mdi-plus"></i></span>
                         </a>
                         <ul class="list-unstyled">
@@ -88,6 +88,11 @@
                                 <li>
                                     <a class="{{ isActive($page, 'posts') }}" href="{{ route('posts.index') }}">
                                         Postingan
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="{{ isActive($page, 'Postingan AI') }}" href="{{ route('posts.index') }}?source=ai">
+                                        <i class="fa fa-robot" style="font-size:11px;"></i> Postingan AI
                                     </a>
                                 </li>
                             @endcan
@@ -136,7 +141,7 @@
 
                 <!-- Submenu: AI Research & Generate -->
                 <li class="has_sub">
-                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Artikel Referensi', 'Rekomendasi', 'Kata Kunci', 'Postingan AI']) }}">
+                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Artikel Referensi', 'Rekomendasi', 'Kata Kunci']) }}">
                         <i class="fa fa-magic"></i> <span>AI Generate</span>
                         <span class="pull-right"><i class="mdi mdi-plus"></i></span>
                     </a>
@@ -154,11 +159,6 @@
                         <li>
                             <a class="{{ isActive($page, 'Kata Kunci') }}" href="{{ route('ref-articles.keywords.index') }}">
                                 <i class="fa fa-key" style="font-size:11px;"></i> Kelola Kata Kunci
-                            </a>
-                        </li>
-                        <li>
-                            <a class="{{ isActive($page, 'Postingan AI') }}" href="{{ route('posts.index') }}?source=ai">
-                                <i class="fa fa-robot" style="font-size:11px;"></i> Postingan AI
                             </a>
                         </li>
                     </ul>

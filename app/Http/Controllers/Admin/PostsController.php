@@ -19,12 +19,27 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PostsController extends Controller
 {
-   public function index(Request $request)
+    public function index(Request $request)
     {
         if ($request->ajax()) {
             $posts = Posts::with(['category', 'createdBy', 'updatedBy'])
-                ->select('posts.*')
-                ->latest();
+                ->select('posts.*');
+
+            // Filter: show only AI posts if ?source=ai
+            if ($request->get('source') === 'ai') {
+                $posts->where(function ($q) {
+                    $q->where('published_by', 'system')
+                      ->orWhereNotNull('source');
+                });
+            } elseif ($request->get('source') === 'manual') {
+                // Show only manual/editor posts
+                $posts->where(function ($q) {
+                    $q->where('published_by', '!=', 'system')
+                      ->orWhereNull('published_by');
+                });
+            }
+
+            $posts->latest();
 
             return DataTables::of($posts)
                 ->addIndexColumn()
