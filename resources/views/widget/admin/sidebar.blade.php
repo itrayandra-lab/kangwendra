@@ -87,7 +87,7 @@
                             @can('view posts')
                                 <li>
                                     <a class="{{ isActive($page, 'posts') }}" href="{{ route('posts.index') }}">
-                                        Postingan
+                                        Postingan Mandiri
                                     </a>
                                 </li>
                                 <li>
@@ -141,7 +141,7 @@
 
                 <!-- Submenu: AI Research & Generate -->
                 <li class="has_sub">
-                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Artikel Referensi', 'Rekomendasi', 'Kata Kunci']) }}">
+                    <a href="javascript:void(0);" class="waves-effect {{ isActive($page, ['Artikel Referensi', 'Hasil Scrape', 'Kata Kunci']) }}">
                         <i class="fa fa-magic"></i> <span>AI Generate</span>
                         <span class="pull-right"><i class="mdi mdi-plus"></i></span>
                     </a>
@@ -152,8 +152,8 @@
                             </a>
                         </li>
                         <li>
-                            <a class="{{ isActive($page, 'Rekomendasi') }}" href="{{ route('ref-articles.recommendations', 'all') }}">
-                                <i class="fa fa-thumbs-up" style="font-size:11px;"></i> Rekomendasi
+                            <a class="{{ isActive($page, 'Hasil Scrape') }}" href="{{ route('admin.scrape-results.index') }}">
+                                <i class="fa fa-search" style="font-size:11px;"></i> Hasil Scrape
                             </a>
                         </li>
                         <li>

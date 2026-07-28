@@ -94,11 +94,11 @@ class RefArticleController extends Controller
             'deleted_low_score' => $deleted,
         ]);
 
-        $count = ResearchRecommendation::byKeyword($keyword)->where('confidence_score', '>=', 45)->count();
+        $count = ResearchRecommendation::byKeyword($keyword)->count();
 
         return redirect()
-            ->route('ref-articles.recommendations', urlencode($keyword))
-            ->with('info', "Research selesai! {$count} URL AI-focused ditemukan untuk '{$keyword}'. {$deleted} hasil lama dihapus.");
+            ->route('admin.scrape-results.index', ['keyword' => $keyword])
+            ->with('success', "Research selesai! {$count} URL ditemukan untuk '{$keyword}'. Lihat hasil scrape, lalu pindahkan yang sesuai ke Ref Articles.");
     }
 
     /**
@@ -107,11 +107,11 @@ class RefArticleController extends Controller
     public function recommendations(?string $keyword = null)
     {
         $keyword = $keyword ? urldecode($keyword) : null;
-        $page = 'Rekomendasi';
+        $page = 'Ref Articles';
 
-        // Show ALL recommendations if no keyword, OR filter by keyword
-        $query = ResearchRecommendation::where('confidence_score', '>=', 45)
-            ->orderByDesc('confidence_score');
+        // Show ONLY results that have been moved to Ref Articles
+        $query = ResearchRecommendation::whereNotNull('ref_article_id')
+            ->orderByDesc('created_at');
 
         if ($keyword) {
             $query->where('keyword', strtolower($keyword));
@@ -119,19 +119,12 @@ class RefArticleController extends Controller
 
         $recommendations = $query->get();
 
-        // Count old low-score recommendations separately
-        $lowScoreQuery = ResearchRecommendation::where('confidence_score', '<', 45);
-        if ($keyword) {
-            $lowScoreQuery->where('keyword', strtolower($keyword));
-        }
-        $lowScoreCount = $lowScoreQuery->count();
-
         $pref = $keyword
             ? EditorPreference::where('keyword', strtolower($keyword))->first()
             : null;
 
         return view('pages.admin.ref-articles.recommendations', compact(
-            'page', 'keyword', 'recommendations', 'pref', 'lowScoreCount'
+            'page', 'keyword', 'recommendations', 'pref'
         ));
     }
 

@@ -1,0 +1,142 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\ResearchRecommendation;
+use App\Models\RefArticle;
+use App\Models\EditorPreference;
+use App\Models\Posts;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
+class ScrapeResultController extends Controller
+{
+    /**
+     * Show all scrape results (raw URLs found from sitemaps).
+     */
+    public function index(Request $request)
+    {
+        $page = 'Hasil Scrape';
+
+        $keyword = $request->get('keyword');
+        $status = $request->get('status'); // pending, success, failed, moved
+
+        $query = ResearchRecommendation::orderByDesc('created_at');
+
+        if ($keyword) {
+            $query->where('keyword', strtolower($keyword));
+        }
+
+        // Status filter
+        if ($status === 'success') {
+            $query->where('status', 'scrape_success');
+        } elseif ($status === 'failed') {
+            $query->where('status', 'scrape_failed');
+        } elseif ($status === 'moved') {
+            $query->whereNotNull('ref_article_id');
+        } elseif ($status === 'pending') {
+            $query->where('status', 'pending');
+        }
+
+        $results = $query->paginate(20);
+
+        // Stats per keyword
+        $keywordStats = [];
+        $keywords = ResearchRecommendation::selectRaw('keyword, status, COUNT(*) as total')
+            ->groupBy('keyword', 'status')
+            ->get()
+            ->groupBy('keyword');
+
+        foreach ($keywords as $kw => $items) {
+            $keywordStats[$kw] = [
+                'total'    => $items->sum('total'),
+                'pending'  => $items->where('status', 'pending')->sum('total'),
+                'success'  => $items->where('status', 'scrape_success')->sum('total'),
+                'failed'   => $items->where('status', 'scrape_failed')->sum('total'),
+                'moved'    => $items->filter(fn($i) => $i->status !== 'pending' && $i->status !== 'scrape_success' && $i->status !== 'scrape_failed')->sum('total'),
+            ];
+        }
+
+        // Available keywords for filter
+        $availableKeywords = ResearchRecommendation::selectRaw('DISTINCT keyword')->pluck('keyword');
+
+        return view('pages.admin.scrape-results.index', compact(
+            'page', 'results', 'keyword', 'status', 'keywordStats', 'availableKeywords'
+        ));
+    }
+
+    /**
+     * Move selected scrape results to Ref Articles.
+     */
+    public function moveToRefArticles(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Pilih至少 satu hasil scrape.');
+        }
+
+        $moved = 0;
+        foreach ($ids as $id) {
+            $rec = ResearchRecommendation::find($id);
+            if (!$rec) continue;
+
+            // Skip if already has ref_article
+            if ($rec->ref_article_id) continue;
+
+            // Create RefArticle from this scrape result
+            $refArticle = RefArticle::create([
+                'title'           => $rec->title,
+                'source_url'      => $rec->url,
+                'source_domain'   => $rec->domain,
+                'source_keyword'  => $rec->keyword,
+                'image_url'       => null,
+                'content_snippet' => $rec->snippet,
+                'ai_research_status' => 'idle',
+            ]);
+
+            $rec->update(['ref_article_id' => $refArticle->id]);
+            $moved++;
+        }
+
+        return back()->with('success', "{$moved} hasil scrape dipindahkan ke Ref Articles.");
+    }
+
+    /**
+     * Delete selected scrape results.
+     */
+    public function destroySelected(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Pilih至少 satu hasil.');
+        }
+
+        $deleted = ResearchRecommendation::whereIn('id', $ids)->delete();
+        return back()->with('success', "{$deleted} hasil dihapus.");
+    }
+
+    /**
+     * Retry failed scrape results (re-scrape from source).
+     */
+    public function retryFailed(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Pilih至少 satu hasil.');
+        }
+
+        $retried = 0;
+        foreach ($ids as $id) {
+            $rec = ResearchRecommendation::find($id);
+            if (!$rec) continue;
+
+            // Dispatch scrape job for this URL
+            $rec->update(['status' => 'pending']);
+            \App\Jobs\ScrapeParaphraseJob::dispatch($rec->url, $rec->keyword, $rec->id);
+            $retried++;
+        }
+
+        return back()->with('success', "{$retried} job di-queue untuk retry.");
+    }
+}

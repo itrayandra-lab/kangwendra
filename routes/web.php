@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\RefArticleController;
 use App\Http\Controllers\Admin\RssController;
 use App\Http\Controllers\Admin\PublishScheduleController;
+use App\Http\Controllers\Admin\ScrapeResultController;
 
 # Auth
 Route::group(['prefix' => 'portal', 'controller' => LoginController::class], function () {
@@ -212,6 +213,14 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/{refArticle}/edit-post', 'editPost')->name('ref-articles.edit-post');
         Route::put('/{refArticle}/update-post', 'updatePost')->name('ref-articles.update-post');
         Route::delete('/{refArticle}', 'destroy')->name('ref-articles.destroy');
+    });
+
+    // Scrape Results - raw scrape data with status
+    Route::group(['prefix' => 'scrape-results', 'controller' => ScrapeResultController::class], function () {
+        Route::get('/', 'index')->name('admin.scrape-results.index');
+        Route::post('/move', 'moveToRefArticles')->name('admin.scrape-results.move');
+        Route::post('/destroy', 'destroySelected')->name('admin.scrape-results.destroy');
+        Route::post('/retry', 'retryFailed')->name('admin.scrape-results.retry');
     });
 
     // Posts - Unpublish & Regenerate

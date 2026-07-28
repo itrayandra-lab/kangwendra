@@ -94,41 +94,35 @@
                 {!! session('error') !!}
             </div>
         @endif
-        @if(session('info'))
-            <div class="alert alert-info alert-dismissible">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                {!! session('info') !!}
-            </div>
-        @endif
 
-        @if($lowScoreCount > 0)
-        <div class="alert alert-warning" style="border-radius:8px;">
-            <strong>Peringatan:</strong> {{ $lowScoreCount }} URL dari hasil pencarian sebelumnya berkualitas rendah
-            (score &lt; 45%) dan tidak ditampilkan.
-            Klik <strong>Re-Research</strong> untuk cari artikel AI yang lebih relevan.
+        {{-- Info Banner --}}
+        <div style="background:#e3f2fd; border:1px solid #1565c0; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#1565c0;">
+            <strong>Flow:</strong> Research → <a href="{{ route('admin.scrape-results.index') }}" style="color:#1565c0;">Hasil Scrape</a> → "Pindahkan ke Ref Articles" → halaman ini → Approve → Generate Post
         </div>
-        @endif
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <div>
-                <h4 style="margin:0;">Rekomendasi untuk: <strong>{{ $keyword }}</strong></h4>
+                <h4 style="margin:0;">Ref Articles</h4>
                 <p style="margin:4px 0 0; color:#666; font-size:13px;">
-                    {{ $recommendations->count() }} URL AI-focused ditemukan
-                    @if($lowScoreCount > 0)
-                        <span class="badge badge-warning" style="margin-left:8px;">
-                            {{ $lowScoreCount }} hasil lama ditolak (score &lt; 45%)
-                        </span>
+                    {{ $recommendations->count() }} artikel dipindahkan dari hasil scrape
+                    @if($keyword)
+                        untuk keyword <strong>"{{ $keyword }}"</strong>
                     @endif
                 </p>
             </div>
             <div>
-                <form action="{{ route('ref-articles.research') }}" method="POST" style="display:inline;">
-                    @csrf
-                    <input type="hidden" name="keyword" value="{{ $keyword }}">
-                    <button type="submit" class="action-btn" style="background:#6f42c1; color:white;">
-                        Re-Research
-                    </button>
-                </form>
+                @if($keyword)
+                    <a href="{{ route('admin.scrape-results.index', ['keyword' => $keyword]) }}" class="btn btn-outline-primary btn-sm" style="border-radius:8px;">
+                        <i class="fa fa-search"></i> Lihat Hasil Scrape
+                    </a>
+                    <form action="{{ route('ref-articles.research') }}" method="POST" style="display:inline;">
+                        @csrf
+                        <input type="hidden" name="keyword" value="{{ $keyword }}">
+                        <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px;">
+                            <i class="fa fa-refresh"></i> Re-Research
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
 
