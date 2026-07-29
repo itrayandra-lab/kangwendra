@@ -47,8 +47,21 @@ class PostsController extends Controller
                 ->addColumn('image', fn($p) => $p->image ? '<img src="'.getFile($p->image).'" class="img-thumbnail" style="width:60px;height:40px;object-fit:cover;">' : '<span class="text-muted">-</span>')
                 ->editColumn('counter', fn($p) => number_format($p->counter ?? 0))
                 ->editColumn('status', function($p) {
-                    $pub = $p->status === 'active' && $p->published_at && $p->published_at <= now();
-                    return $pub ? '<span class="label label-success">Published</span>' : '<span class="label label-warning">Draft</span>';
+                    // Draft: inactive atau tidak ada published_at
+                    if ($p->status === 'inactive') {
+                        return '<span class="label label-warning">Draft</span>';
+                    }
+                    // Published: aktif DAN waktu publish sudah lewat
+                    if ($p->status === 'active' && $p->published_at && $p->published_at <= now()) {
+                        return '<span class="label label-success">Published</span>';
+                    }
+                    // Terjadwal: aktif tapi waktu publish masih depan
+                    if ($p->status === 'active' && $p->published_at && $p->published_at > now()) {
+                        $time = $p->published_at->format('d M H:i');
+                        return '<span class="label label-info">Terjadwal ' . $time . '</span>';
+                    }
+                    // Default fallback
+                    return '<span class="label label-default">Unknown</span>';
                 })
                 ->addColumn('category', fn($p) => $p->category?->name ?? '-')
                 ->addColumn('tags', function($p) {
