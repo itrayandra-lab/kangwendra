@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Schedule;
 
 // =============================================
-// AUTO PIPELINE: Daily 08:00 WIB
+// AUTO PIPELINE: Daily 03:30 WIB
 // Research + Scrape + Paraphrase + Schedule
 // Max 5 articles per day
 // Sources: Search Engine Land + SE Journal

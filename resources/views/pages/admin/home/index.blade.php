@@ -119,7 +119,7 @@
                 <h5 style="font-weight: 700; margin-bottom: 12px; color: #333;">
                     AI Pipeline Status
                     <span style="font-weight: 400; font-size: 12px; color: #888;">
-                        &mdash; Search Engine Land &amp; SE Journal &bull; Max 5 artikel/hari &bull; Auto 08:00 WIB
+                        &mdash; Search Engine Land &amp; SE Journal &bull; Max 5 artikel/hari &bull; Auto 03:30 WIB
                     </span>
                 </h5>
             </div>
@@ -189,7 +189,7 @@
                 <div class="ai-card">
                     <div class="ai-card-title">Pipeline Schedule</div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
-                        <span class="ai-badge" style="background:#e9ecef; color:#333;">08:00 WIB - Research + Scrape</span>
+                        <span class="ai-badge" style="background:#e9ecef; color:#333;">03:30 WIB - Research + Scrape</span>
                         <span class="ai-badge" style="background:#e9ecef; color:#333;">08:00/13:00/16:00 - Publish</span>
                     </div>
                     <div style="font-size:11px; color:#aaa; margin-top:6px;">

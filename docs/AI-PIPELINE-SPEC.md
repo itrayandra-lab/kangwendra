@@ -4,6 +4,8 @@
 **Tanggal:** 26 Juli 2026
 **Status:** Ready for Implementation
 
+> **Note (2026-07-29):** Scheduler diubah — auto-pipeline `app:auto-pipeline` jalan di **03:30 WIB** (bukan 08:00 WIB lagi) untuk hemat resource server. Publish schedule tetap **08:00 / 13:00 / 16:00 WIB**. Lihat `routes/console.php` untuk config aktual.
+
 ---
 
 ## 1. Overview

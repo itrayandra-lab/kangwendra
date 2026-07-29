@@ -22,7 +22,7 @@ class AutoPipeline extends Command
                             {--dry-run : Only show what would be done, do not execute}
                             {--max=5 : Maximum articles to process}';
 
-    protected $description = 'Automated AI pipeline: Sitemap research, scrape, paraphrase, and schedule publish (runs at 08:00 WIB daily)';
+    protected $description = 'Automated AI pipeline: Sitemap research, scrape, paraphrase, and schedule publish (runs at 03:30 WIB daily)';
 
     protected const CONFIDENCE_THRESHOLD = 45.0;
     protected const LOG_CHANNEL = 'ai-generate';
