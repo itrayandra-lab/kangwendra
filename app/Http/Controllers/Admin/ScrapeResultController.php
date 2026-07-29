@@ -191,7 +191,7 @@ class ScrapeResultController extends Controller
             return back()->with('error', 'Pilih至少 satu hasil.');
         }
 
-        $deleted = ResearchRecommendation::whereIn('ids', $ids)->delete();
+        $deleted = ResearchRecommendation::whereIn('id', $ids)->delete();
         return back()->with('success', "{$deleted} hasil dihapus.");
     }
 
