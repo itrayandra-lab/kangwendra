@@ -47,9 +47,13 @@ class PostsController extends Controller
                 ->addColumn('image', fn($p) => $p->image ? '<img src="'.getFile($p->image).'" class="img-thumbnail" style="width:60px;height:40px;object-fit:cover;">' : '<span class="text-muted">-</span>')
                 ->editColumn('counter', fn($p) => number_format($p->counter ?? 0))
                 ->editColumn('status', function($p) {
-                    // Draft: inactive atau tidak ada published_at
+                    // Draft: inactive
                     if ($p->status === 'inactive') {
                         return '<span class="label label-warning">Draft</span>';
+                    }
+                    // Tanpa jadwal: active tapi published_at = null
+                    if ($p->status === 'active' && !$p->published_at) {
+                        return '<span class="label label-default">Tanpa Jadwal</span>';
                     }
                     // Published: aktif DAN waktu publish sudah lewat
                     if ($p->status === 'active' && $p->published_at && $p->published_at <= now()) {
@@ -60,7 +64,7 @@ class PostsController extends Controller
                         $time = $p->published_at->format('d M H:i');
                         return '<span class="label label-info">Terjadwal ' . $time . '</span>';
                     }
-                    // Default fallback
+                    // Fallback
                     return '<span class="label label-default">Unknown</span>';
                 })
                 ->addColumn('category', fn($p) => $p->category?->name ?? '-')

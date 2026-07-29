@@ -32,11 +32,15 @@
                         <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                             @php
                                 $isDraft = $post->status === 'inactive';
+                                $isNoSchedule = $post->status === 'active' && !$post->published_at;
                                 $isPublished = $post->status === 'active' && $post->published_at && $post->published_at <= now();
                                 $isScheduled = $post->status === 'active' && $post->published_at && $post->published_at > now();
                                 if ($isDraft) {
                                     $badgeClass = 'label-warning';
                                     $badgeText = 'Draft';
+                                } elseif ($isNoSchedule) {
+                                    $badgeClass = 'label-default';
+                                    $badgeText = 'Tanpa Jadwal';
                                 } elseif ($isPublished) {
                                     $badgeClass = 'label-success';
                                     $badgeText = 'Published';
@@ -59,6 +63,8 @@
                                     <span style="color:#999; font-size:12px; margin-left:8px;">(belum masuk beranda)</span>
                                 @elseif($isDraft)
                                     <i class="fa fa-pencil text-warning"></i> Post masih draft, tidak ditampilkan di beranda
+                                @elseif($isNoSchedule)
+                                    <i class="fa fa-calendar-times-o text-muted"></i> Post tanpa jadwal publish, tidak muncul di beranda otomatis
                                 @else
                                     <i class="fa fa-question-circle text-muted"></i> Status tidak jelas
                                 @endif
