@@ -151,7 +151,7 @@
                 <div class="ai-card text-center">
                     <div class="ai-card-title">Pending Recommendations</div>
                     <div class="ai-card-value">{{ $researchStats['pending_recs'] }}</div>
-                    <div class="ai-card-sub">{{ $researchStats['scraped_recs'] }} sudah diproses</div>
+                    <div class="ai-card-sub">{{ $researchStats['processed'] }} sudah diproses</div>
                 </div>
             </div>
         </div>
