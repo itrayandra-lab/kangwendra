@@ -44,6 +44,8 @@ class ScrapingController extends Controller
      */
     public function research(Request $request)
     {
+        set_time_limit(0); // No PHP timeout - sitemap scraping can take time
+
         $validated = $request->validate([
             'keyword' => 'required|string|min:2|max:255',
         ]);
@@ -67,7 +69,6 @@ class ScrapingController extends Controller
         $count = ResearchRecommendation::byKeyword($keyword)->count();
 
         if ($count === 0) {
-            // Check if keyword exists in config at all
             $allKeywords = ScraperConfig::getKeywords();
             $inConfig = in_array($keyword, $allKeywords);
 
