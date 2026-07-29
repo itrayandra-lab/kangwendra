@@ -79,6 +79,12 @@ class KeywordResearchJob implements ShouldQueue
                 continue;
             }
 
+            // Skip if URL already moved to ref_articles (approved before)
+            if (\App\Models\RefArticle::where('source_url', $url)->exists()) {
+                $skippedExisting++;
+                continue;
+            }
+
             try {
                 $title = $scraper->extractTitleFromSlug($url);
                 $domain = $scraper->getDomain($url);

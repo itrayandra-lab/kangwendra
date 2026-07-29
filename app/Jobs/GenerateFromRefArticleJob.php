@@ -147,68 +147,228 @@ class GenerateFromRefArticleJob implements ShouldQueue
             throw new \Exception('DEEPSEEK_API_KEY belum dikonfigurasi');
         }
 
-        $payload = [
-            'model'    => $model,
-            'messages' => [
-                [
-                    'role'    => 'system',
-                    'content' => 'Kamu adalah penulis artikel teknologi profesional dalam Bahasa Indonesia. '
-                               . 'Tulis artikel yang informatif, mudah dipahami, dan tidak bertele-tele. '
-                               . 'Jangan pernah menyalin kalimat dari sumber asli. Selalu kembalikan JSON.',
-                ],
-                [
-                    'role'    => 'user',
-                    'content' => $this->buildPrompt($title, $content),
-                ],
-            ],
-            'max_tokens'  => 8192,
-            'temperature'  => 0.7,
-        ];
+        $truncatedContent = Str::limit($content, 4000, '...');
+        $attempt = 0;
+        $lastError = null;
 
-        $response = Http::timeout(600)
-            ->withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type'  => 'application/json',
-            ])
-            ->post("{$baseUrl}/chat/completions", $payload);
+        while ($attempt < 2) {
+            $attempt++;
+            $prompt = $this->buildPrompt($title, $truncatedContent);
 
-        if ($response->failed()) {
+            $payload = [
+                'model'    => $model,
+                'messages' => [
+                    [
+                        'role'    => 'system',
+                        'content' => 'Kamu adalah penulis artikel teknologi profesional dalam Bahasa Indonesia. '
+                                   . 'Tulis artikel yang informatif, mudah dipahami, dan tidak bertele-tele. '
+                                   . 'Jangan pernah menyalin kalimat dari sumber asli. Selalu kembalikan JSON.',
+                    ],
+                    [
+                        'role'    => 'user',
+                        'content' => $prompt,
+                    ],
+                ],
+                'max_tokens'  => 8192,
+                'temperature'  => 0.7,
+            ];
+
+            $response = Http::timeout(600)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type'  => 'application/json',
+                ])
+                ->post("{$baseUrl}/chat/completions", $payload);
+
+            if ($response->failed()) {
+                $body = $response->json();
+                $errorMsg = $body['error']['message'] ?? $response->body();
+                throw new \Exception("DeepSeek API error [{$response->status()}]: {$errorMsg}");
+            }
+
             $body = $response->json();
-            $errorMsg = $body['error']['message'] ?? $response->body();
-            throw new \Exception("DeepSeek API error [{$response->status()}]: {$errorMsg}");
-        }
+            if (isset($body['usage'])) {
+                Log::info('DeepSeek usage (GenerateFromRefArticleJob)', [
+                    'attempt'            => $attempt,
+                    'prompt_tokens'     => $body['usage']['prompt_tokens'] ?? 0,
+                    'completion_tokens' => $body['usage']['completion_tokens'] ?? 0,
+                    'total_tokens'      => $body['usage']['total_tokens'] ?? 0,
+                ]);
+            }
 
-        $body = $response->json();
-        if (isset($body['usage'])) {
-            Log::info('DeepSeek usage (GenerateFromRefArticleJob)', [
-                'prompt_tokens'     => $body['usage']['prompt_tokens'] ?? 0,
-                'completion_tokens' => $body['usage']['completion_tokens'] ?? 0,
-                'total_tokens'      => $body['usage']['total_tokens'] ?? 0,
+            $raw = trim($body['choices'][0]['message']['content'] ?? '');
+
+            // Log raw response for debugging
+            Log::debug('DeepSeek raw response (GenerateFromRefArticleJob)', [
+                'ref_title' => Str::limit($title, 60),
+                'raw_length' => strlen($raw),
+                'raw_preview' => Str::limit($raw, 200),
             ]);
+
+            // Fix: replace unescaped newlines inside JSON string values with \n literal
+            // Strategy: find JSON boundaries and replace newlines that appear INSIDE quoted strings
+            $rawFixed = $this->fixJsonNewlines($raw);
+
+            // Robust JSON extraction - try multiple strategies
+            $decoded = $this->extractJson($rawFixed);
+
+            if ($decoded && !empty($decoded['title']) && !empty($decoded['content'])) {
+                return $decoded;
+            }
+
+            // Retry once with shorter content on parse failure
+            if ($attempt === 1) {
+                $lastError = 'Attempt 1 failed: ' . Str::limit($raw, 200);
+                $truncatedContent = Str::limit($content, 2000, '...');
+                Log::warning('DeepSeek parse retry (GenerateFromRefArticleJob)', [
+                    'ref_title' => Str::limit($title, 60),
+                    'error'     => $lastError,
+                ]);
+                continue;
+            }
+
+            // All attempts failed
+            throw new \Exception('DeepSeek returned invalid format: ' . Str::limit($raw, 300) . ' | Last error: ' . $lastError);
         }
 
-        $raw = trim($body['choices'][0]['message']['content'] ?? '');
-        $raw = preg_replace('/(?<!\\\)[\r\n]+/', "\n", $raw);
+        throw new \Exception('DeepSeek failed after retries: ' . ($lastError ?? 'unknown'));
+    }
 
+    /**
+     * Fix unescaped newlines inside JSON string values.
+     * DeepSeek sometimes outputs raw newlines instead of \n inside quoted strings.
+     */
+    private function fixJsonNewlines(string $raw): string
+    {
+        // Remove markdown code block wrapper if present
+        $raw = preg_replace('/^```json\s*/', '', $raw);
+        $raw = preg_replace('/^```\s*/', '', $raw);
+        $raw = preg_replace('/\s*```$/', '', $raw);
+        $raw = trim($raw);
+
+        // If raw starts with '{', we have JSON. Replace newlines INSIDE quoted strings.
+        // Strategy: find positions of opening and closing braces, then replace newlines
+        // that appear between quotes (not at structure level)
+        if (strpos($raw, '{') === 0) {
+            // Split by lines, but preserve JSON structure
+            // Replace any unescaped newline inside a quoted string with literal \n
+            $result = '';
+            $inString = false;
+            $escapeNext = false;
+            $chars = mb_str_split($raw);
+            foreach ($chars as $i => $char) {
+                if ($escapeNext) {
+                    $result .= $char;
+                    $escapeNext = false;
+                    continue;
+                }
+                if ($char === '\\') {
+                    $result .= $char;
+                    $escapeNext = true;
+                    continue;
+                }
+                if ($char === '"') {
+                    $inString = !$inString;
+                    $result .= $char;
+                    continue;
+                }
+                if ($inString && ($char === "\n" || $char === "\r")) {
+                    // Inside a quoted string, replace newline with \n literal
+                    $result .= '\\n';
+                    continue;
+                }
+                $result .= $char;
+            }
+            return $result;
+        }
+
+        return $raw;
+    }
+
+    /**
+     * Extract valid JSON from raw DeepSeek response using multiple strategies.
+     */
+    private function extractJson(string $raw): ?array
+    {
+        // Strategy 1: Direct parse
         $decoded = json_decode($raw, true);
-        if (!$decoded && preg_match('/```(?:json)?\s*([\s\S]+?)```/', $raw, $m)) {
+        if ($decoded !== null && $this->isValidArticleJson($decoded)) {
+            return $decoded;
+        }
+
+        // Strategy 2: Markdown code block
+        if (preg_match('/```(?:json)?\s*([\s\S]+?)```/', $raw, $m)) {
             $decoded = json_decode(trim($m[1]), true);
+            if ($decoded !== null && $this->isValidArticleJson($decoded)) {
+                return $decoded;
+            }
         }
-        if (!$decoded && preg_match('/\{[\s\S]+\}/', $raw, $m)) {
+
+        // Strategy 3: Find the first { ... } block
+        if (preg_match('/\{[\s\S]+/', $raw, $m)) {
+            $potential = $m[0];
+            $decoded = json_decode($potential, true);
+            if ($decoded !== null && $this->isValidArticleJson($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Strategy 4: Find JSON with trailing content after the closing brace
+        if (preg_match('/\{[\s\S]*\}/', $raw, $m)) {
             $decoded = json_decode($m[0], true);
+            if ($decoded !== null && $this->isValidArticleJson($decoded)) {
+                return $decoded;
+            }
         }
 
-        if (!$decoded || empty($decoded['title']) || empty($decoded['content'])) {
-            throw new \Exception('DeepSeek returned invalid format: ' . Str::limit($raw, 300));
+        // Strategy 5: Try to extract content between first "title" and last "}"
+        if (preg_match('/"title"\s*:\s*"[^"]*"/', $raw)) {
+            // Find where the JSON starts
+            $start = strpos($raw, '{');
+            if ($start !== false) {
+                $potential = substr($raw, $start);
+                // Try progressively shorter versions
+                for ($len = strlen($potential); $len > 100; $len -= 100) {
+                    $candidate = substr($potential, 0, $len);
+                    // Ensure it ends with }
+                    if (substr(trim($candidate), -1) === '}') {
+                        $decoded = json_decode($candidate, true);
+                        if ($decoded !== null && $this->isValidArticleJson($decoded)) {
+                            return $decoded;
+                        }
+                    }
+                    // Also try without trimming
+                    if (substr($candidate, -1) === '}') {
+                        $decoded = json_decode($candidate, true);
+                        if ($decoded !== null && $this->isValidArticleJson($decoded)) {
+                            return $decoded;
+                        }
+                    }
+                }
+            }
         }
 
-        return $decoded;
+        return null;
+    }
+
+    /**
+     * Validate that decoded JSON has the required article fields.
+     */
+    private function isValidArticleJson(?array $decoded): bool
+    {
+        if ($decoded === null) return false;
+        if (empty($decoded['title'])) return false;
+        if (empty($decoded['content'])) return false;
+        // Title must be a reasonable length
+        if (strlen($decoded['title']) < 10) return false;
+        // Content must have some HTML-like structure or be long enough
+        $contentLen = strlen($decoded['content']);
+        if ($contentLen < 50) return false;
+        return true;
     }
 
     private function buildPrompt(string $title, string $content): string
     {
-        $truncated = Str::limit($content, 6000, '...');
-
         return <<<PROMPT
 Kamu adalah penulis artikel teknologi profesional yang menulis dalam Bahasa Indonesia.
 
@@ -225,7 +385,7 @@ ATURAN:
 JUDUL ASLI: {$title}
 
 ISI ARTIKEL REFERENSI:
-{$truncated}
+{$content}
 ---
 
 FORMAT OUTPUT (HANYA JSON - tidak ada penjelasan lain):

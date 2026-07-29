@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schedule;
 // Sources: Search Engine Land + SE Journal
 // =============================================
 Schedule::command('app:auto-pipeline --max=5')
-    ->dailyAt('08:00')
+    ->dailyAt('03:30')
     ->timezone('Asia/Jakarta')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/auto-pipeline.log'));
