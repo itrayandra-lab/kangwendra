@@ -430,8 +430,10 @@ PROMPT;
         }
 
         if ($slotIdx === null) {
+            // Semua slot penuh → assign ke slot 08:00 HARI INI
+            // (langsung publish karena published_at <= now)
             $slotIdx = 0;
-            $publishTime = new DateTime('tomorrow', $tz);
+            $publishTime = new DateTime('today', $tz);
             $publishTime->setTime($slots[0]['hour'], 0, 0);
         } else {
             if (count($usedSlots) > 0) {
@@ -449,7 +451,7 @@ PROMPT;
             'image'        => $ref->image_url,
             'source'       => $ref->source_url,
             'domain'       => $ref->source_domain,
-            'status'       => 'draft',
+            'status'       => 'active',
             'published_by'  => 'system',
             'category_id'  => $category->id,
             'created_by'   => $adminUser->id,
