@@ -1,216 +1,220 @@
-# Kangwendra AI Auto-Feed Pipeline Redesign
+# Kangwendra AI Pipeline — Current State
 
-**Versi:** 1.0
-**Tanggal:** 26 Juli 2026
-**Status:** Ready for Implementation
-
-> **Note (2026-07-29):** Scheduler diubah — auto-pipeline `app:auto-pipeline` jalan di **03:30 WIB** (bukan 08:00 WIB lagi) untuk hemat resource server. Publish schedule tetap **08:00 / 13:00 / 16:00 WIB**. Lihat `routes/console.php` untuk config aktual.
+**Versi:** 2.0
+**Tanggal Update:** 29 Juli 2026
+**Status:** Active & Running
 
 ---
 
-## 1. Overview
+## Ringkasan
 
-### 1.1 Objectives
+Pipeline AI di Kangwendra berjalan otomatis dari scraping hingga publish **tanpa scheduler publish**. Post langsung `active` saat dibuat oleh AI.
 
-- Mengganti sistem scraping lama (Yahoo Tech + Pharma) dengan sistem baru berbasis **Search Engine Land + Search Engine Journal**
-- Memecah proses besar menjadi **job-job kecil** yang ringan dan bisa di-retry independent
-- Mengurangi beban database dengan **cleanup konten asli** setelah paraphrase selesai
-- Membangun **AI learning system** yang bisa belajar dari pilihan (untuk fase future)
-- Sistem berjalan **otomatis tanpa campur tangan editor** (fully automated backend)
-- Batas **5 artikel/hari** dengan publish terjadwal
+---
 
-### 1.2 Daily Automated Flow
+## Alur Pipeline
 
 ```
-08:00 WIB (SETIAP PAGI) — AUTOMATED
-|
-├─ KeywordResearchJob (sitemap scraping)
-│   ├─ Dynamic sitemap discovery: parse sitemap_index.xml → extract post-sitemap*.xml from 2022+
-│   ├─ Process newest sitemaps first (sorted by lastmod descending)
-│   ├─ Per-entry date filter: skip articles older than 2022
-│   ├─ Filter: skip media files, wp-content paths, author/category/tag/page URLs
-│   ├─ Keyword-matched confidence scoring (sort by relevance)
-│   │   └─ Base score 30, requires AI keyword in URL slug to qualify (≥45)
-│   └─ Simpan ke research_recommendations (pending)
-|
-├─ ScrapeParaphraseJob × 5 (scrape → validate → paraphrase → save)
-│   ├─ Domain validation: only searchengineland.com + searchenginejournal.com
-│   ├─ Content validation: AI keywords, image required, min 200 chars
-│   ├─ Phase 2.5 quality gate: article age < 1 year + ≥2 AI keywords in content
-│   └─ RefArticle only created AFTER content passes all checks
-|
-├─ Schedule publish:
-│   ├─ Post #1 → hari ini 08:00 WIB
-│   ├─ Post #2 → hari ini 13:00 WIB
-│   ├─ Post #3 → hari ini 16:00 WIB
-│   ├─ Post #4 → besok 08:00 WIB
-│   └─ Post #5 → besok 13:00 WIB
-|
-├─ Auto-publish di jam 08:00, 13:00, 16:00 WIB (scheduler existing)
-|
-└─ AI Learning (background):
-    ├─ Kalau source URL mati (404/timeout) → SKIP, jangan simpan
-    └─ Track preference score (untuk future use)
+03:30 WIB  → app:auto-pipeline (via scheduler, 1x/hari)
+               ↓
+             KeywordResearchJob
+               ├─ Scrap sitemap_index.xml SEJ + SEL
+               ├─ Confidence scoring (threshold: 45%)
+               ├─ Skip jika URL sudah ada di ref_articles
+               └─ Simpan ke research_recommendations
+               ↓
+             ScrapeParaphraseJob × max 5 (via queue worker)
+               ├─ Fetch article dari URL
+               ├─ Validate (AI keywords, image, age < 1 tahun)
+               ├─ DeepSeek paraphrase → artikel baru Bahasa Indonesia
+               ├─ Normalize content (hapus \n literal)
+               ├─ Auto-assign slot publish (08:00 / 13:00 / 16:00)
+               ├─ Save post: status='active', published_at=slot
+               └─ AI learning (approval feedback)
+
+Setiap menit → queue worker proses jobs dari queue
 ```
 
 ---
 
-## 2. Database Schema
+## Publish Slot
 
-### 2.1 Table: `editor_preferences` (BARU)
+Post AI dibuat langsung dengan `status='active'`. `published_at` menentukan kapan post muncul di beranda.
+
+| Slot | `published_at` | Keterangan |
+|------|---------------|-----------|
+| #1 | HH:MM:SS → 08:00 | Slot pagi |
+| #2 | HH:MM:SS → 13:00 | Slot siang |
+| #3 | HH:MM:SS → 16:00 | Slot sore |
+| Overflow (>3 post) | Hari ini 08:00 | Langsung publish |
+
+**Overflow:** Kalau semua slot penuh, post diarahkan ke 08:00 hari yang sama — langsung publish (karena `published_at <= now()`).
+
+**Manual posts** (dari editor) tidak terpengaruh slot AI. Berbeda tabel, berbeda slot.
+
+---
+
+## Scheduler
+
+File: `routes/console.php`
 
 ```php
-Schema::create('editor_preferences', function (Blueprint $table) {
-    $table->id();
-    $table->string('keyword', 255)->unique();
-    $table->string('topic', 255)->nullable();
-    $table->integer('approved_count')->default(0);
-    $table->integer('rejected_count')->default(0);
-    $table->integer('unpublished_count')->default(0);
-    $table->decimal('score', 8, 4)->default(0);
-    $table->decimal('confidence', 8, 4)->default(50);
-    $table->text('blocklist_urls')->nullable();
-    $table->text('blocklist_patterns')->nullable();
-    $table->timestamps();
-    $table->index('keyword');
-    $table->index('score');
-    $table->index('confidence');
-});
+// Scheduler aktif (hanya 1):
+Schedule::command('app:auto-pipeline --max=5')
+    ->dailyAt('03:30')
+    ->timezone('Asia/Jakarta')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/auto-pipeline.log'));
 ```
 
-### 2.2 Table: `research_recommendations` (BARU)
+**HANYA `app:auto-pipeline`** yang jalan otomatis via scheduler. Publish scheduler (`app:publish-scheduled-posts`) sudah dihapus karena post langsung `active`.
 
-```php
-Schema::create('research_recommendations', function (Blueprint $table) {
-    $table->id();
-    $table->string('keyword', 255);
-    $table->string('url', 500);
-    $table->string('title', 500)->nullable();
-    $table->string('domain', 255)->nullable();
-    $table->string('snippet', 1000)->nullable();
-    $table->decimal('confidence_score', 8, 4)->nullable();
-    $table->enum('status', ['pending', 'approved', 'rejected', 'scraped'])->default('pending');
-    $table->string('ref_article_id')->nullable();
-    $table->timestamps();
-    $table->index('keyword');
-    $table->index('status');
-    $table->unique(['keyword', 'url']); // composite unique
-});
+---
+
+## Yang Jalan Otomatis
+
+| Komponen | Command | Keterangan |
+|----------|---------|-----------|
+| Scrape + Paraphrase | `php artisan queue:work` | WAJIB — proses jobs dari queue |
+| Auto-pipeline | `php artisan schedule:run` (cron) | Jalan 03:30 WIB daily |
+| Scheduler publish | — | TIDAK ADA — post langsung active |
+
+### Server Production
+
+```bash
+# Cron untuk scheduler (1x auto-pipeline):
+* * * * * php /path-to/artisan schedule:run >> /dev/null 2>&1
+
+# Supervisor untuk queue worker:
+php artisan queue:work redis --sleep=3 --tries=3
 ```
 
-### 2.3 Table: `ref_articles` (MODIFIKASI)
+> **Catatan:** `schedule:work` (di local Herd) tidak diperlukan untuk publish. Cukup `queue:work` untuk proses scrape + paraphrase.
 
-```php
-// KOLOM BARU:
-$table->enum('ai_research_status', ['idle', 'researching', 'done', 'failed'])
-    ->default('idle')->after('ai_status');
-$table->string('source_keyword', 255)->nullable()->after('source_domain');
-$table->text('research_notes')->nullable()->after('ai_research_status');
+---
 
-// SETELAH PARAPHRASE SELESAI:
-// - content → NULL (hapus konten asli, hemat DB)
-// - original_content_hash → NULL
+## Database Tables
+
+### `ref_articles`
+- Menyimpan article yang sudah di-approve dari hasil scraping
+- `ai_research_status`: `idle` → `researching` → `done` / `failed`
+- `generated_post_id`: link ke `posts` setelah paraphrase selesai
+- `source_url`: URL asli dari SEJ/SEL
+- `content`: di-NULL-kan setelah paraphrase selesai (hemat DB)
+
+### `research_recommendations`
+- Hasil scraping: URL + confidence score
+- Status: `pending` → di-approve / di-reject
+- Duplicate check: cek `ref_articles.source_url` saat scrape
+
+### `posts`
+- `status='active'`: post live di beranda
+- `published_at`: jadwal muncul di beranda
+- `published_by='system'`: buatan AI | `published_by=admin_id`: manual
+- `source`: URL asli (AI posts) | `NULL`: manual posts
+
+### `editor_preferences`
+- Kata kunci AI untuk scraping
+- `blocklist_urls`: URL yang di-reject
+- `confidence`: score pembelajaran AI
+
+---
+
+## Admin Flow
+
+```
+Scraping (menu)
+  └─ Research keyword → hasil di research_recommendations
+  └─ Hasil Scraping (menu)
+       └─ Approve → pindahkan ke ref_articles + AI learning
+       └─ Reject → hapus + blocklist URL
+  └─ Scraper Config (menu)
+
+Ref Articles (menu)
+  └─ Generate → paraphrase → save post (active)
+  └─ Generate All Idle → batch max 5
+  └─ Semua Ref Articles
+
+Postingan AI (menu, ?source=ai)
+  └─ post dengan published_by='system' atau source IS NOT NULL
+
+Postingan Mandiri (menu, ?source=manual)
+  └─ post dengan published_by!='system' dan source IS NULL
 ```
 
-### 2.4 Table: `posts` (MODIFIKASI)
+---
 
-```php
-// KOLOM BARU:
-$table->string('published_by', 50)->default('system')->after('status');
-$table->timestamp('unpublished_at')->nullable()->after('published_at');
-$table->string('unpublished_reason', 255)->nullable()->after('unpublished_at');
-```
+## Status Badge di Admin
+
+| Badge | Kondisi |
+|-------|---------|
+| 🟢 **Published** | `status='active'` + `published_at <= now()` |
+| 🔵 **Terjadwal** | `status='active'` + `published_at > now()` |
+| 🟡 **Draft** | `status='inactive'` |
+| 🔵 **AI** (kolom Asal) | `published_by='system'` |
+| ⚪ **Editor** (kolom Asal) | `published_by!=system` |
 
 ---
 
-## 3. Jobs
+## Files Utama
 
-### 3.1 KeywordResearchJob
-AI research keyword → output 5 recommended URLs dari SEL/SEJ. Sitemap URLs tidak perlu HTTP validation karena sudah pre-validated oleh search engine.
-
-### 3.2 ScrapeParaphraseJob
-1 job = scrape + paraphrase + save + cleanup.
-- Kalau source URL mati (404/timeout): SKIP, jangan simpan
-- Validate: title, content min 200 chars, image required
-- After done: content = NULL (hemat DB)
-
-### 3.3 UpdateEditorPreferenceJob
-Background job untuk recalculate preference scores.
-
----
-
-## 4. Daily Limit & Publish Slots
-
-| Slot | Waktu | Keterangan |
-|------|-------|-----------|
-| #1 | 08:00 WIB | Post scraped pertama |
-| #2 | 13:00 WIB | Post scraped kedua |
-| #3 | 16:00 WIB | Post scraped ketiga |
-| #4 | Besok 08:00 WIB | Post scraped keempat (overflow) |
-| #5 | Besok 13:00 WIB | Post scraped kelima (overflow) |
-
-- **Confidence threshold:** 50% (sitemap URLs already pre-validated via sitemap)
-- **Source:** searchengineland.com, searchenginejournal.com
-- **Daily limit:** 5 artikel
+| File | Fungsi |
+|------|--------|
+| `routes/console.php` | Scheduler definitions |
+| `app/Console/Commands/AutoPipeline.php` | Orchestrator: research + dispatch scrape jobs |
+| `app/Jobs/KeywordResearchJob.php` | Scrape sitemap SEJ + SEL |
+| `app/Jobs/ScrapeParaphraseJob.php` | Scrape + DeepSeek paraphrase + save (via auto-pipeline) |
+| `app/Jobs/GenerateFromRefArticleJob.php` | Generate dari ref_articles (via admin manual) |
+| `app/Services/SitemapScraperService.php` | Sitemap discovery + URL extraction |
+| `app/Services/SearchEngineLandScraperService.php` | Article detail scraper |
+| `app/Models/RefArticle.php` | Model ref_articles |
+| `app/Models/ResearchRecommendation.php` | Model research_recommendations |
+| `app/Http/Controllers/Admin/PostsController.php` | CRUD posts + filter AI/Mandiri |
+| `app/Http/Controllers/Admin/ScrapingController.php` | Research + keyword management |
+| `app/Http/Controllers/Admin/ScrapeResultController.php` | Approve/reject hasil scraping |
+| `app/Http/Controllers/Admin/RefArticleController.php` | Generate dari ref_articles |
+| `app/Http/Controllers/Admin/HomeController.php` | Dashboard AI pipeline stats |
 
 ---
 
-## 5. AI Learning
+## Commit History (Pipeline Refactoring)
 
-- Editor approve URL → score + confidence naik
-- Editor reject URL → blocklist + score turun
-- Post di-unpublish → confidence turun
-- Confidence < threshold → tidak di-scrape
-
----
-
-## 6. Files
-
-### CREATE (11 files)
-- `app/Jobs/KeywordResearchJob.php`
-- `app/Jobs/ScrapeParaphraseJob.php`
-- `app/Jobs/UpdateEditorPreferenceJob.php`
-- `app/Console/Commands/AutoPipelineCommand.php`
-- `app/Services/SearchEngineLandScraperService.php`
-- `app/Services/SitemapScraperService.php`
-- `app/Services/EditorPreferenceService.php`
-- `app/Models/EditorPreference.php`
-- `app/Models/ResearchRecommendation.php`
-- Migration: `editor_preferences`
-- Migration: `research_recommendations`
-
-### MODIFY (8 files)
-- `app/Models/RefArticle.php`
-- `app/Models/Post.php`
-- `app/Http/Controllers/Admin/RefArticleController.php`
-- `app/Http/Controllers/Admin/PostsController.php`
-- `app/Http/Controllers/Admin/HomeController.php`
-- `resources/views/pages/admin/ref-articles/index.blade.php`
-- `resources/views/pages/admin/ref-articles/recommendations.blade.php`
-- `resources/views/pages/admin/home/index.blade.php`
-- `routes/console.php`
-
-### DELETE (8 files)
-- `app/Services/YahooTechScraperService.php`
-- `app/Services/TechPharmaScraperService.php`
-- `app/Services/KeywordResearchService.php`
-- `app/Jobs/GenerateAiArticleJob.php`
-- `app/Console/Commands/ProcessPendingAi.php`
-- `app/Console/Commands/AutoFeedCommand.php`
-- `app/Console/Commands/ScrapeYahooTech.php`
-- `app/Console/Commands/UpdateExistingPostsDomain.php`
+| Commit | Deskripsi |
+|--------|---------|
+| `ade5953` | Post filtering: AI vs Mandiri separate pages |
+| `e07513d` | Research stats fix + orphaned records cleanup |
+| `55c2216` | HomeController: ai_research_status column fix |
+| `1cb7e86` | Duplicate prevention + scheduler + DeepSeek robustness |
+| `cd2987a` | Update comment: 08:00 → 03:30 WIB |
+| `b680bce` | Fix DeepSeek \n newline: normalize content |
+| `931cd92` | Status badge: add Terjadwal state |
+| `f413f2c` | Edit post: add status info box |
+| `d050bfb` | Post langsung active: hapus scheduler publish |
 
 ---
 
-## 7. Implementation Order
+## Catatan Teknis
 
-1. Database migrations
-2. Models (EditorPreference, ResearchRecommendation) + modify RefArticle, Post
-3. Services (SearchEngineLandScraper, SitemapScraper, EditorPreference)
-4. Jobs (KeywordResearchJob, ScrapeParaphraseJob, UpdateEditorPreferenceJob)
-5. AutoPipelineCommand + PostController (unpublish, regenerate)
-6. RefArticleController + routes
-7. Views (ref-articles/index, posts/index, dashboard)
-8. Cleanup old files
-9. Routes & console schedule updates
-10. Testing & verification
+### DeepSeek Parsing
+- Try direct `json_decode` first
+- Fallback: markdown code block extraction
+- Fallback: `{...}` block extraction
+- Normalize: `preg_replace('/\\\\n|\\\\r|\r\n|\r|\n/', ' ', $content)`
+- HTML tags (`<p>`, `<h2>`, `<strong>`) sudah define structure
+
+### Confidence Scoring
+- Base score: 30
+- +70: keyword AI di URL slug
+- +5: AI entity match
+- +3: domain SEJ/SEL
+- -10 to -20: bad patterns (review, comparison, brand HP, wordle, nyt)
+- **Threshold: 45%** — di bawah ini tidak disimpan
+
+### Blocklist
+- Di simpan di `editor_preferences.blocklist_urls` (JSON array)
+- Dicek saat scraping: skip jika URL ada di blocklist
+- Clear via "Clear All Blocklists" button di admin
+
+### Daily Limit
+- Default: **5 artikel/hari** dari `ScraperConfig::getDailyLimit()`
+- Bisa diubah via Scraping menu → Scraper Config
