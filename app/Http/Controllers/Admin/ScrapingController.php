@@ -70,7 +70,10 @@ class ScrapingController extends Controller
 
         if ($count === 0) {
             $allKeywords = ScraperConfig::getKeywords();
-            $inConfig = in_array($keyword, $allKeywords);
+            // Case-insensitive check
+            $normalizedKw = strtolower($keyword);
+            $normalizedAll = array_map('strtolower', $allKeywords);
+            $inConfig = in_array($normalizedKw, $normalizedAll);
 
             $msg = "Research selesai! 0 URL ditemukan untuk '{$keyword}'.";
             if ($inConfig) {
