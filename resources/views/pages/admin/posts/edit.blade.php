@@ -27,6 +27,52 @@
                     <h3 class="panel-title">Perbarui {{ $page }}</h3>
                 </div>
                 <div class="panel-body">
+                    {{-- Status Info Box --}}
+                    <div style="background:#f8f9fa; border:1px solid #ddd; border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+                        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                            @php
+                                $isDraft = $post->status === 'inactive';
+                                $isPublished = $post->status === 'active' && $post->published_at && $post->published_at <= now();
+                                $isScheduled = $post->status === 'active' && $post->published_at && $post->published_at > now();
+                                if ($isDraft) {
+                                    $badgeClass = 'label-warning';
+                                    $badgeText = 'Draft';
+                                } elseif ($isPublished) {
+                                    $badgeClass = 'label-success';
+                                    $badgeText = 'Published';
+                                } elseif ($isScheduled) {
+                                    $badgeClass = 'label-info';
+                                    $badgeText = 'Terjadwal';
+                                } else {
+                                    $badgeClass = 'label-default';
+                                    $badgeText = 'Unknown';
+                                }
+                            @endphp
+                            <div>
+                                <span class="label {{ $badgeClass }}" style="font-size:13px; padding:5px 12px;">{{ $badgeText }}</span>
+                            </div>
+                            <div style="font-size:13px; color:#555;">
+                                @if($isPublished)
+                                    <i class="fa fa-check-circle text-success"></i> Sudah dipublikasikan pada <strong>{{ $post->published_at->format('d M Y H:i') }} WIB</strong>
+                                @elseif($isScheduled)
+                                    <i class="fa fa-clock-o text-info"></i> Akan dipublikasikan pada <strong>{{ $post->published_at->format('d M Y H:i') }} WIB</strong>
+                                    <span style="color:#999; font-size:12px; margin-left:8px;">(belum masuk beranda)</span>
+                                @elseif($isDraft)
+                                    <i class="fa fa-pencil text-warning"></i> Post masih draft, tidak ditampilkan di beranda
+                                @else
+                                    <i class="fa fa-question-circle text-muted"></i> Status tidak jelas
+                                @endif
+                            </div>
+                            <div style="margin-left:auto; font-size:12px; color:#999;">
+                                @if($post->published_by === 'system')
+                                    <span class="label label-info" style="font-size:11px;">AI</span>
+                                @else
+                                    <span class="label label-default" style="font-size:11px;">Editor</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
                     <form action="{{ route('posts.update', $post->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT') 
