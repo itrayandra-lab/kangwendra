@@ -98,6 +98,8 @@ function refresh() {
             if (d.status === 'complete') {
                 document.getElementById('s-status').textContent = 'Selesai';
                 clearInterval(poll);
+                // Auto-redirect to posts page after 2 seconds
+                setTimeout(() => { window.location.href = "{{ route('posts.index') }}"; }, 2000);
             } else {
                 document.getElementById('s-status').textContent = 'Diproses (' + done + '/' + total + ')';
             }
@@ -138,7 +140,7 @@ if (batchId) {
             <div class="lbl">Gagal</div>
         </div>
         <div class="stat-box stat-proc">
-            <div class="num" id="s-proc">{{ $processing + $pending }}</div>
+            <div class="num" id="s-proc">{{ $processing }}</div>
             <div class="lbl">Proses</div>
         </div>
     </div>
@@ -159,7 +161,7 @@ if (batchId) {
         <div style="text-align: center; padding: 10px;">
             <strong>Batch selesai.</strong> {{ $success }} berhasil, {{ $failed }} gagal.
             &nbsp;
-            <a href="{{ route('ref-articles.index') }}" class="btn btn-primary btn-sm">Kembali ke Manajemen</a>
+            <a href="{{ route('posts.index') }}" class="btn btn-primary btn-sm">Lihat Postingan AI</a>
         </div>
     </div>
     @endif
@@ -188,7 +190,7 @@ if (batchId) {
     @if($success > 0)
     <div class="section">
         <div class="section-title">Berhasil di-generate ({{ $success }})</div>
-        @foreach(\App\Models\RefArticle::where('batch_id', $batchId)->where('ai_status', 'done')->get() as $a)
+        @foreach(\App\Models\RefArticle::where('batch_id', $batchId)->where('ai_research_status', 'done')->get() as $a)
             @if($a->generated_post_id)
             <div class="item-row">
                 <span>{{ Str::limit($a->title, 55) }}</span>

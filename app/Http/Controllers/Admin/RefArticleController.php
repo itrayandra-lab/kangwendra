@@ -39,8 +39,7 @@ class RefArticleController extends Controller
         $stats = [
             'total'      => RefArticle::where('moved_from_scrape', true)->count(),
             'idle'      => RefArticle::where('moved_from_scrape', true)->where(fn($q) => $q->whereNull('ai_research_status')->orWhere('ai_research_status', 'idle'))->count(),
-            'researching'   => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'researching')->count(),
-            'processing'=> RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'processing')->count(),
+            'researching' => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'researching')->count(),
             'done'      => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'done')->count(),
             'failed'    => RefArticle::where('moved_from_scrape', true)->where('ai_research_status', 'failed')->count(),
         ];
@@ -67,13 +66,22 @@ class RefArticleController extends Controller
             return back()->with('info', 'Tidak ada Ref Article yang idle. Semua sudah diproses.');
         }
 
+        // Generate a batch ID to track this group
+        $batchId = now()->format('YmdHis');
+
         $dispatched = 0;
         foreach ($idleArticles as $article) {
+            // Update status to researching BEFORE dispatching
+            $article->update([
+                'ai_research_status' => 'researching',
+                'batch_id' => $batchId,
+            ]);
             GenerateFromRefArticleJob::dispatch($article->id);
             $dispatched++;
         }
 
-        return back()->with('success', "{$dispatched} job paraphrase di-queue. Periksa halaman Postingan AI untuk hasilnya.");
+        // Redirect to batch progress page with the batch ID
+        return redirect()->route('ref-articles.batch-progress', ['batch_id' => $batchId]);
     }
 
     /**
@@ -85,9 +93,13 @@ class RefArticleController extends Controller
             return back()->with('error', 'Source URL tidak tersedia.');
         }
 
+        $refArticle->update([
+            'ai_research_status' => 'researching',
+            'batch_id' => now()->format('YmdHis'),
+        ]);
         GenerateFromRefArticleJob::dispatch($refArticle->id);
 
-        return back()->with('success', 'Generate job dispatched. Periksa halaman Postingan AI.');
+        return redirect()->route('ref-articles.batch-progress', ['batch_id' => $refArticle->batch_id]);
     }
 
     /**
@@ -99,9 +111,13 @@ class RefArticleController extends Controller
             return back()->with('error', 'Source URL tidak tersedia.');
         }
 
+        $refArticle->update([
+            'ai_research_status' => 'researching',
+            'batch_id' => now()->format('YmdHis'),
+        ]);
         GenerateFromRefArticleJob::dispatch($refArticle->id);
 
-        return back()->with('success', 'Retry job dispatched. Periksa halaman Postingan AI.');
+        return redirect()->route('ref-articles.batch-progress', ['batch_id' => $refArticle->batch_id]);
     }
 
     // ── VIEW DETAIL ───────────────────────────────────────────
@@ -223,5 +239,66 @@ class RefArticleController extends Controller
         }
 
         return 'Teknologi';
+    }
+
+    // ── BATCH PROGRESS ─────────────────────────────────────────
+
+    /**
+     * Show batch progress page for a given batch_id.
+     */
+    public function batchProgress(Request $request)
+    {
+        $page = 'Batch Progress';
+        $batchId = $request->input('batch_id');
+
+        if (!$batchId) {
+            return redirect()->route('ref-articles.index');
+        }
+
+        $articles = RefArticle::where('batch_id', $batchId)->get();
+        $total = $articles->count();
+        $success = $articles->where('ai_research_status', 'done')->count();
+        $failed = $articles->where('ai_research_status', 'failed')->count();
+        $processing = $articles->where('ai_research_status', 'researching')->count();
+        $pending = $total - $success - $failed - $processing;
+
+        $failedArticles = $articles->where('ai_research_status', 'failed');
+
+        return view('pages.admin.ref-articles.batch-progress', compact(
+            'page', 'batchId', 'total', 'success', 'failed', 'processing', 'pending', 'failedArticles'
+        ));
+    }
+
+    /**
+     * API endpoint for batch progress polling (AJAX).
+     */
+    public function batchStatus(Request $request)
+    {
+        $batchId = $request->input('batch_id');
+
+        if (!$batchId) {
+            return response()->json(['error' => 'No batch_id', 'status' => 'error']);
+        }
+
+        $articles = RefArticle::where('batch_id', $batchId)->get();
+        $total = $articles->count();
+
+        if ($total === 0) {
+            return response()->json(['error' => 'Batch not found', 'status' => 'error']);
+        }
+
+        $success = $articles->where('ai_research_status', 'done')->count();
+        $failed = $articles->where('ai_research_status', 'failed')->count();
+        $processing = $articles->where('ai_research_status', 'researching')->count();
+
+        $status = ($success + $failed === $total) ? 'complete' : 'processing';
+
+        return response()->json([
+            'total' => $total,
+            'success' => $success,
+            'failed' => $failed,
+            'processing' => $processing,
+            'status' => $status,
+        ]);
     }
 }
