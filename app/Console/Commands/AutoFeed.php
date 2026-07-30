@@ -5,8 +5,6 @@ namespace App\Console\Commands;
 use App\Jobs\GenerateAiArticleJob;
 use App\Models\RefArticle;
 use App\Services\TechPharmaScraperService;
-use App\Services\YahooNewsScraperService;
-use App\Services\YahooTechScraperService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -17,7 +15,7 @@ class AutoFeed extends Command
                             {--scrape-only : Hanya scrape, jangan AI}
                             {--ai-only : Hanya generate AI dari ref_articles yang ada}
                             {--limit=3 : Maksimal article untuk AI generation per run}
-                            {--sources=yahoo,pharma : Sumber scraping (yahoo, pharma, all)}';
+                            {--sources=pharma : Sumber scraping (pharma, all)}';
 
     protected $description = 'Automation feed: Multi-source scraping + DeepSeek AI generation';
 
@@ -35,14 +33,12 @@ class AutoFeed extends Command
         $limit      = (int) $this->option('limit');
         $sourcesOpt = $this->option('sources');
 
-        $sources = $sourcesOpt === 'all' ? ['yahoo', 'pharma'] : explode(',', $sourcesOpt);
+        $sources = $sourcesOpt === 'all' ? ['pharma'] : explode(',', $sourcesOpt);
 
         if (!$aiOnly) {
             foreach ($sources as $source) {
                 $source = trim($source);
-                if ($source === 'yahoo') {
-                    $this->stepScrapeYahoo();
-                } elseif ($source === 'pharma') {
+                if ($source === 'pharma') {
                     $this->stepScrapePharma();
                 }
             }
@@ -67,28 +63,10 @@ class AutoFeed extends Command
         return 0;
     }
 
-    protected function stepScrapeYahoo(): void
-    {
-        $this->newLine();
-        $this->info('[Step 1] Scraping Yahoo Tech...');
-
-        try {
-            $scraper = new YahooTechScraperService();
-            $saved   = $scraper->scrapeAndSave();
-
-            $this->info("  OK: {$saved} artikel disimpan");
-            Log::info("AutoFeed YahooTech: {$saved} articles saved.");
-
-        } catch (\Exception $e) {
-            $this->error("  Gagal: {$e->getMessage()}");
-            Log::error("AutoFeed YahooTech failed: {$e->getMessage()}");
-        }
-    }
-
     protected function stepScrapePharma(): void
     {
         $this->newLine();
-        $this->info('[Step 2] Scraping Tech Pharma...');
+        $this->info('[Step 1] Scraping Tech Pharma...');
 
         try {
             $scraper = new TechPharmaScraperService();
@@ -106,7 +84,7 @@ class AutoFeed extends Command
     protected function stepAiGeneration(int $limit): void
     {
         $this->newLine();
-        $this->info('[Step 3] Dispatch AI generation jobs...');
+        $this->info('[Step 2] Dispatch AI generation jobs...');
 
         RefArticle::failed()->update(['ai_status' => 'pending', 'ai_error' => null]);
 
