@@ -400,13 +400,9 @@ PROMPT;
         }
 
         // Publish slot calculation from ScraperConfig
+        // Searches across multiple days to avoid collisions when multiple articles are queued
         $tz = new DateTimeZone('Asia/Jakarta');
-        $todayStart = (new DateTime('today', $tz))->format('Y-m-d H:i:s');
-        $tomorrowDt = new DateTime('tomorrow', $tz);
-        $tomorrowDt->modify('-1 second');
-        $todayEnd = $tomorrowDt->format('Y-m-d H:i:s');
-
-        $existingToday = Posts::whereBetween('published_at', [$todayStart, $todayEnd])->get();
+        $now = new DateTime('now', $tz);
 
         $scheduleHours = ScraperConfig::getPublishScheduleHours();
         $slots = [];
@@ -416,38 +412,41 @@ PROMPT;
             $slots[] = ['hour' => $hour, 'label' => self::getSlotLabel($hour)];
         }
 
-        $usedSlots = [];
-        foreach ($existingToday as $p) {
-            $hour = (int) $p->published_at->format('H');
+        // Find next available slot across next 7 days
+        $publishTime = null;
+        for ($dayOffset = 0; $dayOffset <= 7; $dayOffset++) {
+            $targetDate = (clone $now)->modify("+{$dayOffset} days")->format('Y-m-d');
+            $startOfDay = $targetDate . ' 00:00:00';
+            $endOfDay = $targetDate . ' 23:59:59';
+
+            $existingOnDay = Posts::whereBetween('published_at', [$startOfDay, $endOfDay])->get();
+
+            $usedSlotIndices = [];
+            foreach ($existingOnDay as $p) {
+                $hour = (int) $p->published_at->format('H');
+                foreach ($slots as $idx => $slot) {
+                    if ($hour === $slot['hour']) { $usedSlotIndices[$idx] = true; break; }
+                }
+            }
+
             foreach ($slots as $idx => $slot) {
-                if ($hour === $slot['hour']) {
-                    $usedSlots[$idx] = true;
-                    break;
+                if (!isset($usedSlotIndices[$idx])) {
+                    $targetDt = new DateTime($targetDate, $tz);
+                    $targetDt->setTime($slot['hour'], 0, 0);
+                    // If it's today, ensure the slot time hasn't passed yet
+                    if ($dayOffset === 0 && $targetDt <= $now) {
+                        continue; // Skip past slots today, try next slot or next day
+                    }
+                    $publishTime = $targetDt;
+                    break 2; // Found a slot, exit both loops
                 }
             }
         }
 
-        $slotIdx = null;
-        $slotCount = count($slots);
-        for ($i = 0; $i < $slotCount; $i++) {
-            if (!isset($usedSlots[$i])) {
-                $slotIdx = $i;
-                break;
-            }
-        }
-
-        if ($slotIdx === null) {
-            // Semua slot penuh → assign ke slot pertama HARI INI
-            $slotIdx = 0;
-            $publishTime = new DateTime('today', $tz);
+        // Fallback: if all slots full for 7 days, use first slot tomorrow
+        if ($publishTime === null) {
+            $publishTime = (clone $now)->modify('+1 day');
             $publishTime->setTime($slots[0]['hour'], 0, 0);
-        } else {
-            if (count($usedSlots) > 0) {
-                $publishTime = new DateTime('tomorrow', $tz);
-            } else {
-                $publishTime = new DateTime('today', $tz);
-            }
-            $publishTime->setTime($slots[$slotIdx]['hour'], 0, 0);
         }
 
         return Posts::create([
