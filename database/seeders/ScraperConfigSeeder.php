@@ -43,7 +43,14 @@ class ScraperConfigSeeder extends Seeder
                 'label'       => 'Confidence Threshold',
                 'description' => 'Minimal score (%) agar artikel diproses',
                 'type'        => 'integer',
-                'value'       => '45',
+                'value'       => '55',
+            ],
+            [
+                'key'         => 'publish_schedule_hours',
+                'label'       => 'Jadwal Publish',
+                'description' => 'Jam-jam publish post AI dalam format array (HH:MM)',
+                'type'        => 'array',
+                'value'       => json_encode(['08:00', '13:00', '16:00']),
             ],
             [
                 'key'         => 'daily_limit',

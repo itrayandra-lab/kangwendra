@@ -325,7 +325,7 @@ PROMPT;
             $slug = $base . '-' . $i++;
         }
 
-        // Auto-schedule to next available slot
+        // Auto-schedule to next available slot from ScraperConfig
         $tz = new DateTimeZone('Asia/Jakarta');
         $tomorrowDt = new DateTime('tomorrow', $tz);
         $tomorrowDt->modify('-1 second');
@@ -333,11 +333,13 @@ PROMPT;
 
         $existingToday = Posts::whereBetween('published_at', [(new DateTime('today', $tz))->format('Y-m-d H:i:s'), $todayEnd])->get();
 
-        $slots = [
-            0 => ['hour' => 8,  'label' => 'pagi'],
-            1 => ['hour' => 13, 'label' => 'siang'],
-            2 => ['hour' => 16, 'label' => 'sore'],
-        ];
+        $scheduleHours = \App\Models\ScraperConfig::getPublishScheduleHours();
+        $slots = [];
+        foreach ($scheduleHours as $time) {
+            $parts = explode(':', $time);
+            $hour = (int) ($parts[0] ?? 0);
+            $slots[] = ['hour' => $hour, 'label' => self::getSlotLabel($hour)];
+        }
 
         $usedSlots = [];
         foreach ($existingToday as $p) {
@@ -348,13 +350,13 @@ PROMPT;
         }
 
         $slotIdx = null;
-        foreach ([0, 1, 2] as $idx) {
-            if (!isset($usedSlots[$idx])) { $slotIdx = $idx; break; }
+        $slotCount = count($slots);
+        for ($i = 0; $i < $slotCount; $i++) {
+            if (!isset($usedSlots[$i])) { $slotIdx = $i; break; }
         }
 
         if ($slotIdx === null) {
-            // Semua slot penuh → assign ke slot 08:00 HARI INI
-            // (langsung publish karena published_at <= now)
+            // Semua slot penuh → assign ke slot pertama HARI INI
             $slotIdx = 0;
             $publishTime = new DateTime('today', $tz);
             $publishTime->setTime($slots[0]['hour'], 0, 0);
@@ -419,5 +421,15 @@ PROMPT;
             'ai_research_status' => 'failed',
             'ai_error'          => $e->getMessage(),
         ]);
+    }
+
+    /**
+     * Get human-readable label for a publish hour.
+     */
+    protected static function getSlotLabel(int $hour): string
+    {
+        if ($hour < 12) return 'pagi';
+        if ($hour < 17) return 'siang';
+        return 'sore';
     }
 }

@@ -163,7 +163,7 @@
                 <span class="pipeline-arrow">&rarr;</span>
                 <span class="pipeline-step">Auto Publish</span>
                 <span class="pipeline-arrow">&rarr;</span>
-                <span class="pipeline-step">08:00 / 13:00 / 16:00 WIB</span>
+                <span class="pipeline-step">{{ implode(' / ', App\Models\ScraperConfig::getPublishScheduleHours()) }} WIB</span>
             </div>
 
             {{-- Flow Banner --}}

@@ -190,7 +190,7 @@
                     <div class="ai-card-title">Pipeline Schedule</div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
                         <span class="ai-badge" style="background:#e9ecef; color:#333;">03:30 WIB - Research + Scrape</span>
-                        <span class="ai-badge" style="background:#e9ecef; color:#333;">08:00/13:00/16:00 - Publish</span>
+                        <span class="ai-badge" style="background:#e9ecef; color:#333;">{{ implode(' / ', App\Models\ScraperConfig::getPublishScheduleHours()) }} WIB - Publish</span>
                     </div>
                     <div style="font-size:11px; color:#aaa; margin-top:6px;">
                         Sources: searchengineland.com, searchenginejournal.com

@@ -121,10 +121,43 @@ class SitemapScraperService
                 if ($scoreA !== $scoreB) return $scoreB <=> $scoreA;
                 return $b['date_ts'] <=> $a['date_ts'];
             });
+            Log::info('SitemapScraper: keyword match', [
+                'keyword' => $keyword,
+                'match_type' => 'url_slug',
+                'found' => count($keywordMatchEntries),
+            ]);
             return array_column(array_slice($keywordMatchEntries, 0, $limit), 'url');
         }
 
+        // Step 5: Content fallback — search in article title and description
+        $contentMatchEntries = [];
+        foreach ($allEntries as $entry) {
+            if ($this->keywordInContent($entry['url'], $keyword)) {
+                $contentMatchEntries[] = $entry;
+            }
+        }
+
+        if (!empty($contentMatchEntries)) {
+            usort($contentMatchEntries, function ($a, $b) use ($keyword) {
+                $scoreA = $this->calculateContentConfidence($a['url'], $keyword);
+                $scoreB = $this->calculateContentConfidence($b['url'], $keyword);
+                if ($scoreA !== $scoreB) return $scoreB <=> $scoreA;
+                return $b['date_ts'] <=> $a['date_ts'];
+            });
+            Log::info('SitemapScraper: content fallback match', [
+                'keyword' => $keyword,
+                'match_type' => 'content',
+                'found' => count($contentMatchEntries),
+            ]);
+            return array_column(array_slice($contentMatchEntries, 0, $limit), 'url');
+        }
+
         // No keyword match found — return empty (don't serve generic AI articles)
+        Log::info('SitemapScraper: no match', [
+            'keyword' => $keyword,
+            'match_type' => 'none',
+            'found' => 0,
+        ]);
         return [];
     }
 
@@ -453,6 +486,116 @@ class SitemapScraperService
         }
 
         // Step 4: Reject penalties
+        $reject = [
+            'review' => -15, '-vs-' => -15, 'comparison' => -10,
+            'budget' => -10, 'hp-murah' => -15, 'smartphone' => -10,
+            'iphone' => -10, 'samsung' => -10, 'xiaomi' => -10, 'oppo' => -10,
+            'wordle' => -20, 'crossword' => -20, 'nyt' => -20,
+            'yahoo' => -15,
+        ];
+        foreach ($reject as $pattern => $penalty) {
+            if (stripos($urlLower, $pattern) !== false) $score += $penalty;
+        }
+
+        return max(20, min(80, $score));
+    }
+
+    /**
+     * Fetch article page and extract <title> and <meta name="description">.
+     * Timeout 15 detik, User-Agent Chrome.
+     * Returns ['title' => string, 'description' => string].
+     */
+    protected function fetchArticleMeta(string $url): array
+    {
+        try {
+            $response = Http::timeout(15)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                ])
+                ->get($url);
+
+            if (!$response->successful()) {
+                return ['title' => '', 'description' => ''];
+            }
+
+            $html = $response->body();
+
+            // Extract <title>
+            $title = '';
+            if (preg_match('/<title[^>]*>([^<]+)<\/title>/i', $html, $m)) {
+                $title = trim(strip_tags($m[1]));
+            }
+
+            // Extract <meta name="description"> — two possible attribute orders
+            $description = '';
+            if (preg_match('/<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']+)["\']/i', $html, $m)) {
+                $description = trim($m[1]);
+            } elseif (preg_match('/<meta[^>]+content=["\']([^"\']+)["\'][^>]+name=["\']description["\']/i', $html, $m)) {
+                $description = trim($m[1]);
+            }
+
+            return ['title' => $title, 'description' => $description];
+        } catch (\Exception $e) {
+            return ['title' => '', 'description' => ''];
+        }
+    }
+
+    /**
+     * Check if keyword exists in article title or meta description (case-insensitive).
+     * Uses fetchArticleMeta() to get page metadata.
+     */
+    protected function keywordInContent(string $url, string $keyword): bool
+    {
+        $meta = $this->fetchArticleMeta($url);
+        $title = strtolower($meta['title']);
+        $description = strtolower($meta['description']);
+        $keywordLower = strtolower($keyword);
+
+        return stripos($title, $keywordLower) !== false
+            || stripos($description, $keywordLower) !== false;
+    }
+
+    /**
+     * Calculate confidence score for content-matched articles (not URL slug matched).
+     * Base score: 48 if URL contains AI entity, 35 otherwise.
+     * Adds SEJ/SEL bonus and bad pattern penalties.
+     */
+    public function calculateContentConfidence(string $url, string $keyword): float
+    {
+        $urlLower = strtolower($url);
+
+        // AI entity check from URL (extended list including grok, grok-ai, xai)
+        $aiKeywords = [
+            'gemini', 'claude', 'chatgpt', 'deepseek', 'mistral', 'openai',
+            'llm', 'large-language', 'artificial-intelligence', 'generative-ai',
+            'ai-agent', 'agentic', 'machine-learning', 'deep-learning',
+            'neural-network', 'transformer',
+            'gpt-5', 'gpt-4', 'copilot', 'anthropic',
+            'foundation-model', 'ai-model',
+            'seo-ai', 'search-ai', 'ai-search',
+            'enterprise-ai', 'microsoft-ai', 'google-ai', 'meta-ai',
+            'ai-tools', 'ai-platform', 'ai-regulation',
+            'ai-chip', 'robotics', 'ai-startup', 'ai-funding',
+            'automation',
+            // New AI entities
+            'grok', 'grok-ai', 'xai',
+        ];
+
+        $aiMatch = false;
+        foreach ($aiKeywords as $kw) {
+            if (stripos($urlLower, $kw) !== false) {
+                $aiMatch = true;
+                break;
+            }
+        }
+
+        $score = $aiMatch ? 48 : 35;
+
+        // Bonus: SEJ +3, SEL +3
+        if (stripos($urlLower, 'searchenginejournal')) $score += 3;
+        if (stripos($urlLower, 'searchengineland')) $score += 3;
+
+        // Penalti: bad patterns
         $reject = [
             'review' => -15, '-vs-' => -15, 'comparison' => -10,
             'budget' => -10, 'hp-murah' => -15, 'smartphone' => -10,

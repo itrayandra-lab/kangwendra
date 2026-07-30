@@ -94,11 +94,16 @@ class ScraperConfig extends Model
 
     public static function getConfidenceThreshold(): int
     {
-        return (int) static::getValue('confidence_threshold', 45);
+        return (int) static::getValue('confidence_threshold', 55);
     }
 
     public static function getDailyLimit(): int
     {
         return (int) static::getValue('daily_limit', 5);
+    }
+
+    public static function getPublishScheduleHours(): array
+    {
+        return static::getValue('publish_schedule_hours', ['08:00', '13:00', '16:00']);
     }
 }
