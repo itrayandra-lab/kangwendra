@@ -83,8 +83,10 @@ class GenerateFromRefArticleJob implements ShouldQueue
         ]);
 
         // ── STEP 4: PARAPHRASE (DEEPSEEK) ────────────────────────────
+        // Truncate content to first 2-3 paragraphs for faster API processing
+        $truncatedContent = $this->truncateContentForPrompt($article['content'], 3);
         try {
-            $generated = $this->callDeepSeek($article['title'], $article['content']);
+            $generated = $this->callDeepSeek($article['title'], $truncatedContent);
         } catch (\Exception $e) {
             $ref->update(['ai_research_status' => 'failed', 'ai_error' => $e->getMessage()]);
             Log::error('GenerateFromRefArticleJob: DeepSeek failed', ['ref_id' => $ref->id, 'error' => $e->getMessage()]);
@@ -374,7 +376,7 @@ PROMPT;
             'title'        => $generated['title'],
             'slug'        => $slug,
             'content'     => $generated['content'],
-            'image'        => $ref->image_url,
+            'image'        => $ref->image_url ?: $this->getRandomFallbackImage(),
             'source'      => $ref->source_url,
             'domain'      => $ref->source_domain,
             'status'      => 'active',
@@ -485,5 +487,31 @@ PROMPT;
         // Truncated — no closing brace found, return what we have
         $json = substr($text, $start);
         return json_decode($json, true);
+    }
+
+    /**
+     * Truncate HTML content to first N paragraphs for faster API processing.
+     * Extracts the first $maxParagraphs <p> tags from the HTML content.
+     */
+    protected function truncateContentForPrompt(string $html, int $maxParagraphs = 3): string
+    {
+        if (preg_match_all('/<p[^>]*>([\s\S]*?)<\/p>/i', $html, $matches)) {
+            $paragraphs = array_slice($matches[0], 0, $maxParagraphs);
+            if (!empty($paragraphs)) {
+                return implode("\n\n", $paragraphs);
+            }
+        }
+
+        // Fallback: if no <p> tags found, return first N characters
+        return Str::limit(strip_tags($html), 1500);
+    }
+
+    /**
+     * Get a random fallback image from Unsplash for articles without a source image.
+     */
+    protected function getRandomFallbackImage(): string
+    {
+        $seed = mt_rand(1000000, 9999999);
+        return "https://source.unsplash.com/800x450/?technology,ai,innovation&sig={$seed}";
     }
 }
