@@ -130,8 +130,12 @@ class SitemapScraperService
         }
 
         // Step 5: Content fallback — search in article title and description
+        // Limit to first 30 entries to avoid long execution time
+        // (30 URLs x 8s timeout = ~4 minutes max)
+        $contentCheckLimit = 30;
+        $allEntriesLimited = array_slice($allEntries, 0, $contentCheckLimit);
         $contentMatchEntries = [];
-        foreach ($allEntries as $entry) {
+        foreach ($allEntriesLimited as $entry) {
             if ($this->keywordInContent($entry['url'], $keyword)) {
                 $contentMatchEntries[] = $entry;
             }
@@ -148,6 +152,7 @@ class SitemapScraperService
                 'keyword' => $keyword,
                 'match_type' => 'content',
                 'found' => count($contentMatchEntries),
+                'checked' => $contentCheckLimit,
             ]);
             return array_column(array_slice($contentMatchEntries, 0, $limit), 'url');
         }
@@ -157,6 +162,7 @@ class SitemapScraperService
             'keyword' => $keyword,
             'match_type' => 'none',
             'found' => 0,
+            'checked' => $contentCheckLimit,
         ]);
         return [];
     }
@@ -508,7 +514,7 @@ class SitemapScraperService
     protected function fetchArticleMeta(string $url): array
     {
         try {
-            $response = Http::timeout(15)
+            $response = Http::timeout(8)
                 ->withHeaders([
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
                 ])
