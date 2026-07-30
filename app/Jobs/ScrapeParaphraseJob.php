@@ -198,6 +198,7 @@ class ScrapeParaphraseJob implements ShouldQueue
             throw new \Exception('DEEPSEEK_API_KEY belum dikonfigurasi');
         }
 
+        $maxTokens = (int) config('services.deepseek.max_tokens', 16384);
         $payload = [
             'model'    => $model,
             'messages' => [
@@ -212,7 +213,7 @@ class ScrapeParaphraseJob implements ShouldQueue
                     'content' => $this->buildPrompt($refTitle, $refContent),
                 ],
             ],
-            'max_tokens'  => 8192,
+            'max_tokens'  => $maxTokens,
             'temperature'  => 0.7,
         ];
 
@@ -256,9 +257,9 @@ class ScrapeParaphraseJob implements ShouldQueue
             $decoded = json_decode(trim($m[1]), true);
         }
 
-        // Fallback: extract { ... }
-        if (!$decoded && preg_match('/\{[\s\S]*\}/', $raw, $m)) {
-            $decoded = json_decode($m[0], true);
+        // Fallback: extract JSON object with proper brace matching
+        if (!$decoded) {
+            $decoded = $this->extractJsonObject($raw);
         }
 
         if (!$decoded || !isset($decoded['title'], $decoded['content'])) {
@@ -549,5 +550,57 @@ PROMPT;
         if ($hour < 12) return 'pagi';
         if ($hour < 17) return 'siang';
         return 'sore';
+    }
+
+    /**
+     * Extract JSON object from text, respecting string boundaries.
+     * Handles truncated responses by finding the first { and matching its closing }.
+     */
+    protected function extractJsonObject(string $text): ?array
+    {
+        $start = strpos($text, '{');
+        if ($start === false) {
+            return null;
+        }
+
+        $len = strlen($text);
+        $depth = 0;
+        $inString = false;
+        $escape = false;
+
+        for ($i = $start; $i < $len; $i++) {
+            $c = $text[$i];
+
+            if ($escape) {
+                $escape = false;
+                continue;
+            }
+
+            if ($c === '\\') {
+                $escape = true;
+                continue;
+            }
+
+            if ($c === '"') {
+                $inString = !$inString;
+                continue;
+            }
+
+            if ($inString) continue;
+
+            if ($c === '{') {
+                $depth++;
+            } elseif ($c === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    $json = substr($text, $start, $i - $start + 1);
+                    return json_decode($json, true);
+                }
+            }
+        }
+
+        // Truncated — no closing brace found
+        $json = substr($text, $start);
+        return json_decode($json, true);
     }
 }
