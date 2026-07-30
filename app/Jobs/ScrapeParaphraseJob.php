@@ -471,7 +471,7 @@ PROMPT;
                 'ref_source_url' => $ref->source_url,
                 'ref_title'      => $ref->title,
                 'ai_model'       => config('services.deepseek.model', 'deepseek-v4-pro'),
-                'publish_slot'    => "slot_{$slotIdx}_{$slots[$slotIdx]['label']}",
+                'publish_slot'    => $publishTime->format('Y-m-d H:i'),
                 'batch_id'       => $this->batchId,
             ],
         ]);
