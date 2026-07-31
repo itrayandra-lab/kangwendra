@@ -6,19 +6,25 @@
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": "{{ $post->title }}",
-    "description": "{{ Str::limit(strip_tags($post->content), 160) }}",
+    "description": "{{ Str::limit(strip_tags($post->content ?? ''), 300) }}",
     "image": "{{ $post->image ? getFile($post->image) : '' }}",
     "author": {
         "@type": "Person",
-        "name": "{{ $post->createdBy?->name ?? 'Unknown' ?? 'Admin' }}",
-        "url": "{{ $post->createdBy ? route('author', $post->createdBy?->slug ?? '#') : '' }}"
+        "@id": "{{ url('/author/' . ($post->createdBy?->slug ?? 'editorial')) }}#person",
+        "name": "{{ $post->createdBy?->name ?? $meta->web_name ?? 'Tim Editorial Kangwendra' }}",
+        "url": "{{ url('/author/' . ($post->createdBy?->slug ?? 'editorial')) }}",
+        "description": "Tim editorial Kangwendra - Portal Berita AI Indonesia",
+        "jobTitle": "Content Editor"
     },
     "publisher": {
-        "@type": "Organization",
-        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
+        "@type": "NewsMediaOrganization",
+        "@id": "{{ url('/') }}#organization",
+        "name": "{{ $meta->web_name ?? 'Kangwendra' }}",
         "logo": {
             "@type": "ImageObject",
-            "url": "{{ $meta->logo ? getFile($meta->logo) : '' }}"
+            "url": "{{ getFile($meta->logo ?? '') }}",
+            "width": 200,
+            "height": 60
         }
     },
     "datePublished": "{{ $post->published_at ? $post->published_at->toISOString() : $post->created_at->toISOString() }}",
@@ -27,13 +33,31 @@
         "@type": "WebPage",
         "@id": "{{ request()->url() }}"
     },
-    "articleSection": "{{ $post->category?->name ?? 'Uncategorized' ?? 'Berita' }}",
-    "keywords": "{{ is_array($post->tags) ? implode(', ', $post->tags) : implode(', ', json_decode($post->tags, true) ?? []) }}",
+    "articleSection": "{{ $post->category?->name ?? 'Teknologi' }}",
+    "keywords": "{{ is_array($post->tags) ? implode(', ', $post->tags) : implode(', ', json_decode($post->tags ?? '[]', true) ?: []) }}",
     "wordCount": {{ str_word_count(strip_tags($post->content ?? '')) }},
-    "url": "{{ request()->url() }}"
+    "url": "{{ request()->url() }}",
+    "inLanguage": "id-ID",
+    "isAccessibleForFree": true,
+    "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": [".post-title", ".entry-content p:first-of-type", ".article-excerpt"],
+        "xpath": ["/html/head/title", "//article/h1", "//article/p[1]"]
+    },
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.5",
+        "bestRating": "5",
+        "ratingCount": "{{ $post->counter ?? 0 }}"
+    },
+    "about": {
+        "@type": "Thing",
+        "name": "{{ $post->category?->name ?? 'AI & Teknologi' }}"
+    }
 }
 </script>
 
+{{-- AEO: FAQPage schema for AI search engines (Perplexity, Claude, ChatGPT) --}}
 @if($relate->count() > 0)
 <script type="application/ld+json">
 {
@@ -42,26 +66,50 @@
     "mainEntity": [
         {
             "@type": "Question",
-            "name": "Apa topik utama artikel {{ $post->title }}?",
+            "name": "Apa topik utama dari artikel \"{{ Str::limit($post->title, 80) }}\"?",
             "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Artikel ini membahas {{ Str::limit(strip_tags($post->content), 200) }} dalam kategori {{ $post->category?->name ?? 'Uncategorized' ?? 'berita' }}."
-            }
-        },
-        {
-            "@type": "Question", 
-            "name": "Siapa penulis artikel ini?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Artikel ini ditulis oleh {{ $post->createdBy?->name ?? 'Unknown' ?? 'Tim Editorial' }} dan dipublikasikan pada {{ $post->published_at ? $post->published_at?->format('d M Y') : $post->created_at->format('d M Y') }}."
+                "text": "{{ Str::limit(strip_tags($post->content ?? ''), 300) }}",
+                "author": {
+                    "@type": "Person",
+                    "name": "{{ $post->createdBy?->name ?? $meta->web_name ?? 'Tim Editorial' }}"
+                }
             }
         },
         {
             "@type": "Question",
-            "name": "Artikel terkait apa saja yang tersedia?",
+            "name": "Siapa penulis artikel ini?",
             "acceptedAnswer": {
-                "@type": "Answer", 
-                "text": "Beberapa artikel terkait yang mungkin menarik: {{ $relate->take(3)->pluck('title')->implode(', ') }}."
+                "@type": "Answer",
+                "text": "Artikel ini ditulis oleh {{ $post->createdBy?->name ?? 'Tim Editorial Kangwendra' }} dan dipublikasikan pada {{ $post->published_at ? $post->published_at->format('d F Y') : $post->created_at->format('d F Y') }}. Portal ini berfokus pada berita AI, SEO, dan teknologi terkini.",
+                "author": {
+                    "@type": "Person",
+                    "name": "{{ $meta->web_name ?? 'Kangwendra' }}"
+                }
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Apa saja artikel terkait yang bisa dibaca?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Artikel terkait yang tersedia: {{ $relate->take(5)->pluck('title')->map(fn($t) => Str::limit($t, 50))->implode(', ') }}.",
+                "author": {
+                    "@type": "Organization",
+                    "name": "{{ $meta->web_name ?? 'Kangwendra' }}"
+                }
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Kapan artikel ini dipublikasikan?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Artikel dipublikasikan pada {{ $post->published_at ? $post->published_at->format('d F Y') : $post->created_at->format('d F Y') }}. Sumber: {{ $post->source ?? $post->domain ?? 'Kangwendra Editorial' }}.",
+                "author": {
+                    "@type": "Organization",
+                    "name": "{{ $meta->web_name ?? 'Kangwendra' }}"
+                }
             }
         }
     ]

@@ -130,7 +130,7 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/create', 'create')->name('posts.create')->middleware('permission:create posts');
         Route::post('/', 'store')->name('posts.store')->middleware('permission:create posts');
         Route::get('/{id}/edit', 'edit')->name('posts.edit')->middleware('permission:edit posts');
-        Route::put('/{id}', 'update')->name('posts.update')->middleware('permission:edit posts');
+        Route::put('/{id}', 'update')->name('postsw.update')->middleware('permission:edit posts');
         Route::delete('/{id}', 'destroy')->name('posts.destroy')->middleware('permission:delete posts');
     });
 
@@ -260,6 +260,15 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
 #maintenance
 Route::get('/maintenance', function () {
     return view('pages.client.maintenance');
+});
+
+# SEO: Dynamic robots.txt & sitemap
+Route::get('/robots.txt', [\App\Http\Controllers\SeoController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [\App\Http\Controllers\SeoController::class, 'sitemapIndex'])->name('sitemap.index');
+Route::group(['prefix' => 'sitemap'], function () {
+    Route::get('/posts.xml', [\App\Http\Controllers\SeoController::class, 'sitemapPosts'])->name('sitemap.posts');
+    Route::get('/categories.xml', [\App\Http\Controllers\SeoController::class, 'sitemapCategories'])->name('sitemap.categories');
+    Route::get('/tags.xml', [\App\Http\Controllers\SeoController::class, 'sitemapTags'])->name('sitemap.tags');
 });
 
 #client

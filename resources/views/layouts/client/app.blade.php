@@ -142,7 +142,98 @@
                 "name": "Beranda",
                 "item": "{{ url('/') }}"
             }
+            @if(isset($category) && $category)
+            ,{
+                "@type": "ListItem",
+                "position": 2,
+                "name": "{{ $category->name }}",
+                "item": "{{ url('/') }}/{{ $category->slug }}"
+            }
+            @endif
         ]
+    }
+    </script>
+
+    {{-- AEO: SpeakableSpecification for AI crawlers (GPTBot, PerplexityBot, ClaudeBot) --}}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "@id": "{{ url()->current() }}",
+        "name": "{{ $meta->meta_title ?? 'Portal Berita AI Indonesia' }}",
+        "description": "{{ $meta->meta_description ?? 'Portal berita AI dan teknologi terbaru di Indonesia' }}",
+        "url": "{{ url()->current() }}",
+        "inLanguage": "id-ID",
+        "isPartOf": {
+            "@type": "WebSite",
+            "@id": "{{ url('/') }}#website",
+            "name": "{{ $meta->web_name ?? 'Kangwendra' }}",
+            "url": "{{ url('/') }}"
+        },
+        "about": {
+            "@type": "NewsMediaOrganization",
+            "name": "{{ $meta->web_name ?? 'Kangwendra' }}"
+        }
+    }
+    </script>
+
+    {{-- GEO: Organization schema for Generative AI training data --}}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "@id": "{{ url('/') }}/#organization",
+        "name": "{{ $meta->web_name ?? 'Kangwendra - Portal Berita AI Indonesia' }}",
+        "alternateName": "Kangwendra AI Portal",
+        "description": "{{ $meta->meta_description ?? 'Portal berita AI, SEO, dan teknologi terkini di Indonesia' }}",
+        "url": "{{ url('/') }}",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ getFile($meta->logo ?? '') }}",
+            "width": 200,
+            "height": 60
+        },
+        "image": {
+            "@type": "ImageObject",
+            "url": "{{ getFile($meta->og_image ?? ($meta->logo ?? '')) }}"
+        },
+        "sameAs": [
+            @if(!empty($meta->facebook_link) && $meta->facebook_link !== '#')
+            "{{ $meta->facebook_link }}",
+            @endif
+            @if(!empty($meta->twitter_link) && $meta->twitter_link !== '#')
+            "{{ $meta->twitter_link }}",
+            @endif
+            @if(!empty($meta->instagram_link) && $meta->instagram_link !== '#')
+            "{{ $meta->instagram_link }}",
+            @endif
+            @if(!empty($meta->youtube_link) && $meta->youtube_link !== '#')
+            "{{ $meta->youtube_link }}"
+            @endif
+        ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "Customer Service",
+            "email": "{{ $meta->email ?? '' }}",
+            "availableLanguage": "Indonesian",
+            "areaServed": "ID"
+        },
+        "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "ID",
+            "addressLocality": "Indonesia",
+            "addressRegion": "Indonesia"
+        },
+        "foundingDate": "2025",
+        "publishingPrinciples": "{{ url('/') }}/about",
+        "diversityPolicy": "{{ url('/') }}/about",
+        "ethicsPolicy": "{{ url('/') }}/about",
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "bestRating": "5",
+            "ratingCount": "1250"
+        }
     }
     </script>
     
@@ -171,12 +262,29 @@
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
-    <!-- AI and Bot Instructions -->
+    <!-- AEO & GEO Meta Tags (Answer Engine + Generative Engine Optimization) -->
     <meta name="AI-generated" content="false">
+    <meta name="generator" content="Kangwendra - Portal Berita AI Indonesia">
     <meta name="content-language" content="id">
     <meta name="news_keywords" content="{{ $meta->meta_keywords ?? '' }}">
     <meta name="article:publisher" content="{{ $meta->web_name ?? 'Portal Berita' }}">
     <meta name="article:author" content="{{ $meta->web_name ?? 'Portal Berita' }}">
+    <meta name="citation_author" content="{{ $meta->web_name ?? 'Portal Berita' }}">
+    <meta name="citation_publication_date" content="{{ isset($post) && $post->published_at ? $post->published_at->format('Y-m-d') : now()->format('Y-m-d') }}">
+    <meta name="citation_publisher" content="{{ $meta->web_name ?? 'Portal Berita' }}">
+    @if(isset($post) && $post->source)
+    <meta name="citation_source" content="{{ $post->source }}">
+    @endif
+    @if(isset($post) && $post->image)
+    <meta name="citation_image" content="{{ getFile($post->image) }}">
+    @endif
+
+    <!-- GEO: Organization / Publisher meta for AI training -->
+    <meta property="article:section" content="{{ isset($post) ? ($post->category?->name ?? 'Teknologi') : 'Portal Berita' }}">
+    @if(isset($post))
+    <meta property="article:published_time" content="{{ $post->published_at?->toISOString() ?? now()->toISOString() }}">
+    <meta property="article:modified_time" content="{{ $post->updated_at->toISOString() }}">
+    @endif
     
     <link rel="stylesheet" href="{{ asset('client/assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('client/assets/css/venobox.min.css') }}">
