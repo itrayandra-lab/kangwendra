@@ -268,51 +268,189 @@ PROMPT;
         $contentLower = strtolower(strip_tags($generated['content'] ?? ''));
         $fullText = $titleLower . ' ' . $contentLower;
 
-        $tagRules = [
-            ['keywords' => ['ai', 'chatgpt', 'gpt-4', 'gpt-5', 'llm', 'openai', 'gemini', 'claude', 'deepseek', 'generative ai', 'generative', 'machine learning', 'deep learning', 'artificial intelligence', 'neural network', 'langchain', 'copilot', 'mistral', 'anthropic', 'ai agent', 'agentic', 'rag system', 'rag llm', 'llm fine-tuning', 'ai model', 'foundation model'],
-                'label' => 'AI & Teknologi'],
-            ['keywords' => ['seo', 'search engine optimization', 'google search', 'google algorithm', 'search algorithm', 'serp', 'organic search', 'search engine land', 'search engine journal', 'ai seo', 'seo ai', 'local seo', 'technical seo', 'backlink', 'link building', 'content marketing seo', 'google spam', 'search quality'],
-                'label' => 'SEO & Search'],
-            ['keywords' => ['startup', 'venture capital', 'funding', 'ipo', 'bisnis teknologi', 'unicorn', 'ekonomi digital', 'digital economy', 'enterprise ai', 'enterprise software', 'saas', 'cloud saas', 'b2b tech'],
-                'label' => 'Bisnis Teknologi'],
-            ['keywords' => ['nvidia', 'gpu', 'processor', 'chip', 'intel', 'amd ryzen', 'snapdragon', 'mediatek', 'ram', 'ssd', 'hdd', 'storage', 'vga', 'cpu', 'ai chip', 'ai hardware', 'tpu', 'npu'],
-                'label' => 'Hardware'],
-            ['keywords' => ['cybersecurity', 'hack', 'malware', 'virus', 'data breach', 'privacy', 'privasi', 'keamanan data', 'peretas', 'ransomware', 'phishing', 'kebocoran data', 'zero day'],
-                'label' => 'Keamanan Siber'],
-            ['keywords' => ['apple', 'mac', 'ipad', 'ios', 'macos', 'apple tv', 'apple watch', 'macbook air', 'macbook pro', 'imac', 'wwdc'],
-                'label' => 'Apple'],
-            ['keywords' => ['google android', 'android', 'google pixel', 'android tv', 'google play', 'samsung one ui', 'xiaomi hyperos', 'oppo coloros', 'realme ui', 'vivo funtouch'],
-                'label' => 'Android'],
-            ['keywords' => ['microsoft', 'windows', 'copilot', 'azure', 'office 365', 'bing', 'outlook', 'teams', 'xbox'],
-                'label' => 'Microsoft'],
-            ['keywords' => ['farmasi', 'pharmaceutical', 'drug discovery', 'clinical trial', 'biotech', 'biotechnology', 'obat baru', 'pengembangan obat', 'clinical research', 'regulatory', 'generik obat', 'telemedicine', 'digital health', 'healthtech', 'ehr', 'electronic health record', 'medical device', 'robotics surgery', 'hospital teknologi', 'health data'],
-                'label' => 'Farmasi & Kesehatan'],
-            ['keywords' => ['cloud', 'server', 'data center', 'database', 'cloud computing', 'aws', 'google cloud', 'microsoft azure', 'oracle', 'web hosting', 'infrastructure'],
-                'label' => 'Cloud Computing'],
-            ['keywords' => ['satelit', 'satelite', 'roket', 'spacex', 'nasa', 'luar angkasa', 'planet', 'bintang', 'galaxy', 'black hole', 'teleskop', 'antariksa'],
-                'label' => 'Sains'],
-            ['keywords' => ['tips', 'tutorial', 'cara', 'guide', 'panduan', 'review', 'ulasan', 'perbandingan', 'vs', 'rekomendasi', 'how to', 'trik', 'best practice'],
-                'label' => 'Tips & Review'],
-            ['keywords' => ['crypto', 'bitcoin', 'ethereum', 'blockchain', 'nft', 'web3', 'defi', 'cryptocurrency', 'trading crypto'],
-                'label' => 'Crypto'],
+        // ─── Keyword → Category mapping (priority: specific → general) ───
+        // Each rule: keywords array + categorySlug + categoryName for tags
+        $categoryRules = [
+            // Priority 1: AI Architecture (most specific)
+            [
+                'priority' => 1,
+                'keywords' => [
+                    'ai architecture', 'ai system design', 'ai infrastructure',
+                    'ai selection risk', 'decision architecture',
+                    'trust infrastructure', 'generative discovery',
+                    'selection framework', 'ai decision', 'brand architecture',
+                    'ai system', 'ai infra',
+                ],
+                'slug' => 'ai-architecture',
+                'tagName' => 'AI Architecture',
+            ],
+            // Priority 2: AI Branding
+            [
+                'priority' => 2,
+                'keywords' => [
+                    'ai branding', 'brand strategy', 'brand identity',
+                    'brand positioning', 'brand architecture', 'brand story',
+                    'rebranding', 'brand differentiation', 'brand trust',
+                    'brand perception',
+                ],
+                'slug' => 'brand-strategy',
+                'tagName' => 'Brand Strategy',
+            ],
+            // Priority 3: AI Marketing
+            [
+                'priority' => 3,
+                'keywords' => [
+                    'ai marketing', 'ai content marketing', 'ai seo',
+                    'marketing automation', 'ai advertising', 'digital marketing',
+                    'content marketing', 'social media marketing', 'email marketing',
+                    'marketing strategy', 'seo strategy', 'search marketing',
+                ],
+                'slug' => 'ai-marketing',
+                'tagName' => 'AI Marketing',
+            ],
+            // Priority 4: AI Fundamental
+            [
+                'priority' => 4,
+                'keywords' => [
+                    'ai fundamental', 'ai basics', 'artificial general intelligence',
+                    'agi', 'neural network', 'deep learning fundamentals',
+                    'ai fundamentals', 'machine learning basics', 'ai foundation',
+                    'ai history', 'ai evolution', 'ai overview',
+                ],
+                'slug' => 'ai-fundamental',
+                'tagName' => 'AI Fundamental',
+            ],
+            // Priority 5: Reflections
+            [
+                'priority' => 5,
+                'keywords' => [
+                    'reflection', 'wakeup indonesia', 'wake up indonesia',
+                    'pantom', 'brand story', 'personal brand',
+                ],
+                'slug' => 'reflections',
+                'tagName' => 'Reflections',
+            ],
+            // Priority 6: General AI & Teknologi
+            [
+                'priority' => 6,
+                'keywords' => [
+                    'ai', 'chatgpt', 'gpt-4', 'gpt-5', 'llm', 'openai', 'gemini',
+                    'claude', 'deepseek', 'generative ai', 'generative', 'machine learning',
+                    'deep learning', 'artificial intelligence', 'langchain', 'copilot',
+                    'mistral', 'anthropic', 'ai agent', 'agentic', 'rag system',
+                    'rag llm', 'llm fine-tuning', 'ai model', 'foundation model',
+                    'perplexity', 'ai search', 'llama', 'groq', 'hugging face',
+                ],
+                'slug' => 'ai-teknologi',
+                'tagName' => 'AI & Teknologi',
+            ],
+            // Priority 7: SEO & Search
+            [
+                'priority' => 7,
+                'keywords' => [
+                    'seo', 'search engine optimization', 'google search',
+                    'google algorithm', 'search algorithm', 'serp', 'organic search',
+                    'search engine land', 'search engine journal', 'local seo',
+                    'technical seo', 'backlink', 'link building', 'content marketing',
+                    'google spam', 'search quality', 'google indexing',
+                ],
+                'slug' => 'ai-teknologi',
+                'tagName' => 'SEO & Search',
+            ],
+            // Priority 8: Hardware / Chips
+            [
+                'priority' => 8,
+                'keywords' => [
+                    'nvidia', 'gpu', 'processor', 'chip', 'intel', 'amd ryzen',
+                    'snapdragon', 'mediatek', 'ram', 'ssd', 'hdd', 'storage',
+                    'vga', 'cpu', 'ai chip', 'ai hardware', 'tpu', 'npu',
+                ],
+                'slug' => 'ai-teknologi',
+                'tagName' => 'AI Hardware',
+            ],
+            // Priority 9: Cybersecurity
+            [
+                'priority' => 9,
+                'keywords' => [
+                    'cybersecurity', 'hack', 'malware', 'virus', 'data breach',
+                    'privacy', 'privasi', 'keamanan data', 'peretas',
+                    'ransomware', 'phishing', 'kebocoran data', 'zero day',
+                ],
+                'slug' => 'ai-teknologi',
+                'tagName' => 'Keamanan Siber',
+            ],
+            // Priority 10: Cloud & Infrastructure
+            [
+                'priority' => 10,
+                'keywords' => [
+                    'cloud', 'server', 'data center', 'database',
+                    'cloud computing', 'aws', 'google cloud', 'microsoft azure',
+                    'oracle', 'web hosting',
+                ],
+                'slug' => 'ai-teknologi',
+                'tagName' => 'Cloud Computing',
+            ],
+            // Priority 11: Science
+            [
+                'priority' => 11,
+                'keywords' => [
+                    'satelit', 'satelite', 'roket', 'spacex', 'nasa',
+                    'luar angkasa', 'planet', 'bintang', 'galaxy', 'black hole',
+                    'teleskop', 'antariksa',
+                ],
+                'slug' => 'sains',
+                'tagName' => 'Sains',
+            ],
+            // Priority 12: Crypto
+            [
+                'priority' => 12,
+                'keywords' => [
+                    'crypto', 'bitcoin', 'ethereum', 'blockchain', 'nft',
+                    'web3', 'defi', 'cryptocurrency', 'trading crypto',
+                ],
+                'slug' => 'keuangan',
+                'tagName' => 'Crypto',
+            ],
         ];
 
-        $matchedTags = [];
-        $matchedCategories = [];
-        foreach ($tagRules as $rule) {
+        // Find best matching category (highest priority match)
+        $matchedCategory = null;
+        $matchedTagNames = [];
+        $highestPriority = PHP_INT_MAX;
+
+        foreach ($categoryRules as $rule) {
             foreach ($rule['keywords'] as $kw) {
                 if (strpos($fullText, $kw) !== false) {
-                    $matchedTags[] = $rule['label'];
+                    if ($rule['priority'] < $highestPriority) {
+                        $highestPriority = $rule['priority'];
+                        $matchedCategory = $rule;
+                        // Reset tag names when finding better match
+                        $matchedTagNames = [$rule['tagName']];
+                    } elseif ($rule['priority'] === $highestPriority) {
+                        // Add additional tag if same priority
+                        if (!in_array($rule['tagName'], $matchedTagNames)) {
+                            $matchedTagNames[] = $rule['tagName'];
+                        }
+                    }
                     break;
                 }
             }
         }
 
-        $aiTags = is_array($generated['tags'] ?? null) ? $generated['tags'] : [];
-        $allTags = array_unique(array_merge(['AI', 'Teknologi'], $matchedTags, $aiTags));
-        $tags = array_slice(array_values($allTags), 0, 8);
+        // Get category from DB (fallback to ai-teknologi, then first available)
+        $category = null;
+        if ($matchedCategory) {
+            $category = PostCategory::where('slug', $matchedCategory['slug'])->first();
+        }
+        if (!$category) {
+            $category = PostCategory::where('slug', 'ai-teknologi')->first()
+                ?? PostCategory::first();
+        }
 
-        $category = PostCategory::where('slug', 'teknologi')->first();
+        // Build tags: from matched categories + AI-generated tags
+        $aiTags = is_array($generated['tags'] ?? null) ? $generated['tags'] : [];
+        $allTags = array_unique(array_merge(['AI'], $matchedTagNames, $aiTags));
+        $tags = array_slice(array_values($allTags), 0, 8);
 
         foreach ($tags as $tagName) {
             PostTags::firstOrCreate(

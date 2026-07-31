@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             PostSeeder::class,
             PublishScheduleSeeder::class,
             ScraperConfigSeeder::class,
+            MenuAndKeywordSeeder::class,
         ]);
     }
 }
