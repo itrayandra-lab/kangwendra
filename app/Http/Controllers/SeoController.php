@@ -7,6 +7,7 @@ use App\Models\PostCategory;
 use App\Models\PostTags;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class SeoController extends Controller
 {
@@ -30,6 +31,10 @@ class SeoController extends Controller
             "Sitemap: {$baseUrl}/sitemap/posts.xml",
             "Sitemap: {$baseUrl}/sitemap/categories.xml",
             "Sitemap: {$baseUrl}/sitemap/tags.xml",
+            "Sitemap: {$baseUrl}/sitemap-news.xml",
+            "",
+            "# AI Search Engine Feed",
+            "LLM-Info: {$baseUrl}/llms.txt",
             "",
             "# Disallow admin & internal paths",
             "Disallow: /portal/",
@@ -128,6 +133,7 @@ class SeoController extends Controller
         $content .= '<sitemap><loc>' . e($baseUrl) . '/sitemap/posts.xml</loc><lastmod>' . e($now) . '</lastmod></sitemap>' . "\n";
         $content .= '<sitemap><loc>' . e($baseUrl) . '/sitemap/categories.xml</loc><lastmod>' . e($now) . '</lastmod></sitemap>' . "\n";
         $content .= '<sitemap><loc>' . e($baseUrl) . '/sitemap/tags.xml</loc><lastmod>' . e($now) . '</lastmod></sitemap>' . "\n";
+        $content .= '<sitemap><loc>' . e($baseUrl) . '/sitemap-news.xml</loc><lastmod>' . e($now) . '</lastmod></sitemap>' . "\n";
         $content .= '</sitemapindex>';
 
         return response($content, 200, [
@@ -192,6 +198,208 @@ class SeoController extends Controller
         return response($xml, 200, [
             'Content-Type' => 'application/xml; charset=utf-8',
             'Cache-Control' => 'public, max-age=3600',
+        ]);
+    }
+
+    /**
+     * llms.txt — For AI Search Engines (Perplexity, Claude, ChatGPT, Gemini).
+     * This file tells AI agents what content is available for grounding their answers.
+     * Format: https://llmstxt.vertices.so/docs/site-guide
+     */
+    public function llms(Request $request)
+    {
+        $content = Cache::remember('llms_txt', 1800, function () {
+            $baseUrl = rtrim(config('app.url'), '/');
+            $siteName = config('app.name') ?? 'Kangwendra';
+            $lines = [];
+
+            // Header
+            $lines[] = "# {$siteName} - Portal Berita AI Indonesia";
+            $lines[] = "# Last updated: " . now()->format('Y-m-d H:i:s') . " UTC";
+            $lines[] = "";
+            $lines[] = "# AI News Portal focusing on Artificial Intelligence, SEO, and Technology";
+            $lines[] = "# Language: Indonesian (id-ID)";
+            $lines[] = "";
+
+            // Main URL
+            $lines[] = "## Site";
+            $lines[] = "URL: {$baseUrl}";
+            $lines[] = "";
+
+            // About section
+            $lines[] = "## About";
+            $lines[] = "{$siteName} adalah portal berita AI Indonesia yang menyediakan";
+            $lines[] = "artikel terbaru tentang Artificial Intelligence, SEO, teknologi,";
+            $lines[] = "machine learning, dan berita digital terkini.";
+            $lines[] = "";
+
+            // Navigation
+            $lines[] = "## Navigation";
+            $categories = PostCategory::withCount('posts')->orderBy('posts_count', 'desc')->limit(10)->get(['slug', 'name']);
+            foreach ($categories as $cat) {
+                $lines[] = "- {$cat->name}: {$baseUrl}/{$cat->slug}";
+            }
+            $lines[] = "";
+
+            // Recent articles (last 50)
+            $lines[] = "## Recent Articles";
+            $posts = Posts::where('status', 'active')
+                ->whereNotNull('published_at')
+                ->with('category')
+                ->orderBy('published_at', 'desc')
+                ->limit(50)
+                ->get(['slug', 'title', 'published_at', 'category_id']);
+
+            foreach ($posts as $post) {
+                $pubDate = $post->published_at ? $post->published_at->format('Y-m-d') : '';
+                $category = $post->category?->name ?? 'AI & Teknologi';
+                $title = trim($post->title);
+                $url = "{$baseUrl}/{$post->slug}";
+                $lines[] = "- [{$category}] {$title} ({$pubDate}): {$url}";
+            }
+            $lines[] = "";
+
+            // RSS Feed reference
+            $lines[] = "## Feeds";
+            $lines[] = "RSS Feed: {$baseUrl}/feed.xml";
+            $lines[] = "Sitemap: {$baseUrl}/sitemap.xml";
+            $lines[] = "";
+
+            // AI Usage Policy
+            $lines[] = "## AI Usage Policy";
+            $lines[] = "All content on {$siteName} is original and human-edited.";
+            $lines[] = "AI-generated content is clearly marked where applicable.";
+            $lines[] = "Content may be used by AI systems for factual grounding with attribution.";
+            $lines[] = "Attribution preferred: \"According to {$siteName}\" or link back to source.";
+
+            return implode("\n", $lines);
+        });
+
+        return response($content, 200, [
+            'Content-Type' => 'text/plain; charset=utf-8',
+            'Cache-Control' => 'public, max-age=1800',
+        ]);
+    }
+
+    /**
+     * Google News sitemap — specific format for Google News indexing.
+     * Cached 30 minutes (Google News crawls frequently).
+     */
+    public function sitemapNews()
+    {
+        $xml = Cache::remember('sitemap_news_xml', 1800, function () {
+            $baseUrl = rtrim(config('app.url'), '/');
+            $siteName = config('app.name') ?? 'Kangwendra';
+
+            // News sitemap: last 2 days only (Google News requirement)
+            $twoDaysAgo = now()->subDays(2);
+            $posts = Posts::where('status', 'active')
+                ->whereNotNull('published_at')
+                ->where('published_at', '>=', $twoDaysAgo)
+                ->with('category', 'createdBy')
+                ->orderBy('published_at', 'desc')
+                ->limit(1000)
+                ->get(['slug', 'title', 'content', 'published_at', 'updated_at', 'category_id', 'created_by']);
+
+            $entries = '';
+            foreach ($posts as $post) {
+                $url = e("{$baseUrl}/{$post->slug}");
+                $title = e(mb_substr($post->title, 0, 500));
+                $pubDate = $post->published_at ? gmdate('Y-m-d\TH:i:s+00:00', strtotime($post->published_at)) : '';
+                $language = 'id';
+                $category = e($post->category?->name ?? 'AI & Teknologi');
+                $author = e($post->createdBy?->name ?? $siteName);
+
+                $entries .= '<url><loc>' . $url . '</loc>';
+                $entries .= '<news:news><news:publication><news:name>' . $siteName . '</news:name><news:language>' . $language . '</news:language></news:publication>';
+                $entries .= '<news:publication_date>' . $pubDate . '</news:publication_date>';
+                $entries .= '<news:title>' . $title . '</news:title>';
+                $entries .= '<news:keywords>' . $category . ', AI, teknologi, berita</news:keywords>';
+                $entries .= '<news:stock_tickers></news:stock_tickers>';
+                $entries .= '</news:news></url>' . "\n";
+            }
+
+            return '<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+' . $entries . '</urlset>';
+        });
+
+        return response($xml, 200, [
+            'Content-Type' => 'application/xml; charset=utf-8',
+            'Cache-Control' => 'public, max-age=1800',
+        ]);
+    }
+
+    /**
+     * RSS / Atom Feed — standard feed for readers and AI crawlers.
+     */
+    public function feed()
+    {
+        $content = Cache::remember('rss_feed_xml', 600, function () {
+            $baseUrl = rtrim(config('app.url'), '/');
+            $siteName = config('app.name') ?? 'Kangwendra';
+            $description = config('app.description') ?? 'Portal Berita AI Indonesia - Berita terkini tentang Artificial Intelligence, SEO, dan Teknologi';
+
+            $posts = Posts::where('status', 'active')
+                ->whereNotNull('published_at')
+                ->with('category', 'createdBy')
+                ->orderBy('published_at', 'desc')
+                ->limit(50)
+                ->get(['slug', 'title', 'content', 'published_at', 'image', 'category_id', 'created_by']);
+
+            $items = '';
+            foreach ($posts as $post) {
+                $url = "{$baseUrl}/{$post->slug}";
+                $title = htmlspecialchars(trim($post->title), ENT_XML1, 'UTF-8');
+                $description = htmlspecialchars(Str::limit(strip_tags($post->content ?? ''), 300), ENT_XML1, 'UTF-8');
+                $pubDate = $post->published_at ? gmdate('D, d M Y H:i:s +0000', strtotime($post->published_at)) : gmdate('D, d M Y H:i:s +0000');
+                $author = htmlspecialchars($post->createdBy?->name ?? $siteName, ENT_XML1, 'UTF-8');
+                $category = htmlspecialchars($post->category?->name ?? 'AI & Teknologi', ENT_XML1, 'UTF-8');
+                $image = $post->image ? getFile($post->image) : '';
+
+                $items .= '<item>';
+                $items .= '<title>' . $title . '</title>';
+                $items .= '<link>' . $url . '</link>';
+                $items .= '<guid isPermaLink="true">' . $url . '</guid>';
+                $items .= '<description><![CDATA[' . $description . ']]></description>';
+                $items .= '<pubDate>' . $pubDate . '</pubDate>';
+                $items .= '<author>' . $author . '</author>';
+                $items .= '<category>' . $category . '</category>';
+                if ($image) {
+                    $items .= '<enclosure url="' . e($image) . '" type="image/jpeg" />';
+                }
+                $items .= '</item>' . "\n";
+            }
+
+            $lastBuild = gmdate('D, d M Y H:i:s +0000');
+            $feedUrl = "{$baseUrl}/feed.xml";
+
+            return '<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:media="http://search.yahoo.com/mrss/">
+<channel>
+  <title>' . htmlspecialchars($siteName, ENT_XML1, 'UTF-8') . '</title>
+  <link>' . $baseUrl . '</link>
+  <description>' . htmlspecialchars($description, ENT_XML1, 'UTF-8') . '</description>
+  <language>id-id</language>
+  <lastBuildDate>' . $lastBuild . '</lastBuildDate>
+  <atom:link href="' . $feedUrl . '" rel="self" type="application/rss+xml" />
+  <image>
+    <url>' . $baseUrl . '/favicon.ico</url>
+    <title>' . htmlspecialchars($siteName, ENT_XML1, 'UTF-8') . '</title>
+    <link>' . $baseUrl . '</link>
+  </image>
+' . $items . '</channel>
+</rss>';
+        });
+
+        return response($content, 200, [
+            'Content-Type' => 'application/rss+xml; charset=utf-8',
+            'Cache-Control' => 'public, max-age=600',
         ]);
     }
 

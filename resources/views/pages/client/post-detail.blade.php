@@ -1,20 +1,39 @@
 @extends('layouts.client.app')
 
+@php
+    // Calculate reading time (avg 200 words/min)
+    $wordCount = str_word_count(strip_tags($post->content ?? ''));
+    $readingTime = max(1, (int) ceil($wordCount / 200));
+
+    // Breaking news: published within 24 hours
+    $isBreaking = $post->published_at && now()->diffInHours($post->published_at) <= 24;
+
+    // Coverage level
+    $coverage = $isBreaking ? 'FULL_COVERAGE' : 'FULL';
+
+    // Get tags as array
+    $tagsArray = is_array($post->tags)
+        ? $post->tags
+        : (is_string($post->tags) ? json_decode($post->tags, true) ?: [] : []);
+    $keywords = implode(', ', $tagsArray);
+@endphp
+
 @push('structured-data')
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "{{ $post->title }}",
-    "description": "{{ Str::limit(strip_tags($post->content ?? ''), 300) }}",
+    "headline": "{{ addslashes($post->title) }}",
+    "description": "{{ addslashes(Str::limit(strip_tags($post->content ?? ''), 300)) }}",
     "image": "{{ $post->image ? getFile($post->image) : '' }}",
     "author": {
         "@type": "Person",
         "@id": "{{ url('/author/' . ($post->createdBy?->slug ?? 'editorial')) }}#person",
-        "name": "{{ $post->createdBy?->name ?? $meta->web_name ?? 'Tim Editorial Kangwendra' }}",
+        "name": "{{ $post->createdBy?->name ?? 'Tim Editorial Kangwendra' }}",
         "url": "{{ url('/author/' . ($post->createdBy?->slug ?? 'editorial')) }}",
         "description": "Tim editorial Kangwendra - Portal Berita AI Indonesia",
-        "jobTitle": "Content Editor"
+        "jobTitle": "Content Editor",
+        "knowsAbout": ["Artificial Intelligence", "SEO", "Machine Learning", "Digital Technology"]
     },
     "publisher": {
         "@type": "NewsMediaOrganization",
@@ -33,12 +52,17 @@
         "@type": "WebPage",
         "@id": "{{ request()->url() }}"
     },
-    "articleSection": "{{ $post->category?->name ?? 'Teknologi' }}",
-    "keywords": "{{ is_array($post->tags) ? implode(', ', $post->tags) : implode(', ', json_decode($post->tags ?? '[]', true) ?: []) }}",
-    "wordCount": {{ str_word_count(strip_tags($post->content ?? '')) }},
+    "articleSection": "{{ $post->category?->name ?? 'AI & Teknologi' }}",
+    "keywords": "{{ $keywords }}",
+    "wordCount": {{ $wordCount }},
+    "timeRequired": "PT{{ $readingTime }}M",
     "url": "{{ request()->url() }}",
     "inLanguage": "id-ID",
     "isAccessibleForFree": true,
+    @if($isBreaking)
+    "isBreakingNews": true,
+    @endif
+    "coverageLevel": "{{ $coverage }}",
     "speakable": {
         "@type": "SpeakableSpecification",
         "cssSelector": [".post-title", ".entry-content p:first-of-type", ".article-excerpt"],
@@ -53,7 +77,17 @@
     "about": {
         "@type": "Thing",
         "name": "{{ $post->category?->name ?? 'AI & Teknologi' }}"
-    }
+    },
+    "mentions": [
+        {
+            "@type": "Thing",
+            "name": "Artificial Intelligence"
+        },
+        {
+            "@type": "Thing",
+            "name": "{{ $post->category?->name ?? 'AI & Teknologi' }}"
+        }
+    ]
 }
 </script>
 

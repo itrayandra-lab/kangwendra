@@ -20,8 +20,17 @@
     <meta name="rating" content="general">
     <meta name="revisit-after" content="1 days">
     
-    <!-- Canonical URL -->
-    <link rel="canonical" href="{{ url()->current() }}">
+    <!-- Canonical URL (strip page param to prevent duplicate content) -->
+    @php
+        $canonicalUrl = request()->fullUrlWithoutQuery(['page']);
+    @endphp
+    <link rel="canonical" href="{{ $canonicalUrl }}">
+    @if(request()->has('page') && request()->page > 1 && isset($posts) && $posts->previousPageUrl())
+    <link rel="prev" href="{{ $posts->previousPageUrl() }}">
+    @endif
+    @if(isset($posts) && $posts->hasPages() && $posts->nextPageUrl())
+    <link rel="next" href="{{ $posts->nextPageUrl() }}">
+    @endif
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -32,7 +41,7 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:url" content="{{ $canonicalUrl }}">
     <meta property="og:locale" content="id_ID">
     <meta property="og:updated_time" content="{{ now()->toISOString() }}">
     
@@ -159,10 +168,10 @@
     {
         "@context": "https://schema.org",
         "@type": "WebPage",
-        "@id": "{{ url()->current() }}",
+        "@id": "{{ $canonicalUrl }}",
         "name": "{{ $meta->meta_title ?? 'Portal Berita AI Indonesia' }}",
         "description": "{{ $meta->meta_description ?? 'Portal berita AI dan teknologi terbaru di Indonesia' }}",
-        "url": "{{ url()->current() }}",
+        "url": "{{ $canonicalUrl }}",
         "inLanguage": "id-ID",
         "isPartOf": {
             "@type": "WebSite",
