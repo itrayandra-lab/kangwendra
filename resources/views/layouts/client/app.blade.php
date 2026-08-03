@@ -28,7 +28,7 @@
     @if(request()->has('page') && request()->page > 1 && isset($posts) && $posts->previousPageUrl())
     <link rel="prev" href="{{ $posts->previousPageUrl() }}">
     @endif
-    @if(isset($posts) && $posts->hasPages() && $posts->nextPageUrl())
+    @if(isset($posts) && method_exists($posts, 'hasPages') && $posts->hasPages() && $posts->nextPageUrl())
     <link rel="next" href="{{ $posts->nextPageUrl() }}">
     @endif
     

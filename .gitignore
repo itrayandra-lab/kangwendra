@@ -5,6 +5,7 @@
 /public/public
 /storage/storage
 /storage/*.key
+/storage/framework/views/*.php
 /vendor
 .env
 .env.backup
@@ -18,3 +19,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+/.claude
+/.claudeignore
+/docs/*.sql
+toArray())

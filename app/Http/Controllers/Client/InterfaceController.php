@@ -382,6 +382,18 @@ class InterfaceController extends Controller
 
     #page detail
     public function page_detail($slug) {
+        #redirect legacy/menu links to dedicated static pages
+        $slugLower = strtolower($slug);
+        if (in_array($slugLower, ['contact', 'kontak'])) {
+            return redirect()->route('contact');
+        }
+        if (in_array($slugLower, ['about', 'tentang'])) {
+            return redirect()->route('about');
+        }
+        if (in_array($slugLower, ['reflection', 'reflections', 'refleksi'])) {
+            return redirect()->route('reflection');
+        }
+
         $page = Page::with('createdBy')->where('slug', $slug)->where('status', 'active')->latest('created_at')->first();
         if (!$page) {
             abort(404);
@@ -392,11 +404,93 @@ class InterfaceController extends Controller
         $modifiedContent = $this->applyTailwindClasses($page->content);
         $data = [
             'page' => $page,
-            'content' => $modifiedContent, 
+            'content' => $modifiedContent,
         ];
         return view('pages.client.page-detail', $data);
     }
-    
+
+    #branding - AI Branding content page
+    public function branding()
+    {
+        $query = Posts::where('status', 'active')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', Carbon::now())
+            ->whereHas('category', function($q) {
+                $q->where('slug', 'branding')->orWhere('name', 'Branding');
+            })
+            ->with(['category', 'createdBy'])
+            ->latest('published_at');
+
+        $searchQuery = request()->input('qr');
+        if ($searchQuery) {
+            $query->where(function ($q) use ($searchQuery) {
+                $q->where('title', 'like', "%{$searchQuery}%");
+            });
+        }
+
+        $posts = $query->paginate(10);
+
+        $data = [
+            'banner_1'    => $this->datas->information('banner', 1),
+            'mostPopular' => $this->datas->recommended(6),
+            'posts'       => $posts,
+            'searchQuery' => $searchQuery,
+        ];
+
+        return view('pages.client.branding', $data);
+    }
+
+    #about page
+    public function about()
+    {
+        $data = [
+            'posts'       => $this->datas->latestPublished(6),
+            'mostPopular' => $this->datas->mostPopular(5),
+            'categories'  => $this->datas->category(6),
+        ];
+        return view('pages.client.about', $data);
+    }
+
+    #reflection page
+    public function reflection()
+    {
+        $query = Posts::where('status', 'active')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', Carbon::now())
+            ->whereHas('category', function($q) {
+                $q->where('slug', 'reflections')->orWhere('name', 'Reflections');
+            })
+            ->with(['category', 'createdBy'])
+            ->latest('published_at');
+
+        $searchQuery = request()->input('qr');
+        if ($searchQuery) {
+            $query->where(function ($q) use ($searchQuery) {
+                $q->where('title', 'like', "%{$searchQuery}%");
+            });
+        }
+
+        $posts = $query->paginate(10);
+
+        $data = [
+            'banner_1'    => $this->datas->information('banner', 1),
+            'mostPopular' => $this->datas->recommended(6),
+            'posts'       => $posts,
+            'searchQuery' => $searchQuery,
+        ];
+
+        return view('pages.client.reflection', $data);
+    }
+
+    #contact page
+    public function contact()
+    {
+        $data = [
+            'mostPopular' => $this->datas->mostPopular(5),
+        ];
+        return view('pages.client.contact', $data);
+    }
+
     /**
      * templetting
      */

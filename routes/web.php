@@ -292,6 +292,13 @@ Route::group(['prefix' => '/', 'controller' => InterfaceController::class, 'midd
     Route::get('/banner/{slug}', 'banner_detail')->name('banner_detail');
     Route::get('/info/{slug}', 'info_detail')->name('info_detail');
     Route::get('/page/{slug}', 'page_detail')->name('page_detail');
+    Route::get('/ai-branding', 'branding')->name('branding');
+
+    #static pages - must be before sensitive routes
+    #reflection conflicts with PHP's built-in Reflection class, so use closure
+    Route::get('/about', 'about')->name('about');
+    Route::get('/reflection', function () { return app(\App\Http\Controllers\Client\InterfaceController::class)->reflection(); })->name('reflection');
+    Route::get('/contact', function () { return app(\App\Http\Controllers\Client\InterfaceController::class)->contact(); })->name('contact');
 
     #sensitif route
     Route::get('/{slug}', 'category')->name('category');

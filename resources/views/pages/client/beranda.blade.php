@@ -132,7 +132,7 @@
                     <div class="hero-sub-img">
                         <img src="{{ $sub->image ? getFile($sub->image) : asset('assets/default.jpg') }}" alt="{{ $sub->title }}">
                         <div class="hero-sub-overlay">
-                            <span class="hero-category">{{ $sub->category?->name ?? 'Uncategorized' }}</span>
+                            <div><span class="hero-category">{{ $sub->category?->name ?? 'Uncategorized' }}</span></div>
                             <h3 class="hero-sub-title">{{ Str::limit($sub->title, 60) }}</h3>
                             <span class="hero-sub-date">{{ $sub->published_at ? $sub->published_at->diffForHumans() : $sub->created_at->diffForHumans() }}</span>
                         </div>
