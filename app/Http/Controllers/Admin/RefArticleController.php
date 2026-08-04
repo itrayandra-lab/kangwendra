@@ -11,6 +11,7 @@ use App\Models\PostTags;
 use App\Models\RefArticle;
 use App\Models\ResearchRecommendation;
 use Illuminate\Http\Request;
+use DateTimeZone;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -52,18 +53,47 @@ class RefArticleController extends Controller
     // ── GENERATE PARAPHRASE ──────────────────────────────────
 
     /**
-     * Generate All Pending RefArticles (max 5 per batch).
+     * Generate All Pending RefArticles.
+     * Menggunakan daily_limit dari ScraperConfig, bukan hardcoded.
      */
     public function generateAll()
     {
+        $dailyLimit = (int) \App\Models\ScraperConfig::getDailyLimit();
+
+        // Cek berapa banyak yang sudah done hari ini (hit daily limit)
+        $tz = new DateTimeZone('Asia/Jakarta');
+        $todayStart = (new \DateTime('today', $tz))->format('Y-m-d 00:00:00');
+        $todayEnd   = (new \DateTime('today', $tz))->format('Y-m-d 23:59:59');
+
+        $doneToday = \App\Models\Posts::whereBetween('published_at', [$todayStart, $todayEnd])
+            ->where('status', 'active')
+            ->count();
+
+        if ($doneToday >= $dailyLimit) {
+            return back()->with('warning', "Daily limit ({$dailyLimit} artikel/hari) sudah tercapai hari ini ({$doneToday} done). Coba lagi besok.");
+        }
+
+        // Hitung berapa banyak yang sudah researching hari ini (dari batch RefArticle)
+        $dispatchedToday = \App\Models\RefArticle::where('moved_from_scrape', true)
+            ->where('ai_research_status', 'done')
+            ->whereDate('updated_at', now($tz)->toDateString())
+            ->count();
+
+        // Sisa slot hari ini
+        $remainingSlots = max(0, $dailyLimit - $dispatchedToday);
+        if ($remainingSlots === 0) {
+            return back()->with('warning', "Semua slot harian ({$dailyLimit}) sudah terpakai. Done today: {$dispatchedToday}. Coba lagi besok.");
+        }
+
+        // Ambil idle articles (batasnya = sisa slot, bukan 5)
         $idleArticles = RefArticle::where('moved_from_scrape', true)
             ->where(fn($q) => $q->whereNull('ai_research_status')->orWhere('ai_research_status', 'idle'))
             ->orderBy('created_at')
-            ->limit(5)
+            ->limit($remainingSlots)
             ->get();
 
         if ($idleArticles->isEmpty()) {
-            return back()->with('info', 'Tidak ada Ref Article yang idle. Semua sudah diproses.');
+            return back()->with('info', "Tidak ada Ref Article yang idle ({$doneToday}/{$dailyLimit} done today).");
         }
 
         // Generate a batch ID to track this group
@@ -81,7 +111,8 @@ class RefArticleController extends Controller
         }
 
         // Redirect to batch progress page with the batch ID
-        return redirect()->route('ref-articles.batch-progress', ['batch_id' => $batchId]);
+        return redirect()->route('ref-articles.batch-progress', ['batch_id' => $batchId])
+            ->with('success', "{$dispatched} artikel di-queue untuk generate. ({$doneToday} done + {$dispatched} queued = " . ($doneToday + $dispatched) . "/{$dailyLimit} harian).");
     }
 
     /**
@@ -91,6 +122,11 @@ class RefArticleController extends Controller
     {
         if (!$refArticle->source_url) {
             return back()->with('error', 'Source URL tidak tersedia.');
+        }
+
+        // Prevent double-dispatch
+        if (in_array($refArticle->ai_research_status, ['researching', 'done'])) {
+            return back()->with('warning', "Artikel ini sedang '{$refArticle->ai_research_status}'. Tidak bisa dispatch ulang.");
         }
 
         $refArticle->update([
@@ -109,6 +145,11 @@ class RefArticleController extends Controller
     {
         if (!$refArticle->source_url) {
             return back()->with('error', 'Source URL tidak tersedia.');
+        }
+
+        // Only allow retry from failed status
+        if ($refArticle->ai_research_status !== 'failed') {
+            return back()->with('warning', "Retry hanya bisa dari status 'failed'. Status sekarang: '{$refArticle->ai_research_status}'.");
         }
 
         $refArticle->update([

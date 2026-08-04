@@ -36,6 +36,7 @@ class DistributePostJob implements ShouldQueue
 
     public function handle()
     {
+        ini_set('memory_limit', '256M'); // Cukup untuk distribusi webhook
         Log::info("Job Started: Processing for domain {$this->targetDomain}", [
             'session_id' => $this->metaData['session_id']
         ]);

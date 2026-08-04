@@ -7,6 +7,7 @@ use App\Models\PostCategory;
 use App\Models\PostTags;
 use App\Models\Posts;
 use App\Models\RefArticle;
+use App\Models\ScraperConfig;
 use App\Services\EditorPreferenceService;
 use App\Services\SearchEngineLandScraperService;
 use DateTime;
@@ -37,11 +38,38 @@ class GenerateFromRefArticleJob implements ShouldQueue
         EditorPreferenceService $prefService
     ): void {
         set_time_limit(900);
+        ini_set('memory_limit', '512M'); // Naikkan limit — full HTML article scrape + regex + DeepSeek response
 
         $ref = RefArticle::find($this->refArticleId);
         if (!$ref) {
             Log::warning('GenerateFromRefArticleJob: RefArticle not found', ['id' => $this->refArticleId]);
             return;
+        }
+
+        // ── DAILY LIMIT GUARD ──
+        $dailyLimit = (int) ScraperConfig::getDailyLimit();
+        $tz = new DateTimeZone('Asia/Jakarta');
+        $todayStart = (new DateTime('today', $tz))->format('Y-m-d 00:00:00');
+        $todayEnd   = (new DateTime('today', $tz))->format('Y-m-d 23:59:59');
+
+        $doneToday = RefArticle::where('moved_from_scrape', true)
+            ->where('ai_research_status', 'done')
+            ->whereBetween('updated_at', [$todayStart, $todayEnd])
+            ->count();
+
+        if ($doneToday >= $dailyLimit) {
+            Log::warning('GenerateFromRefArticleJob: daily limit reached, aborting', [
+                'ref_id'     => $ref->id,
+                'url'        => $ref->source_url,
+                'done_today' => $doneToday,
+                'limit'      => $dailyLimit,
+            ]);
+            // Reset status ke idle agar bisa di-queue ulang besok
+            $ref->update([
+                'ai_research_status' => 'idle',
+                'ai_error' => "Daily limit ({$dailyLimit}/hari) tercapai. Silakan generate ulang besok.",
+            ]);
+            throw new \Exception("Daily limit ({$dailyLimit} artikel/hari) sudah tercapai ({$doneToday} done). Job di-abort. Generate bisa dilakukan besok.");
         }
 
         Log::info('GenerateFromRefArticleJob: START', [
@@ -560,13 +588,18 @@ PROMPT;
 
     public function failed(\Throwable $e): void
     {
+        $isDailyLimitAbort = strpos($e->getMessage(), 'Daily limit') !== false;
+
         Log::error('GenerateFromRefArticleJob: FAILED', [
             'ref_id' => $this->refArticleId,
             'error'  => $e->getMessage(),
+            'daily_limit_abort' => $isDailyLimitAbort,
         ]);
 
+        // Kalau aborted karena daily limit, reset ke idle (bisa retry besok)
+        // Kalau error biasa, set ke failed
         RefArticle::where('id', $this->refArticleId)->update([
-            'ai_research_status' => 'failed',
+            'ai_research_status' => $isDailyLimitAbort ? 'idle' : 'failed',
             'ai_error'          => $e->getMessage(),
         ]);
     }

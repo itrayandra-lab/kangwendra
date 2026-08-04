@@ -182,7 +182,7 @@
                     <form action="{{ route('ref-articles.generate-all') }}" method="POST" style="display:inline;">
                         @csrf
                         <button type="submit" class="btn btn-warning btn-sm" style="border-radius:8px; padding:6px 16px; font-weight:600;"
-                            onclick="return confirm('Generate semua Ref Articles idle? Maksimal 5 per batch.')">
+                            onclick="return confirm('Generate semua Ref Articles idle? Menggunakan daily limit dari ScraperConfig.')">
                             <i class="fa fa-bolt"></i> Generate All Idle ({{ $stats['idle'] }})
                         </button>
                     </form>

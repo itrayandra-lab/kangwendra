@@ -39,7 +39,13 @@ class ScrapeResultController extends Controller
             $query->whereNull('ref_article_id');
         }
 
-        $results = $query->paginate(20);
+        $results = $query->paginate(5); // Always 5 items per page
+
+        // Alternative keywords yang punya hasil (untuk suggest)
+        $altKeywords = ResearchRecommendation::selectRaw('DISTINCT keyword')
+            ->whereDate('created_at', '>=', now()->subDays(7))
+            ->pluck('keyword')
+            ->toArray();
 
         // Stats per keyword
         $keywordStats = [];
@@ -61,7 +67,7 @@ class ScrapeResultController extends Controller
         $availableKeywords = ResearchRecommendation::selectRaw('DISTINCT keyword')->pluck('keyword');
 
         return view('pages.admin.scrape-results.index', compact(
-            'page', 'results', 'keyword', 'status', 'keywordStats', 'availableKeywords'
+            'page', 'results', 'keyword', 'status', 'keywordStats', 'availableKeywords', 'altKeywords'
         ));
     }
 
@@ -76,11 +82,12 @@ class ScrapeResultController extends Controller
         $ids = $request->input('ids', []);
 
         if (empty($ids)) {
-            return back()->with('error', 'Pilih至少 satu URL untuk di-approve.');
+            return back()->with('error', 'Pilih setidaknya satu URL untuk di-approve.');
         }
 
         $approved = 0;
         $skipped = 0;
+        $deletedAlreadyMoved = 0;
         $errors = [];
 
         foreach ((array) $ids as $id) {
@@ -90,12 +97,17 @@ class ScrapeResultController extends Controller
             $rec = ResearchRecommendation::find($id);
             if (!$rec) { $skipped++; continue; }
 
-            // Skip if already moved
-            if ($rec->ref_article_id) { $skipped++; continue; }
+            // Skip if already moved (ref_article_id set)
+            if ($rec->ref_article_id) {
+                $skipped++;
+                continue;
+            }
 
             // Skip if RefArticle with this source_url already exists
+            // → Delete the Rec so it doesn't keep showing up
             if (RefArticle::where('source_url', $rec->url)->exists()) {
-                $skipped++;
+                $rec->delete();
+                $deletedAlreadyMoved++;
                 continue;
             }
 
@@ -129,10 +141,13 @@ class ScrapeResultController extends Controller
         }
 
         $msg = "{$approved} URL di-approve dan dipindahkan ke Ref Articles. Confidence keyword dinaikkan.";
+        if ($deletedAlreadyMoved > 0) {
+            $msg .= " {$deletedAlreadyMoved} URL sudah pernah diproses (RefArticle exists) — sudah dihapus dari daftar.";
+        }
         if ($skipped > 0) $msg .= " {$skipped} dilewati.";
         if (!empty($errors)) $msg .= " Error: " . implode('; ', $errors);
 
-        return back()->with('success', $msg);
+        return back()->with($approved > 0 ? 'success' : ($deletedAlreadyMoved > 0 ? 'info' : 'warning'), $msg);
     }
 
     /**
@@ -146,7 +161,7 @@ class ScrapeResultController extends Controller
         $ids = $request->input('ids', []);
 
         if (empty($ids)) {
-            return back()->with('error', 'Pilih至少 satu URL untuk di-reject.');
+            return back()->with('error', 'Pilih setidaknya satu URL untuk di-reject.');
         }
 
         $rejected = 0;
@@ -188,7 +203,7 @@ class ScrapeResultController extends Controller
     {
         $ids = $request->input('ids', []);
         if (empty($ids)) {
-            return back()->with('error', 'Pilih至少 satu hasil.');
+            return back()->with('error', 'Pilih setidaknya satu hasil.');
         }
 
         $deleted = ResearchRecommendation::whereIn('id', $ids)->delete();
@@ -202,7 +217,7 @@ class ScrapeResultController extends Controller
     {
         $ids = $request->input('ids', []);
         if (empty($ids)) {
-            return back()->with('error', 'Pilih至少 satu hasil.');
+            return back()->with('error', 'Pilih setidaknya satu hasil untuk di-retry.');
         }
 
         $retried = 0;

@@ -47,6 +47,27 @@ class ScrapeParaphraseJob implements ShouldQueue
         EditorPreferenceService $prefService
     ): void {
         set_time_limit(900);
+        ini_set('memory_limit', '512M'); // Naikkan limit — full HTML article scrape + regex + DeepSeek response
+
+        // ── DAILY LIMIT GUARD (guard terakhir -防止 race condition) ──
+        $dailyLimit = (int) \App\Models\ScraperConfig::getDailyLimit();
+        $tz = new DateTimeZone('Asia/Jakarta');
+        $todayStart = (new \DateTime('today', $tz))->format('Y-m-d 00:00:00');
+        $todayEnd   = (new \DateTime('today', $tz))->format('Y-m-d 23:59:59');
+
+        $doneToday = \App\Models\RefArticle::where('moved_from_scrape', true)
+            ->where('ai_research_status', 'done')
+            ->whereBetween('updated_at', [$todayStart, $todayEnd])
+            ->count();
+
+        if ($doneToday >= $dailyLimit) {
+            Log::warning('ScrapeParaphraseJob: daily limit reached, aborting', [
+                'url'        => $this->url,
+                'done_today' => $doneToday,
+                'limit'      => $dailyLimit,
+            ]);
+            throw new \Exception("Daily limit ({$dailyLimit} artikel/hari) sudah tercapai ({$doneToday} done). Job di-abort.");
+        }
 
         Log::info('ScrapeParaphraseJob: START', [
             'url'            => $this->url,
@@ -526,21 +547,27 @@ PROMPT;
 
     public function failed(\Throwable $e): void
     {
+        // Jangan record failure jika aborted karena daily limit
+        $isDailyLimitAbort = strpos($e->getMessage(), 'Daily limit') !== false;
+
         Log::error('ScrapeParaphraseJob: FAILED', [
             'url'   => $this->url,
             'error' => $e->getMessage(),
             'batch' => $this->batchId,
+            'daily_limit_abort' => $isDailyLimitAbort,
         ]);
 
         RefArticle::where('source_url', $this->url)
             ->where('batch_id', $this->batchId)
             ->update([
-                'ai_status' => 'failed',
+                'ai_status' => $isDailyLimitAbort ? 'idle' : 'failed',
                 'ai_error'  => $e->getMessage(),
             ]);
 
-        $this->markRecommendationRejected($e->getMessage());
-        $this->recordRejection();
+        if (!$isDailyLimitAbort) {
+            $this->markRecommendationRejected($e->getMessage());
+            $this->recordRejection();
+        }
     }
 
     /**

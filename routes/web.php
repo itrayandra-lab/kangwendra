@@ -206,6 +206,8 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/', 'index')->name('admin.scraping.index');
         Route::post('/research', 'research')->name('admin.scraping.research');
         Route::post('/research-all', 'researchAll')->name('admin.scraping.research-all');
+        Route::get('/batch-progress', 'batchProgress')->name('admin.scraping.batch-progress');
+        Route::get('/batch-status', 'batchStatus')->name('admin.scraping.batch-status');
         Route::get('/scrape-config', [App\Http\Controllers\Admin\ScraperConfigController::class, 'index'])->name('admin.scraping.scrape-config');
         Route::put('/scrape-config/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'update'])->name('admin.scraping.scrape-config.update');
         Route::post('/scrape-config/add-item/{key}', [App\Http\Controllers\Admin\ScraperConfigController::class, 'addItem'])->name('admin.scraping.scrape-config.add-item');
@@ -224,20 +226,6 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::post('/reject', 'reject')->name('admin.hasil-scraping.reject');
         Route::post('/destroy', 'destroySelected')->name('admin.hasil-scraping.destroy');
         Route::post('/retry', 'retryFailed')->name('admin.hasil-scraping.retry');
-    });
-
-    # Ref Articles - Generate Paraphrase + View (NO research/recommendations here)
-    Route::group(['prefix' => 'ref-articles', 'controller' => RefArticleController::class], function () {
-        Route::get('/', 'index')->name('ref-articles.index');
-        Route::get('/batch-progress', 'batchProgress')->name('ref-articles.batch-progress');
-        Route::get('/batch-status', 'batchStatus')->name('ref-articles.batch-status');
-        Route::post('/generate-all', 'generateAll')->name('ref-articles.generate-all');
-        Route::get('/{refArticle}', 'show')->name('ref-articles.show');
-        Route::post('/{refArticle}/generate', 'generate')->name('ref-articles.generate');
-        Route::post('/{refArticle}/retry', 'retry')->name('ref-articles.retry');
-        Route::get('/{refArticle}/edit-post', 'editPost')->name('ref-articles.edit-post');
-        Route::put('/{refArticle}/update-post', 'updatePost')->name('ref-articles.update-post');
-        Route::delete('/{refArticle}', 'destroy')->name('ref-articles.destroy');
     });
 
     // Posts - Unpublish & Regenerate

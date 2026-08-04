@@ -23,16 +23,25 @@ class KeywordResearchJob implements ShouldQueue
     public function __construct(
         public string $keyword,
         public int $userId = 1,
-        public int $maxUrls = 10
-    ) {}
+        public int $maxUrls = 10,
+        public string $batchId = ''
+    ) {
+        $this->batchId = $batchId ?: now()->format('YmdHis');
+    }
 
     public function handle(SitemapScraperService $scraper): void
     {
+        // Naikkan memory limit agar cukup untuk sitemap scraping + article meta fetch
+        ini_set('memory_limit', '512M');
+
         // Normalize keyword to lowercase
         $keyword = strtolower(trim($this->keyword));
         $this->keyword = $keyword;
 
-        Log::info('KeywordResearchJob: starting', ['keyword' => $keyword]);
+        Log::info('KeywordResearchJob: starting', [
+            'keyword' => $keyword,
+            'batch_id' => $this->batchId,
+        ]);
 
         // Initialize editor preference
         EditorPreference::firstOrCreate(

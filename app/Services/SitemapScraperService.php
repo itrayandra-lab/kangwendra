@@ -59,9 +59,9 @@ class SitemapScraperService
         foreach ($domainSitemaps as $domain => $sitemaps) {
             $sitemapIterators[$domain] = 0;
         }
-        $maxSitemapsPerDomain = 5; // only check 5 newest sitemaps per domain (fast)
-        $collectLimit = $limit * 5; // collect up to 5x the needed entries before filtering
-        $maxPerDomain = 100; // cap entries per domain for diversity
+        $maxSitemapsPerDomain = 20; // check up to 20 sitemaps per domain (dari 5) — sitemap SEJ/SEL punya 30-662 sitemap, newest 5 sering tidak ada keyword match
+        $collectLimit = $limit * 30; // collect up to 30x the needed entries (dari 10x) — keyword filter akan remove большинство entries
+        $maxPerDomain = 200; // cap entries per domain for diversity (dari 100)
 
         while (count($allEntries) < $collectLimit) {
             $allDone = true;
@@ -130,9 +130,8 @@ class SitemapScraperService
         }
 
         // Step 5: Content fallback — search in article title and description
-        // Limit to first 30 entries to avoid long execution time
-        // (30 URLs x 8s timeout = ~4 minutes max)
-        $contentCheckLimit = 30;
+        // Limit to first 50 entries (dari 30) untukcoverage lebih luas
+        $contentCheckLimit = 50;
         $allEntriesLimited = array_slice($allEntries, 0, $contentCheckLimit);
         $contentMatchEntries = [];
         foreach ($allEntriesLimited as $entry) {

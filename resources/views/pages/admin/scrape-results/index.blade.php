@@ -37,6 +37,53 @@
         @if(session('error'))
             <div class="alert alert-danger" style="border-radius:8px;">{{ session('error') }}</div>
         @endif
+        @if(session('info'))
+            <div class="alert alert-info" style="border-radius:8px;">{!! session('info') !!}</div>
+        @endif
+
+        {{-- Batch Progress Link (if user just clicked research) --}}
+        @if(request('batch_processed'))
+            <div style="background:#d4edda; border:1px solid #28a745; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#155724;">
+                <i class="fa fa-check-circle" style="color:#155724;"></i>
+                <strong>Research selesai!</strong> Berikut hasil dari research terakhir. Approve URL yang kamu mau untuk dipindahkan ke Ref Articles.
+                <a href="{{ route('admin.scraping.batch-progress') }}" class="btn btn-xs btn-success" style="margin-left:8px; border-radius:20px;">
+                    Lihat Progress Research →
+                </a>
+            </div>
+        @endif
+
+        {{-- Keyword Alternatives (jika 0 results) --}}
+        @if($results->isEmpty() && !empty($altKeywords))
+            <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:16px 20px; margin-bottom:16px; font-size:13px;">
+                <strong style="color:#856404;">
+                    <i class="fa fa-search"></i>
+                    Tidak ada hasil untuk
+                    @if($keyword)
+                        keyword "<strong>{{ $keyword }}</strong>"
+                    @else
+                        research ini
+                    @endif
+                    saat ini.
+                </strong>
+                <p style="color:#856404; margin:8px 0 4px;">
+                    Keyword yang punya hasil terbaru:
+                </p>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    @foreach($altKeywords as $altKw)
+                        <form action="{{ route('admin.scraping.research') }}" method="POST" style="display:inline;">
+                            @csrf
+                            <input type="hidden" name="keyword" value="{{ $altKw }}">
+                            <button type="submit" class="btn btn-xs"
+                                style="background:#fff; border:1px solid #ffc107; color:#856404; border-radius:20px; cursor:pointer; padding:4px 12px;">
+                                <i class="fa fa-search"></i> {{ $altKw }}
+                        </form>
+                    @endforeach
+                </div>
+                <p style="color:#856404; margin:8px 0 0; font-size:12px;">
+                    Atau klik <a href="{{ route('admin.scraping.index') }}">menu Scraping</a> untuk research keyword baru.
+                </p>
+            </div>
+        @endif
 
         {{-- Flow Banner --}}
         <div style="background:#e8f5e9; border:1px solid #4caf50; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#2e7d32;">
@@ -95,7 +142,13 @@
             </div>
         @endif
 
-        {{-- Status Filter Tabs --}}
+        {{-- Pagination info --}}
+        <div style="font-size:12px; color:#888; margin-bottom:8px;">
+            Menampilkan {{ $results->count() }} hasil per halaman.
+            @if($results->hasPages())
+                Total {{ $results->total() }} hasil.
+            @endif
+        </div>
         <div style="margin-bottom:16px;">
             <a href="{{ $keyword ? route('admin.hasil-scraping.index', ['keyword' => $keyword]) : route('admin.hasil-scraping.index') }}"
                class="filter-tab {{ !$status ? 'active' : '' }}">Semua</a>
@@ -103,6 +156,11 @@
                class="filter-tab {{ $status === 'pending' ? 'active' : '' }}">Pending</a>
             <a href="{{ $keyword ? route('admin.hasil-scraping.index', ['keyword' => $keyword, 'status' => 'moved']) : route('admin.hasil-scraping.index', ['status' => 'moved']) }}"
                class="filter-tab {{ $status === 'moved' ? 'active' : '' }}">Dipindahkan</a>
+            <span style="float:right;">
+                <a href="{{ route('admin.scraping.batch-progress') }}" class="btn btn-xs btn-default" style="border-radius:20px;">
+                    <i class="fa fa-tasks"></i> Progress Research
+                </a>
+            </span>
         </div>
 
         {{-- Bulk Actions --}}
@@ -185,16 +243,38 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center" style="padding:40px; color:#999;">
-                                <i class="fa fa-inbox" style="font-size:40px;"></i>
-                                <p style="margin-top:8px;">
-                                    @if($keyword)
-                                        Belum ada hasil untuk keyword <strong>"{{ $keyword }}"</strong>.
-                                        <br><span style="font-size:12px;">Coba keyword lain atau tambah keyword baru di Scraper Config.</span>
-                                    @else
-                                        Belum ada hasil scrape. Klik <strong>Research</strong> di menu Scraping untuk memulai.
-                                    @endif
-                                </p>
+                            <td colspan="7" class="text-center" style="padding:40px;">
+                                <i class="fa fa-inbox" style="font-size:40px; color:#ccc;"></i>
+                                @if($keyword)
+                                    <p style="margin-top:12px; color:#856404; font-weight:600;">
+                                        Belum ada hasil untuk "<strong>{{ $keyword }}</strong>".
+                                    </p>
+                                    <p style="color:#888; font-size:13px; margin-top:8px;">
+                                        Kemungkinan sitemap SEJ/SEL tidak memuat artikel tentang "{{ $keyword }}" saat ini.
+                                    </p>
+                                @else
+                                    <p style="margin-top:12px; color:#888;">
+                                        Belum ada hasil scrape.
+                                        <br>Klik <strong>Research</strong> di menu Scraping untuk memulai.
+                                    </p>
+                                @endif
+                                @if(!empty($altKeywords))
+                                    <p style="margin-top:16px; color:#856404; font-size:13px;">
+                                        Keyword yang punya hasil terbaru:
+                                    </p>
+                                    <div style="margin-top:8px;">
+                                        @foreach($altKeywords as $altKw)
+                                            <form action="{{ route('admin.scraping.research') }}" method="POST" style="display:inline;">
+                                                @csrf
+                                                <input type="hidden" name="keyword" value="{{ $altKw }}">
+                                                <button type="submit" class="btn btn-xs"
+                                                    style="background:#fff3cd; border:1px solid #ffc107; color:#856404; border-radius:20px; cursor:pointer; margin:2px;">
+                                                    <i class="fa fa-search"></i> {{ $altKw }}
+                                                </button>
+                                            </form>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </td>
                         </tr>
                     @endforelse

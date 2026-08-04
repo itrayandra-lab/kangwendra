@@ -6,6 +6,7 @@ use App\Jobs\KeywordResearchJob;
 use App\Jobs\ScrapeParaphraseJob;
 use App\Models\EditorPreference;
 use App\Models\Posts;
+use App\Models\RefArticle;
 use App\Models\ResearchRecommendation;
 use App\Services\EditorPreferenceService;
 use App\Services\SitemapScraperService;
@@ -46,23 +47,29 @@ class AutoPipeline extends Command
         $this->info('============================================');
 
         // ── Step 1: Check daily limit ──
+        // Hitung dari RefArticle yang sudah selesai (done) hari ini,
+        // bukan dari Posts (karena Posts.published_at = future slot time,
+        // bukan waktu article selesai diproses).
         $todayStart = (new DateTime('today', $tz))->format('Y-m-d 00:00:00');
         $todayEnd   = (new DateTime('today', $tz))->format('Y-m-d 23:59:59');
 
-        $publishedToday = Posts::whereBetween('published_at', [$todayStart, $todayEnd])
-            ->where('status', 'draft')
+        $doneToday = RefArticle::where('moved_from_scrape', true)
+            ->where('ai_research_status', 'done')
+            ->whereBetween('updated_at', [$todayStart, $todayEnd])
             ->count();
 
-        if ($publishedToday >= $this->getDailyLimit()) {
-            $this->warn("Daily limit ({$publishedToday}/{$this->getDailyLimit()}) reached. Exiting.");
-            Log::info('AutoPipeline: daily limit reached', ['count' => $publishedToday]);
+        $dailyLimit = $this->getDailyLimit();
+
+        if ($doneToday >= $dailyLimit) {
+            $this->warn("Daily limit ({$doneToday}/{$dailyLimit}) sudah tercapai. Exiting.");
+            Log::info('AutoPipeline: daily limit reached', ['done_today' => $doneToday, 'limit' => $dailyLimit]);
             return 0;
         }
 
         // Effective max: can't exceed remaining slots
-        $remainingSlots = max(0, $this->getDailyLimit() - $publishedToday);
+        $remainingSlots = max(0, $dailyLimit - $doneToday);
         $effectiveMax = min((int) $this->option('max'), $remainingSlots);
-        $this->info("Articles remaining today: {$remainingSlots} (will dispatch max {$effectiveMax})");
+        $this->info("Articles done today: {$doneToday}/{$dailyLimit} | Remaining slots: {$remainingSlots} | Will dispatch: {$effectiveMax}");
 
         // ── Step 2: Get keyword(s) ──
         $keywordOption = $this->option('keyword');
@@ -168,13 +175,14 @@ class AutoPipeline extends Command
         $this->info("  - Keywords processed: " . count($keywords));
         $this->info("  - Articles dispatched: {$dispatched}");
         $this->info("  - Duration: {$duration}s");
-        $this->info("  - Daily total: " . ($publishedToday + $dispatched) . '/' . $this->getDailyLimit());
+        $this->info("  - Daily done+dispatched: " . ($doneToday + $dispatched) . '/' . $dailyLimit);
         $this->info('============================================');
 
         Log::info('AutoPipeline: completed', [
             'dispatched'    => $dispatched,
             'duration_sec'  => $duration,
-            'daily_total'  => $publishedToday + $dispatched,
+            'done_today'   => $doneToday,
+            'daily_total'  => $doneToday + $dispatched,
             'keywords'     => $keywords,
         ]);
 
