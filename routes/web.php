@@ -130,7 +130,7 @@ Route::group(['prefix' => 'portal', 'middleware' => ['auth']], function () {
         Route::get('/create', 'create')->name('posts.create')->middleware('permission:create posts');
         Route::post('/', 'store')->name('posts.store')->middleware('permission:create posts');
         Route::get('/{id}/edit', 'edit')->name('posts.edit')->middleware('permission:edit posts');
-        Route::put('/{id}', 'update')->name('postsw.update')->middleware('permission:edit posts');
+        Route::put('/{id}', 'update')->name('posts.update')->middleware('permission:edit posts');
         Route::delete('/{id}', 'destroy')->name('posts.destroy')->middleware('permission:delete posts');
     });
 
