@@ -1,6 +1,7 @@
 ﻿@extends('layouts.client.app')
 
 @push('structured-data')
+{{-- WebSite schema --}}
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
@@ -27,6 +28,28 @@
 }
 </script>
 
+{{-- WebPage schema for homepage --}}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "{{ url('/') }}",
+    "name": "{{ $meta->meta_title ?? ($meta->web_name ?? 'Kangwendra') }}",
+    "description": "{{ $meta->meta_description ?? '' }}",
+    "url": "{{ url('/') }}",
+    "inLanguage": "id-ID",
+    "isPartOf": {
+        "@type": "WebSite",
+        "@id": "{{ url('/') }}#website",
+        "name": "{{ $meta->web_name ?? 'Kangwendra' }}"
+    },
+    "about": {
+        "@type": "NewsMediaOrganization",
+        "name": "{{ $meta->web_name ?? 'Kangwendra' }}"
+    }
+}
+</script>
+
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
@@ -42,7 +65,7 @@
                 "@type": "Article",
                 "headline": "{{ $news->title }}",
                 "description": "{{ Str::limit(strip_tags($news->content), 160) }}",
-                "url": "{{ route('post_detail', [$news->category->slug, $news->slug]) }}",
+                "url": "{{ url('/') }}/{{ $news->category?->slug ?? 'ai-teknologi' }}/{{ $news->slug }}",
                 "datePublished": "{{ $news->published_at ? $news->published_at->toISOString() : $news->created_at->toISOString() }}",
                 "author": {
                     "@type": "Person",
@@ -108,7 +131,7 @@
             <div class="hero-main">
                 <a href="{{ route('post_detail', [$heroMain->category?->slug ?? 'uncategorized', $heroMain->slug]) }}" class="hero-main-link">
                     <div class="hero-main-img">
-                        <img src="{{ $heroMain->image ? getFile($heroMain->image) : asset('assets/default.jpg') }}" alt="{{ $heroMain->title }}">
+                        <img src="{{ $heroMain->image ? getFile($heroMain->image) : asset('assets/default.jpg') }}" alt="{{ $heroMain->title }}" width="1200" height="630" loading="eager" fetchpriority="high">
                         <div class="hero-main-overlay">
                             <div class="hero-main-content">
                                 <span class="hero-category">{{ $heroMain->category?->name ?? 'Uncategorized' }}</span>
@@ -130,7 +153,7 @@
                 @foreach($heroSubs->take(3) as $sub)
                 <a href="{{ route('post_detail', [$sub->category?->slug ?? 'uncategorized', $sub->slug]) }}" class="hero-sub-item">
                     <div class="hero-sub-img">
-                        <img src="{{ $sub->image ? getFile($sub->image) : asset('assets/default.jpg') }}" alt="{{ $sub->title }}">
+                        <img src="{{ $sub->image ? getFile($sub->image) : asset('assets/default.jpg') }}" alt="{{ $sub->title }}" width="600" height="400" loading="lazy">
                         <div class="hero-sub-overlay">
                             <div><span class="hero-category">{{ $sub->category?->name ?? 'Uncategorized' }}</span></div>
                             <h3 class="hero-sub-title">{{ Str::limit($sub->title, 60) }}</h3>
@@ -169,7 +192,7 @@
                                     @if($article->image)
                                         <div class="post-thumb media">
                                             <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
+                                                <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
                                             </a>
                                         </div>
                                     @endif
@@ -214,7 +237,7 @@
                                             @php $imageAd = $ads->where('type', 'image')->first(); @endphp
                                             @if($imageAd)
                                                 <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                    <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
+                                                    <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
                                                 </a>
                                             @endif
                                         </div>
@@ -243,7 +266,7 @@
                                         @if($article->image)
                                             <div class="post-thumb media">
                                                 <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
+                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
                                                 </a>
                                             </div>
                                         @endif
@@ -288,7 +311,7 @@
                                                 @php $imageAd = $ads->where('type', 'image')->first(); @endphp
                                                 @if($imageAd)
                                                     <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
+                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
                                                     </a>
                                                 @endif
                                             </div>
@@ -319,7 +342,7 @@
                                         @if($article->image)
                                             <div class="post-thumb media">
                                                 <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
+                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
                                                 </a>
                                             </div>
                                         @endif
@@ -364,7 +387,7 @@
                                                 @php $imageAd = $ads->where('type', 'image')->first(); @endphp
                                                 @if($imageAd)
                                                     <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
+                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
                                                     </a>
                                                 @endif
                                             </div>
@@ -395,7 +418,7 @@
                                         @if($article->image)
                                             <div class="post-thumb media">
                                                 <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
+                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
                                                 </a>
                                             </div>
                                         @endif
@@ -440,7 +463,7 @@
                                                 @php $imageAd = $ads->where('type', 'image')->first(); @endphp
                                                 @if($imageAd)
                                                     <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
+                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
                                                     </a>
                                                 @endif
                                             </div>
@@ -471,7 +494,7 @@
                                         @if($article->image)
                                             <div class="post-thumb media">
                                                 <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}">
+                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
                                                 </a>
                                             </div>
                                         @endif
@@ -516,7 +539,7 @@
                                                 @php $imageAd = $ads->where('type', 'image')->first(); @endphp
                                                 @if($imageAd)
                                                     <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid">
+                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
                                                     </a>
                                                 @endif
                                             </div>
@@ -569,7 +592,7 @@
                                     <li class="img-hover-move">
                                         <a href="{{ route('category', $category->slug) }}" class="media">
                                             @if($category->posts->first() && $category->posts->first()->image)
-                                                <img src="{{ getFile($category->posts->first()->image) }}" alt="{{ $category->name }}">
+                                                <img src="{{ getFile($category->posts->first()->image) }}" alt="{{ $category->name }}" width="600" height="400" loading="lazy">
                                             @endif
                                             {{ $category->name }} 
                                             <span>{{ $category->posts->count() }}</span>
@@ -596,7 +619,7 @@
                                     @if($popular->image)
                                         <div class="widget-post-thumb media">
                                             <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}">
-                                                <img src="{{ getFile($popular->image) }}" alt="{{ $popular->title }}">
+                                                <img src="{{ getFile($popular->image) }}" alt="{{ $popular->title }}" width="600" height="400" loading="lazy">
                                             </a>
                                         </div>
                                     @else
@@ -671,7 +694,7 @@
                         <div class="sidebar-widget widget">
                             <div class="widget-banner">
                                 <a href="#">
-                                    <img src="{{ getFile($ads->first()->image) }}" alt="banner">
+                                    <img src="{{ getFile($ads->first()->image) }}" alt="banner" width="1200" height="300" loading="lazy">
                                 </a>
                             </div>
                         </div>

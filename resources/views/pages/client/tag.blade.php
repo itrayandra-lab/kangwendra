@@ -1,5 +1,45 @@
 @extends('layouts.client.app')
 
+@push('structured-data')
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Beranda",
+            "item": "{{ url('/') }}"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Tag: {{ $tag?->name ?? 'Tag' }}",
+            "item": "{{ url('/') }}/tag/{{ $tag?->slug ?? '' }}"
+        }
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "{{ request()->url() }}",
+    "name": "{{ $tag?->meta_title ?? ($tag?->name . ' - ' . ($meta->web_name ?? 'Kangwendra')) }}",
+    "description": "Artikel dengan tag {{ $tag?->name ?? 'Tag' }} - Portal Berita AI Indonesia",
+    "url": "{{ request()->url() }}",
+    "inLanguage": "id-ID",
+    "isPartOf": {
+        "@type": "WebSite",
+        "@id": "{{ url('/') }}#website",
+        "name": "{{ $meta->web_name ?? 'Kangwendra' }}",
+        "url": "{{ url('/') }}"
+    }
+}
+</script>
+@endpush
+
 @section('content')
     <section class="page-header">
         <div class="container">
@@ -25,7 +65,7 @@
                                         @if($item->image)
                                             <div class="post-thumb media">
                                                 <a href="/{{ $item->category?->slug }}/{{ $item->slug }}">
-                                                    <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}">
+                                                    <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}" width="600" height="400" loading="lazy">
                                                 </a>
                                             </div>
                                         @else
@@ -124,7 +164,7 @@
                                             @if($item->image)
                                                 <div class="post-thumb">
                                                     <a href="/{{ $item->category?->slug }}/{{ $item->slug }}">
-                                                        <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}">
+                                                        <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}" width="600" height="400" loading="lazy">
                                                     </a>
                                                 </div>
                                             @else

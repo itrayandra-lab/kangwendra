@@ -255,7 +255,20 @@
     <meta name="theme-color" content="#ffffff">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="{{ getFile($meta->favicon ?? '') }}">
-    
+
+    <!-- RSS / Atom Feed Auto-Discovery -->
+    <link rel="alternate" type="application/rss+xml" title="{{ $meta->web_name ?? 'Kangwendra' }} RSS Feed" href="{{ url('/') }}/feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="{{ $meta->web_name ?? 'Kangwendra' }} Atom Feed" href="{{ url('/') }}/feed.xml">
+
+    <!-- OpenSearch Description (Windows Search integration) -->
+    <link rel="search" type="application/opensearchdescription+xml" title="{{ $meta->web_name ?? 'Kangwendra' }}" href="{{ url('/') }}/opensearch.xml">
+
+    <!-- Google Search Console Verification (replace with your verification token) -->
+    <!-- <meta name="google-site-verification" content="YOUR_VERIFICATION_TOKEN_HERE"> -->
+
+    <!-- Bing Webmaster Verification -->
+    <!-- <meta name="msvalidate.01" content="YOUR_BING_TOKEN_HERE"> -->
+
     <!-- DNS Prefetch for Performance -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//www.google-analytics.com">

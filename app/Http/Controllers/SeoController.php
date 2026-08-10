@@ -36,6 +36,9 @@ class SeoController extends Controller
             "# AI Search Engine Feed",
             "LLM-Info: {$baseUrl}/llms.txt",
             "",
+            "# OpenSearch",
+            "Sitemap: {$baseUrl}/opensearch.xml",
+            "",
             "# Disallow admin & internal paths",
             "Disallow: /portal/",
             "Disallow: /admin/",
@@ -75,6 +78,13 @@ class SeoController extends Controller
             "User-agent: Amazonbot",
             "Allow: /",
             "User-agent: Applebot-Extended",
+            "Allow: /",
+            "",
+            "User-agent: DeepSeekBot",
+            "Allow: /",
+            "User-agent: Grok",
+            "Allow: /",
+            "User-agent: YouBot",
             "Allow: /",
             "",
             "# Social Media",
@@ -150,17 +160,23 @@ class SeoController extends Controller
     {
         $xml = Cache::remember('sitemap_posts_xml', 3600, function () {
             $baseUrl = rtrim(config('app.url'), '/');
-            $posts = Posts::where('status', 'active')
-                ->whereNotNull('published_at')
-                ->orderBy('published_at', 'desc')
+            $posts = Posts::where('posts.status', 'active')
+                ->whereNotNull('posts.published_at')
+                ->join('post_categories', 'posts.category_id', '=', 'post_categories.id')
+                ->orderBy('posts.published_at', 'desc')
                 ->limit(5000)
-                ->get(['slug', 'title', 'published_at', 'updated_at']);
+                ->get(['posts.slug', 'posts.title', 'posts.published_at', 'posts.updated_at', 'posts.image', 'post_categories.slug as category_slug']);
 
             $entries = '';
             foreach ($posts as $post) {
-                $url = e("{$baseUrl}/{$post->slug}");
+                $url = e("{$baseUrl}/{$post->category_slug}/{$post->slug}");
                 $lastmod = $post->published_at ? $post->published_at->toISOString() : $post->updated_at->toISOString();
-                $entries .= '<url><loc>' . $url . '</loc><lastmod>' . $lastmod . '</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>' . "\n";
+                $imageTag = '';
+                if (!empty($post->image)) {
+                    $imageUrl = e(getFile($post->image));
+                    $imageTag = '<image:image><image:loc>' . $imageUrl . '</image:loc></image:image>';
+                }
+                $entries .= '<url><loc>' . $url . '</loc><lastmod>' . $lastmod . '</lastmod><changefreq>weekly</changefreq><priority>0.8</priority>' . $imageTag . '</url>' . "\n";
             }
 
             return '<?xml version="1.0" encoding="UTF-8"?>
@@ -253,8 +269,9 @@ class SeoController extends Controller
             foreach ($posts as $post) {
                 $pubDate = $post->published_at ? $post->published_at->format('Y-m-d') : '';
                 $category = $post->category?->name ?? 'AI & Teknologi';
+                $categorySlug = $post->category?->slug ?? 'ai-teknologi';
                 $title = trim($post->title);
-                $url = "{$baseUrl}/{$post->slug}";
+                $url = "{$baseUrl}/{$categorySlug}/{$post->slug}";
                 $lines[] = "- [{$category}] {$title} ({$pubDate}): {$url}";
             }
             $lines[] = "";
@@ -293,22 +310,23 @@ class SeoController extends Controller
 
             // News sitemap: last 2 days only (Google News requirement)
             $twoDaysAgo = now()->subDays(2);
-            $posts = Posts::where('status', 'active')
-                ->whereNotNull('published_at')
-                ->where('published_at', '>=', $twoDaysAgo)
-                ->with('category', 'createdBy')
-                ->orderBy('published_at', 'desc')
+            $posts = Posts::where('posts.status', 'active')
+                ->whereNotNull('posts.published_at')
+                ->where('posts.published_at', '>=', $twoDaysAgo)
+                ->join('post_categories', 'posts.category_id', '=', 'post_categories.id')
+                ->leftJoin('users', 'posts.created_by', '=', 'users.id')
+                ->orderBy('posts.published_at', 'desc')
                 ->limit(1000)
-                ->get(['slug', 'title', 'content', 'published_at', 'updated_at', 'category_id', 'created_by']);
+                ->get(['posts.slug', 'posts.title', 'posts.published_at', 'posts.updated_at', 'post_categories.slug as category_slug', 'users.name as author_name']);
 
             $entries = '';
             foreach ($posts as $post) {
-                $url = e("{$baseUrl}/{$post->slug}");
+                $url = e("{$baseUrl}/{$post->category_slug}/{$post->slug}");
                 $title = e(mb_substr($post->title, 0, 500));
                 $pubDate = $post->published_at ? gmdate('Y-m-d\TH:i:s+00:00', strtotime($post->published_at)) : '';
                 $language = 'id';
-                $category = e($post->category?->name ?? 'AI & Teknologi');
-                $author = e($post->createdBy?->name ?? $siteName);
+                $category = e($post->category_slug ?? 'ai-teknologi');
+                $author = e($post->author_name ?? $siteName);
 
                 $entries .= '<url><loc>' . $url . '</loc>';
                 $entries .= '<news:news><news:publication><news:name>' . $siteName . '</news:name><news:language>' . $language . '</news:language></news:publication>';
@@ -350,7 +368,8 @@ class SeoController extends Controller
 
             $items = '';
             foreach ($posts as $post) {
-                $url = "{$baseUrl}/{$post->slug}";
+                $categorySlug = $post->category?->slug ?? 'ai-teknologi';
+                $url = "{$baseUrl}/{$categorySlug}/{$post->slug}";
                 $title = htmlspecialchars(trim($post->title), ENT_XML1, 'UTF-8');
                 $description = htmlspecialchars(Str::limit(strip_tags($post->content ?? ''), 300), ENT_XML1, 'UTF-8');
                 $pubDate = $post->published_at ? gmdate('D, d M Y H:i:s +0000', strtotime($post->published_at)) : gmdate('D, d M Y H:i:s +0000');
@@ -400,6 +419,34 @@ class SeoController extends Controller
         return response($content, 200, [
             'Content-Type' => 'application/rss+xml; charset=utf-8',
             'Cache-Control' => 'public, max-age=600',
+        ]);
+    }
+
+    /**
+     * OpenSearch Description — for Windows Search & browser search bar integration.
+     */
+    public function opensearch()
+    {
+        $siteName = e(config('app.name') ?? 'Kangwendra');
+        $webIdentity = \App\Models\WebIdentity::first();
+        $description = e($webIdentity?->meta_description ?? 'Portal Berita AI Indonesia - Berita terkini tentang Artificial Intelligence, SEO, dan Teknologi');
+        $searchUrl = e(config('app.url')) . '/search?q=';
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>' . $siteName . '</ShortName>
+  <Description>' . $description . '</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <OutputEncoding>UTF-8</OutputEncoding>
+  <Image width="16" height="16" type="image/x-icon">' . e(config('app.url')) . '/favicon.ico</Image>
+  <Url type="text/html" method="get" template="' . $searchUrl . '{searchTerms}"/>
+  <moz:SearchForm>' . e(config('app.url')) . '/search</moz:SearchForm>
+</OpenSearchDescription>';
+
+        return response($xml, 200, [
+            'Content-Type' => 'application/xml; charset=utf-8',
+            'Cache-Control' => 'public, max-age=86400',
         ]);
     }
 

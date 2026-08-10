@@ -57,9 +57,9 @@
                             </div>
                             <div style="font-size:13px; color:#555;">
                                 @if($isPublished)
-                                    <i class="fa fa-check-circle text-success"></i> Sudah dipublikasikan pada <strong>{{ $post->published_at->format('d M Y H:i') }} WIB</strong>
+                                    <i class="fa fa-check-circle text-success"></i> Sudah dipublikasikan pada <strong>{{ $post->published_at?->format('d M Y H:i') ?? 'N/A' }} WIB</strong>
                                 @elseif($isScheduled)
-                                    <i class="fa fa-clock-o text-info"></i> Akan dipublikasikan pada <strong>{{ $post->published_at->format('d M Y H:i') }} WIB</strong>
+                                    <i class="fa fa-clock-o text-info"></i> Akan dipublikasikan pada <strong>{{ $post->published_at?->format('d M Y H:i') ?? 'N/A' }} WIB</strong>
                                     <span style="color:#999; font-size:12px; margin-left:8px;">(belum masuk beranda)</span>
                                 @elseif($isDraft)
                                     <i class="fa fa-pencil text-warning"></i> Post masih draft, tidak ditampilkan di beranda

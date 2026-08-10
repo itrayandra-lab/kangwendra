@@ -10,6 +10,7 @@
 .env
 .env.backup
 .env.production
+.env.local
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
@@ -21,5 +22,6 @@ yarn-error.log
 /.vscode
 /.claude
 /.claudeignore
-/docs/*.sql
+/docs/production/*.sql
+/docs/production/*.md
 toArray())

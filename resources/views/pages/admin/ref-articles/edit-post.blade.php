@@ -186,7 +186,7 @@
             <a href="{{ route('posts.edit', $post->id) }}" target="_blank" class="btn btn-outline-secondary btn-sm">
                 Edit Penuh
             </a>
-            <a href="{{ route('post_detail', [$post->category->slug ?? 'uncategorized', $post->slug]) }}"
+            <a href="{{ route('post_detail', [$post->category?->slug ?? 'uncategorized', $post->slug]) }}"
                 target="_blank" class="btn btn-outline-info btn-sm">
                 Lihat Post
             </a>

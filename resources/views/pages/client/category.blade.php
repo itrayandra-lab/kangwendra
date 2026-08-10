@@ -1,5 +1,49 @@
 @extends('layouts.client.app')
 
+@push('structured-data')
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Beranda",
+            "item": "{{ url('/') }}"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "{{ $category->name ?? 'Kategori' }}",
+            "item": "{{ url('/') }}/{{ $category->slug ?? '' }}"
+        }
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "{{ request()->url() }}",
+    "name": "{{ $category->meta_title ?? ($category->name . ' - ' . ($meta->web_name ?? 'Kangwendra')) }}",
+    "description": "{{ $category->meta_description ?? ($category->name . ' - Artikel terbaru tentang ' . $category->name) }}",
+    "url": "{{ request()->url() }}",
+    "inLanguage": "id-ID",
+    "isPartOf": {
+        "@type": "WebSite",
+        "@id": "{{ url('/') }}#website",
+        "name": "{{ $meta->web_name ?? 'Kangwendra' }}",
+        "url": "{{ url('/') }}"
+    },
+    "about": {
+        "@type": "Thing",
+        "name": "{{ $category->name ?? 'Kategori' }}"
+    }
+}
+</script>
+@endpush
+
 @section('content')
     <section class="page-header">
         <div class="container">
@@ -25,13 +69,13 @@
                                         @if($item->image)
                                             <div class="post-thumb media">
                                                 <a href="/{{ $item->category?->slug ?? 'news' }}/{{ $item->slug }}">
-                                                    <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}">
+                                                    <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}" width="600" height="400" loading="lazy">
                                                 </a>
                                             </div>
                                         @else
                                             <div class="post-thumb media">
                                                 <a href="/{{ $item->category?->slug ?? 'news' }}/{{ $item->slug }}">
-                                                    <img src="{{ asset('assets/default.jpg') }}" alt="{{ $item->title }}">
+                                                    <img src="{{ asset('assets/default.jpg') }}" alt="{{ $item->title }}" width="600" height="400" loading="lazy">
                                                 </a>
                                             </div>
                                         @endif
@@ -124,13 +168,13 @@
                                             @if($item->image)
                                                 <div class="post-thumb">
                                                     <a href="/{{ $item->category?->slug ?? 'news' }}/{{ $item->slug }}">
-                                                        <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}">
+                                                        <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}" width="600" height="400" loading="lazy">
                                                     </a>
                                                 </div>
                                             @else
                                                 <div class="post-thumb">
                                                     <a href="/{{ $item->category?->slug ?? 'news' }}/{{ $item->slug }}">
-                                                        <img src="{{ asset('assets/default.jpg') }}" alt="{{ $item->title }}">
+                                                        <img src="{{ asset('assets/default.jpg') }}" alt="{{ $item->title }}" width="600" height="400" loading="lazy">
                                                     </a>
                                                 </div>
                                             @endif

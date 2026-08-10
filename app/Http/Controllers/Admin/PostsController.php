@@ -234,7 +234,7 @@ class PostsController extends Controller
         $data = [
             'categories' => PostCategory::orderBy('id', 'desc')->get(),
             'tags' => PostTags::orderBy('id', 'desc')->get(),
-            'post' => Posts::findOrFail($id),
+            'post' => Posts::with('category')->findOrFail($id),
             'isMaster' => $isMaster,
         ];
         return view('pages.admin.posts.edit', $data)->with('page', 'Postingan');

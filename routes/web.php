@@ -253,6 +253,7 @@ Route::get('/maintenance', function () {
 # SEO: Dynamic robots.txt & sitemap
 Route::get('/robots.txt', [\App\Http\Controllers\SeoController::class, 'robots'])->name('robots');
 Route::get('/llms.txt', [\App\Http\Controllers\SeoController::class, 'llms'])->name('llms');
+Route::get('/opensearch.xml', [\App\Http\Controllers\SeoController::class, 'opensearch'])->name('opensearch');
 Route::get('/sitemap.xml', [\App\Http\Controllers\SeoController::class, 'sitemapIndex'])->name('sitemap.index');
 Route::get('/sitemap-news.xml', [\App\Http\Controllers\SeoController::class, 'sitemapNews'])->name('sitemap.news');
 Route::get('/feed.xml', [\App\Http\Controllers\SeoController::class, 'feed'])->name('feed');

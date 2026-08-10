@@ -25,7 +25,12 @@
     "@type": "Article",
     "headline": "{{ addslashes($post->title) }}",
     "description": "{{ addslashes(Str::limit(strip_tags($post->content ?? ''), 300)) }}",
-    "image": "{{ $post->image ? getFile($post->image) : '' }}",
+    "image": {
+        "@type": "ImageObject",
+        "url": "{{ $post->image ? getFile($post->image) : '' }}",
+        "width": 1200,
+        "height": 630
+    },
     "author": {
         "@type": "Person",
         "@id": "{{ url('/author/' . ($post->createdBy?->slug ?? 'editorial')) }}#person",
@@ -158,22 +163,23 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-8 offset-lg-2">
+                    <article itemscope itemtype="https://schema.org/Article">
                     @if($post->image)
                         <div class="single-post-thumb">
-                            <img src="{{ getFile($post->image) }}" alt="{{ $post->title }}">
+                            <img src="{{ getFile($post->image) }}" alt="{{ $post->title }}" width="1200" height="630" fetchpriority="high" loading="eager">
                         </div>
                     @endif
                     <header class="entry-header">
-                       <ul class="post-meta">
-                            <li><a href="/{{ $post->category?->slug ?? 'news' }}">{{ $post->category?->name ?? 'Berita' }}</a></li>
+                       <ul class="post-meta" itemscope itemprop="author" itemtype="https://schema.org/Person">
+                            <li itemprop="name"><a href="/{{ $post->category?->slug ?? 'news' }}" itemprop="articleSection">{{ $post->category?->name ?? 'Berita' }}</a></li>
                             <li class="sep"></li>
-                            <li><a href="/{{ $post->category?->slug ?? 'news' }}" class="date">{{ $post->published_at ? \Carbon\Carbon::parse($post->published_at)->format('d.m.Y') : date('d.m.Y') }}</a></li>
+                            <li><time itemprop="datePublished" datetime="{{ $post->published_at ? $post->published_at->toISOString() : $post->created_at->toISOString() }}"><a href="/{{ $post->category?->slug ?? 'news' }}">{{ $post->published_at ? \Carbon\Carbon::parse($post->published_at)->format('d.m.Y') : date('d.m.Y') }}</a></time></li>
                         </ul>
-                        <h2 class="post-title">{{ $post->title }}</h2>
+                        <h1 class="post-title" itemprop="headline">{{ $post->title }}</h1>
                         <div class="post-author-meta">
                             <div class="author-thumb">
                                 <a href="/author/{{ $post->createdBy?->slug ?? '#' }}">
-                                    <img src="{{ $post->createdBy?->image ? getFile($post->createdBy->image) : asset('client/assets/img/author-1.jpg') }}" alt="author">
+                                    <img src="{{ $post->createdBy?->image ? getFile($post->createdBy->image) : asset('client/assets/img/author-1.jpg') }}" alt="{{ $post->createdBy?->name ?? 'author' }}" width="50" height="50" loading="lazy">
                                 </a>
                             </div>
                             <div class="author-info">
@@ -182,9 +188,10 @@
                             </div>
                         </div>
                     </header>
-                    <div class="single-post-content">
+                    <div class="single-post-content" itemprop="articleBody">
                         {!! $content !!}
                     </div>
+                    </article>
                     
                     <footer class="entry-footer">
                         @if ($post->tags)
@@ -242,7 +249,7 @@
                                                 @if($item->image)
                                                     <div class="post-thumb media">
                                                         <a href="/{{ $item->category?->slug ?? 'news' }}/{{ $item->slug }}">
-                                                            <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}">
+                                                            <img src="{{ getFile($item->image) }}" alt="{{ $item->title }}" width="120" height="90" loading="lazy">
                                                         </a>
                                                     </div>
                                                 @endif
@@ -278,7 +285,7 @@
                             <div class="single-post-author">
                                 <div class="author-thumb">
                                     <a href="/author/{{ $post->createdBy?->slug ?? '#' }}">
-                                        <img src="{{ $post->createdBy->image ? getFile($post->createdBy->image) : asset('client/assets/img/author-widget.jpg') }}" alt="author">
+                                        <img src="{{ $post->createdBy->image ? getFile($post->createdBy->image) : asset('client/assets/img/author-widget.jpg') }}" alt="{{ $post->createdBy?->name ?? 'author' }}" width="80" height="80" loading="lazy">
                                     </a>
                                 </div>
                                 <div class="author-info">
