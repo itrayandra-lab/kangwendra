@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\WebIdentity;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -21,6 +22,28 @@ class MetaServiceProvider extends ServiceProvider
     public function register(): void
     {
         //
+    }
+
+    private static ?object $webIdentity = null;
+
+    private function getWebIdentity(): ?object
+    {
+        if (self::$webIdentity !== null) {
+            return self::$webIdentity;
+        }
+
+        try {
+            DB::connection()->getPdo();
+            if (Schema::hasTable('web_identities')) {
+                self::$webIdentity = Cache::remember('web_identity_meta', 3600, function () {
+                    return WebIdentity::orderBy('id', 'desc')->first() ?: false;
+                });
+            }
+        } catch (\Exception $e) {
+            self::$webIdentity = false;
+        }
+
+        return self::$webIdentity ?: null;
     }
 
     public function boot(): void
@@ -46,31 +69,25 @@ class MetaServiceProvider extends ServiceProvider
                 'version' => '1.0.0',
             ];
 
-            try {
-                DB::connection()->getPdo();
-                if (Schema::hasTable('web_identities')) {
-                    $webIdentity = WebIdentity::orderBy('id', 'desc')->first();
-                    if ($webIdentity) {
-                        $defaultMeta['web_name'] = $webIdentity->web_name ?? $defaultMeta['web_name'];
-                        $defaultMeta['domain'] = $webIdentity->domain ?? $defaultMeta['domain'];
-                        $defaultMeta['email'] = $webIdentity->email ?? $defaultMeta['email'];
-                        $defaultMeta['phone_number'] = $webIdentity->phone_number ?? $defaultMeta['phone_number'];
-                        $defaultMeta['facebook_link'] = $webIdentity->facebook_link ?? $defaultMeta['facebook_link'];
-                        $defaultMeta['instagram_link'] = $webIdentity->instagram_link ?? $defaultMeta['instagram_link'];
-                        $defaultMeta['youtube_link'] = $webIdentity->youtube_link ?? $defaultMeta['youtube_link'];
-                        $defaultMeta['twitter_link'] = $webIdentity->twitter_link ?? $defaultMeta['twitter_link'];
-                        $defaultMeta['google_maps'] = $webIdentity->google_maps ?? $defaultMeta['google_maps'];
-                        $defaultMeta['meta_title'] = $webIdentity->meta_title ?? $defaultMeta['meta_title'];
-                        $defaultMeta['meta_description'] = $webIdentity->meta_description ?? $defaultMeta['meta_description'];
-                        $defaultMeta['meta_keywords'] = $webIdentity->meta_keywords ?? $defaultMeta['meta_keywords'];
-                        $defaultMeta['og_image'] = $webIdentity->og_image ? getFile($webIdentity->og_image) : $defaultMeta['og_image'];
-                        $defaultMeta['favicon'] = $webIdentity->favicon ? getFile($webIdentity->favicon) : $defaultMeta['favicon'];
-                        $defaultMeta['logo'] = $webIdentity->logo ? getFile($webIdentity->logo) : $defaultMeta['logo'];
-                        $defaultMeta['status'] = $webIdentity->status ?? $defaultMeta['status'];
-                        $defaultMeta['version'] = $webIdentity->version ?? $defaultMeta['version'];
-                    }
-                }
-            } catch (\Exception $e) {
+            $webIdentity = $this->getWebIdentity();
+            if ($webIdentity) {
+                $defaultMeta['web_name'] = $webIdentity->web_name ?? $defaultMeta['web_name'];
+                $defaultMeta['domain'] = $webIdentity->domain ?? $defaultMeta['domain'];
+                $defaultMeta['email'] = $webIdentity->email ?? $defaultMeta['email'];
+                $defaultMeta['phone_number'] = $webIdentity->phone_number ?? $defaultMeta['phone_number'];
+                $defaultMeta['facebook_link'] = $webIdentity->facebook_link ?? $defaultMeta['facebook_link'];
+                $defaultMeta['instagram_link'] = $webIdentity->instagram_link ?? $defaultMeta['instagram_link'];
+                $defaultMeta['youtube_link'] = $webIdentity->youtube_link ?? $defaultMeta['youtube_link'];
+                $defaultMeta['twitter_link'] = $webIdentity->twitter_link ?? $defaultMeta['twitter_link'];
+                $defaultMeta['google_maps'] = $webIdentity->google_maps ?? $defaultMeta['google_maps'];
+                $defaultMeta['meta_title'] = $webIdentity->meta_title ?? $defaultMeta['meta_title'];
+                $defaultMeta['meta_description'] = $webIdentity->meta_description ?? $defaultMeta['meta_description'];
+                $defaultMeta['meta_keywords'] = $webIdentity->meta_keywords ?? $defaultMeta['meta_keywords'];
+                $defaultMeta['og_image'] = $webIdentity->og_image ? getFile($webIdentity->og_image) : $defaultMeta['og_image'];
+                $defaultMeta['favicon'] = $webIdentity->favicon ? getFile($webIdentity->favicon) : $defaultMeta['favicon'];
+                $defaultMeta['logo'] = $webIdentity->logo ? getFile($webIdentity->logo) : $defaultMeta['logo'];
+                $defaultMeta['status'] = $webIdentity->status ?? $defaultMeta['status'];
+                $defaultMeta['version'] = $webIdentity->version ?? $defaultMeta['version'];
             }
 
             $data = $view->getData();

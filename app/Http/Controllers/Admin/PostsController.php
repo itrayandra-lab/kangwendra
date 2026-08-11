@@ -28,12 +28,15 @@ class PostsController extends Controller
 
         // Apply source filter
         if ($source === 'ai') {
-            $posts->where(function ($q) { $q->where('published_by', 'system')->orWhereNotNull('source'); });
+            // AI posts: source 'AI' (API) atau URL sumber (pipeline), bukan 'web'/''
+            $posts->whereNotNull('source')->where('source', '!=', '')->where('source', '!=', 'web');
             $page = 'Postingan AI';
-        } elseif ($source === 'manual') {
-            $posts->where('published_by', '!=', 'system')
-                  ->where(function ($q) { $q->whereNull('source')->orWhere('source', ''); });
-            $page = 'posts';
+        } elseif (in_array($source, ['web', 'manual'])) {
+            // Web/manual posts: tanpa source URL
+            $posts->where(function ($q) {
+                $q->whereNull('source')->orWhere('source', '')->orWhere('source', 'web');
+            });
+            $page = $source === 'web' ? 'Postingan Web' : 'posts';
         } else {
             $page = 'Postingan';
         }
@@ -80,7 +83,7 @@ class PostsController extends Controller
                 })
                 ->addColumn('created_by', fn($p) => $p->createdBy?->name ?? '-')
                 ->addColumn('updated_by', fn($p) => $p->updatedBy?->name ?? '-')
-                ->addColumn('published_by', fn($p) => $p->published_by === 'system'
+                ->addColumn('published_by', fn($p) => $p->source && $p->source !== 'web'
                     ? '<span class="label label-info">AI</span>'
                     : '<span class="label label-default">Editor</span>')
                 ->editColumn('published_at', fn($p) => $p->published_at ? $p->published_at->translatedFormat('d M Y H:i') : '<span class="text-muted">-</span>')
@@ -94,7 +97,7 @@ class PostsController extends Controller
                             .csrf_field().'<button type="submit" class="btn btn-warning btn-xs" onclick="return confirm(\'Unpublish post ini?\')"><i class="fa fa-ban"></i></button></form> ';
                     }
                     $regen = '';
-                    if ($p->published_by === 'system' || $p->source) {
+                    if ($p->source && $p->source !== 'web') {
                         $regen = '<form action="'.route('posts.regenerate', $p->id).'" method="POST" style="display:inline">'
                             .csrf_field().'<button type="submit" class="btn btn-info btn-xs" onclick="return confirm(\'Regenerate?\')"><i class="fa fa-refresh"></i></button></form> ';
                     }
@@ -132,7 +135,6 @@ class PostsController extends Controller
 
     public function store(Request $request)
     {
-        Log::info("Memulai proses simpan post: " . $request->title);
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -165,9 +167,9 @@ class PostsController extends Controller
                 'published_at' => $request->published_at,
                 'created_by' => Auth::check() ? Auth::user()->id : 1,
                 'counter' => 0,
+                'source' => 'web',
             ]);
 
-            Log::info("Post berhasil disimpan ke database dengan ID: {$post->id}");
 
             $domainConfig = ShareDomain::where('status', 'active')
                 ->get()
@@ -268,6 +270,7 @@ class PostsController extends Controller
             }
 
             $validatedData['updated_by'] = Auth::check() ? Auth::user()->id : 1;
+            $validatedData['source'] = 'web';
 
             $post->update($validatedData);
 

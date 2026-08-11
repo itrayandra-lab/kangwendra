@@ -1,4 +1,5 @@
 @extends('layouts.admin.app')
+@include('widget.admin.datatables')
 @section('title', 'Manajemen Postingan')
 
 @push('styles')
@@ -21,6 +22,18 @@
                         <i class="fa fa-plus"></i> Tambah Postingan
                     </a>
                 @endcan
+
+                <div class="btn-group mb-3" role="group" id="posts-filter">
+                    <button type="button" class="btn btn-sm {{ !in_array(request('source'), ['web', 'ai']) ? 'btn-primary' : 'btn-default' }}" data-source="">
+                        <i class="fa fa-list"></i> Semua
+                    </button>
+                    <button type="button" class="btn btn-sm {{ request('source') === 'web' ? 'btn-primary' : 'btn-default' }}" data-source="web">
+                        <i class="fa fa-globe"></i> Web
+                    </button>
+                    <button type="button" class="btn btn-sm {{ request('source') === 'ai' ? 'btn-primary' : 'btn-default' }}" data-source="ai">
+                        <i class="fa fa-robot"></i> AI
+                    </button>
+                </div>
 
                 @if(session('success'))
                     <div class="alert alert-success alert-dismissible fade show">
@@ -59,13 +72,16 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    var ajaxUrl = '{{ route("posts.index") }}' + window.location.search;
-    $('#posts-table').DataTable({
+    var currentSource = '{{ request('source', '') }}';
+    var table = $('#posts-table').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: ajaxUrl,
+            url: '{{ route("posts.index") }}',
             type: 'GET',
+            data: function(d) {
+                d.source = currentSource;
+            },
         },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
@@ -85,6 +101,13 @@ $(document).ready(function() {
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         order: [[12, 'desc']]
+    });
+
+    $('#posts-filter button').on('click', function() {
+        currentSource = $(this).data('source') || '';
+        $('#posts-filter button').removeClass('btn-primary').addClass('btn-default');
+        $(this).removeClass('btn-default').addClass('btn-primary');
+        table.ajax.reload();
     });
 });
 </script>

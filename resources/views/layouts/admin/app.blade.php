@@ -28,14 +28,6 @@
     <link href="{{ asset('dist/css/icons.css') }}" rel="stylesheet" type="text/css">
     <link href="{{ asset('dist/css/style.css') }}" rel="stylesheet" type="text/css">
 
-    <!-- DataTables -->
-    <link href="{{ asset('dist/plugins/datatables/jquery.dataTables.min.css') }}" rel="stylesheet" type="text/css" />
-    <link href="{{ asset('dist/plugins/datatables/responsive.bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
-    <link href="{{ asset('dist/plugins/datatables/dataTables.bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
-
-    <!-- Google Maps -->
-    <script src="{{ $meta->google_maps }}"></script>
-
     <!-- Vite Assets -->
     @vite(['resources/css/styles.css', 'resources/js/app.js', 'resources/js/script.js'])
 
@@ -114,7 +106,7 @@
         </div>
     </div>
 
-    <!-- jQuery  -->
+    <!-- Scripts -->
     <script src="{{ asset('dist/js/jquery.min.js') }}"></script>
     <script src="{{ asset('dist/js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('dist/js/modernizr.min.js') }}"></script>
@@ -126,12 +118,6 @@
     <script src="{{ asset('dist/js/wow.min.js') }}"></script>
     <script src="{{ asset('dist/js/jquery.nicescroll.js') }}"></script>
     <script src="{{ asset('dist/js/jquery.scrollTo.min.js') }}"></script>
-    <script src="{{ asset('dist/plugins/jquery-sparkline/jquery.sparkline.min.js') }}"></script>
-    <script src="{{ asset('dist/plugins/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('dist/plugins/datatables/dataTables.bootstrap.js') }}"></script>
-    <script src="{{ asset('dist/plugins/datatables/dataTables.responsive.min.js') }}"></script>
-    <script src="{{ asset('dist/plugins/datatables/responsive.bootstrap.min.js') }}"></script>
-    <script src="{{ asset('dist/pages/dashborad.js') }}"></script>
     <script src="{{ asset('dist/plugins/parsleyjs/parsley.min.js') }}"></script>
 
     <script src="{{ asset('dist/js/app.js') }}"></script>

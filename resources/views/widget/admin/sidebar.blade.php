@@ -86,13 +86,8 @@
 
                             @can('view posts')
                                 <li>
-                                    <a class="{{ isActive($page, 'posts') }}" href="{{ route('posts.index', ['source' => 'manual']) }}">
-                                        Postingan Mandiri
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="{{ isActive($page, 'Postingan AI') }}" href="{{ route('posts.index') }}?source=ai">
-                                        Postingan AI
+                                    <a class="{{ isActive($page, 'posts') }}" href="{{ route('posts.index') }}">
+                                        Postingan
                                     </a>
                                 </li>
                             @endcan

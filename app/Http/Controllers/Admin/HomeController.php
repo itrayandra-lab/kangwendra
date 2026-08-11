@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Posts;
 use App\Models\RefArticle;
 use App\Models\EditorPreference;
+use App\Models\ScraperConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
@@ -17,52 +18,58 @@ class HomeController extends Controller
     public function index()
     {
         $totalUsers = User::count();
-        $totalNews = Posts::count();
-        $newsThisYear = Posts::whereYear('created_at', date('Y'))->count();
-        $newsToday = Posts::whereDate('created_at', date('Y-m-d'))->count();
 
-        // AI Pipeline Stats (Ref Articles breakdown)
-        // ai_research_status values: idle, researching, done, failed
-        $aiStats = [
-            'total_ref_articles' => RefArticle::count(),
-            'pending'            => RefArticle::where('ai_research_status', 'idle')->count(),
-            'processing'         => RefArticle::where('ai_research_status', 'researching')->count(),
-            'published'          => RefArticle::where('ai_research_status', 'done')->count(),
-            'failed'             => RefArticle::where('ai_research_status', 'failed')->count(),
-        ];
-
-        // Published today (all active posts)
         $todayStart = now()->startOfDay();
         $todayEnd = now()->endOfDay();
-        $publishedToday = Posts::whereBetween('published_at', [$todayStart, $todayEnd])
-            ->where('status', 'active')
-            ->count();
 
-        // AI-generated posts today
-        $aiPostsToday = Posts::where('published_by', 'system')
-            ->whereDate('created_at', date('Y-m-d'))
-            ->count();
+        // Single aggregated query for all post stats
+        $postsStats = Posts::selectRaw('
+            COUNT(*) AS total,
+            SUM(YEAR(created_at) = ?) AS news_this_year,
+            SUM(created_at BETWEEN ? AND ?) AS news_today,
+            SUM(published_at BETWEEN ? AND ? AND status = "active") AS published_today,
+            SUM(published_by = "system" AND created_at BETWEEN ? AND ?) AS ai_posts_today
+        ', [date('Y'), $todayStart, $todayEnd, $todayStart, $todayEnd, $todayStart, $todayEnd])->first();
 
-        // Editor/Keyword stats
+        // Single aggregated query for all RefArticle stats
+        $refStats = RefArticle::selectRaw('
+            COUNT(*) AS total,
+            SUM(ai_research_status = "idle") AS pending,
+            SUM(ai_research_status = "researching") AS processing,
+            SUM(ai_research_status = "done") AS published,
+            SUM(ai_research_status = "failed") AS failed,
+            SUM(ai_research_status IN ("researching", "done", "failed")) AS processed
+        ')->first();
+
+        // Single aggregated query for keyword stats
+        $keywordStats = EditorPreference::selectRaw('COUNT(*) AS total, AVG(confidence) AS avg_confidence')->first();
+
+        $aiStats = [
+            'total_ref_articles' => (int) $refStats->total,
+            'pending'            => (int) $refStats->pending,
+            'processing'         => (int) $refStats->processing,
+            'published'          => (int) $refStats->published,
+            'failed'             => (int) $refStats->failed,
+        ];
+
         $researchStats = [
-            'total_keywords'  => EditorPreference::count(),
-            'avg_confidence'  => round(EditorPreference::avg('confidence') ?? 0, 1),
-            // Ready to generate = idle RefArticles
-            'pending_recs'    => RefArticle::where('ai_research_status', 'idle')->count(),
-            // Total RefArticles that have been processed (researching + done + failed)
-            'processed'       => RefArticle::whereIn('ai_research_status', ['researching', 'done', 'failed'])->count(),
+            'total_keywords'  => (int) $keywordStats->total,
+            'avg_confidence'  => round((float) $keywordStats->avg_confidence, 1),
+            'pending_recs'    => (int) $refStats->pending,
+            'processed'       => (int) $refStats->processed,
         ];
 
         return view('pages.admin.home.index', [
             'totalUsers'     => $totalUsers,
-            'totalNews'      => $totalNews,
-            'newsThisYear'   => $newsThisYear,
-            'newsToday'      => $newsToday,
+            'totalNews'      => (int) $postsStats->total,
+            'newsThisYear'   => (int) $postsStats->news_this_year,
+            'newsToday'      => (int) $postsStats->news_today,
             'page'           => 'Dashboard',
             'aiStats'        => $aiStats,
-            'publishedToday' => $publishedToday,
-            'aiPostsToday'   => $aiPostsToday,
+            'publishedToday' => (int) $postsStats->published_today,
+            'aiPostsToday'   => (int) $postsStats->ai_posts_today,
             'researchStats'  => $researchStats,
+            'publishHours'   => ScraperConfig::getPublishScheduleHours(),
         ]);
     }
 }

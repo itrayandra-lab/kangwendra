@@ -1,4 +1,5 @@
 @extends('layouts.admin.app')
+@include('widget.admin.datatables')
 @section('title', $page)
 @push('styles')
    
@@ -63,4 +64,10 @@
     </div>
 @endsection
 
-
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('#datatable-responsive').DataTable();
+});
+</script>
+@endpush

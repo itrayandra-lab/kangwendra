@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Posts extends Model
 {
@@ -42,9 +43,40 @@ class Posts extends Model
         'published_at'  => 'datetime',
         'unpublished_at'=> 'datetime',
         'counter'       => 'integer',
-        'tags'          => 'array',
         'meta_data'     => 'array',
     ];
+
+    protected function tags(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->decodeTags($value),
+            set: fn($value) => json_encode(array_values($this->decodeTags($value))),
+        );
+    }
+
+    private function decodeTags($value): array
+    {
+        if (is_array($value)) {
+            return array_values($value);
+        }
+        if ($value === null || $value === '') {
+            return [];
+        }
+        $decoded = json_decode($value, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [];
+        }
+        if (is_array($decoded)) {
+            return array_values($decoded);
+        }
+        if (is_string($decoded)) {
+            $inner = json_decode($decoded, true);
+            if (is_array($inner)) {
+                return array_values($inner);
+            }
+        }
+        return [];
+    }
 
     /**
      * Get the user who created the post.

@@ -1,4 +1,5 @@
 @extends('layouts.admin.app')
+@include('widget.admin.datatables')
 @section('title', 'Manajemen Galery')
 
 @push('styles')

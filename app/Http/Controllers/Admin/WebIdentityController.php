@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Helpers\FileHelper;
 use App\Models\WebIdentity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\Controller;
 
 class WebIdentityController extends Controller
@@ -69,10 +70,12 @@ class WebIdentityController extends Controller
         $webIdentity = WebIdentity::first();
         if ($webIdentity) {
             $webIdentity->update($data);
-            return redirect()->back()->with('success', 'Identitas web berhasil diperbarui.');
         } else {
             WebIdentity::create($data);
-            return redirect()->back()->with('success', 'Identitas web berhasil dibuat.');
         }
+
+        Cache::forget('web_identity_meta');
+
+        return redirect()->back()->with('success', 'Identitas web berhasil disimpan.');
     }
 }

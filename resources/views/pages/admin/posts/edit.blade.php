@@ -70,10 +70,10 @@
                                 @endif
                             </div>
                             <div style="margin-left:auto; font-size:12px; color:#999;">
-                                @if($post->published_by === 'system')
+                                @if($post->source && $post->source !== 'web')
                                     <span class="label label-info" style="font-size:11px;">AI</span>
                                 @else
-                                    <span class="label label-default" style="font-size:11px;">Editor</span>
+                                    <span class="label label-default" style="font-size:11px;">Web</span>
                                 @endif
                             </div>
                         </div>
