@@ -455,7 +455,7 @@
                     <div class="footer-widget widget">
                         <div class="widget-post-items">
                             <h3 class="widget-title">Artikel Terbaru</h3>
-                            @php $latestPosts = App\Models\Posts::with('category')->where('status', 'active')->whereNotNull('published_at')->latest('published_at')->take(2)->get(); @endphp
+                            @php $latestPosts = App\Models\Posts::with('category')->where('status', 'active')->whereNotNull('published_at')->where('published_at', '<=', \Carbon\Carbon::now())->latest('published_at')->take(2)->get(); @endphp
                             @if($latestPosts->count() > 0)
                                 @foreach($latestPosts as $post)
                                 <div class="widget-post-item img-hover-move {{ !$post->image ? 'no-image' : '' }}">

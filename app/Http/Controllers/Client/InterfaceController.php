@@ -193,7 +193,11 @@ class InterfaceController extends Controller
             abort(404);
         }
 
-        $post = Posts::where('slug', $post)->where('status', 'active')->first();
+        $post = Posts::where('slug', $post)
+            ->where('status', 'active')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', Carbon::now())
+            ->first();
         if (!$post) {
             abort(404);
         }
