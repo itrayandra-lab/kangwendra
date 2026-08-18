@@ -401,8 +401,8 @@ PROMPT;
         $allTags = array_unique(array_merge(['AI', 'Teknologi'], $matchedTags, $aiTags));
         $tags = array_slice(array_values($allTags), 0, 8);
 
-        // Always assign to Teknologi category for AI pipeline articles
-        $category = PostCategory::where('slug', 'teknologi')->first();
+        // Always assign to AI & Teknologi category for AI pipeline articles
+        $category = PostCategory::where('slug', 'ai-teknologi')->first();
 
         // Create tag entries
         foreach ($tags as $tagName) {

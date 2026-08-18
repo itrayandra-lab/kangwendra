@@ -382,7 +382,7 @@ PROMPT;
                     'technical seo', 'backlink', 'link building', 'content marketing',
                     'google spam', 'search quality', 'google indexing',
                 ],
-                'slug' => 'ai-teknologi',
+                'slug' => 'ai-marketing',
                 'tagName' => 'SEO & Search',
             ],
             // Priority 8: Hardware / Chips
