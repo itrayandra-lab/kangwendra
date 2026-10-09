@@ -144,7 +144,7 @@
             "name": "Kapan artikel ini dipublikasikan?",
             "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Artikel dipublikasikan pada {{ $post->published_at ? $post->published_at->format('d F Y') : $post->created_at->format('d F Y') }}. Sumber: {{ $post->source ?? $post->domain ?? 'Kangwendra Editorial' }}.",
+                "text": "Artikel dipublikasikan pada {{ $post->published_at ? $post->published_at->format('d F Y') : $post->created_at->format('d F Y') }}. Sumber: {{ $meta->web_name ?? 'Kang Wendra' }}.",
                 "author": {
                     "@type": "Organization",
                     "name": "{{ $meta->web_name ?? 'Kangwendra' }}"

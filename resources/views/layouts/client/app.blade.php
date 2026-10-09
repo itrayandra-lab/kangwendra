@@ -295,9 +295,6 @@
     <meta name="citation_author" content="{{ $meta->web_name ?? 'Portal Berita' }}">
     <meta name="citation_publication_date" content="{{ isset($post) && $post->published_at ? $post->published_at->format('Y-m-d') : now()->format('Y-m-d') }}">
     <meta name="citation_publisher" content="{{ $meta->web_name ?? 'Portal Berita' }}">
-    @if(isset($post) && $post->source)
-    <meta name="citation_source" content="{{ $post->source }}">
-    @endif
     @if(isset($post) && $post->image)
     <meta name="citation_image" content="{{ getFile($post->image) }}">
     @endif
