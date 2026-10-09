@@ -15,21 +15,26 @@ class UploadImageEditor extends Controller
     # image handleler
     public function uploadImage(Request $request)
     {
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $randomName = 'image_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-            $path = public_path('assets/app/image-editor');
-
-            if (!File::exists($path)) {
-                File::makeDirectory($path, 0777, true);
-            }
-
-            $file->move($path, $randomName);
-            $url = asset('assets/app/image-editor/' . $randomName);
-
-            return response()->json(['url' => $url], 200);
+        $file = $request->file('file');
+        if (! $file || ! $file->isValid()) {
+            $limit = ini_get('upload_max_filesize');
+            return response()->json(['error' => "Gambar gagal diterima server. Ukuran maksimal saat ini {$limit}."], 422);
         }
-        return response()->json(['error' => 'No file uploaded'], 400);
+
+        $ext = strtolower($file->getClientOriginalExtension());
+        if (! in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true) || ! @getimagesize($file->getPathname())) {
+            return response()->json(['error' => 'File harus berupa gambar JPG, PNG, GIF, atau WEBP.'], 422);
+        }
+
+        $randomName = 'image_' . Str::random(10) . '.' . $ext;
+        $path = public_path('assets/app/image-editor');
+        if (! File::exists($path)) {
+            File::makeDirectory($path, 0755, true);
+        }
+
+        $file->move($path, $randomName);
+
+        return response()->json(['url' => asset('assets/app/image-editor/' . $randomName)], 200);
     }
 
     public function deleteImage(Request $request)
