@@ -299,6 +299,7 @@
 
 @push('scripts')
 <script src="{{ asset('dist/plugins/summernote/summernote.min.js') }}"></script>
+    <script src="{{ asset('dist/js/image-compress.js') }}?v={{ @filemtime(public_path('dist/js/image-compress.js')) }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -358,9 +359,9 @@ $(document).ready(function() {
             ['view', ['fullscreen', 'codeview', 'help']]
         ],
         callbacks: {
-            onImageUpload: function(files) {
+            onImageUpload: async function(files) {
                 var formData = new FormData();
-                formData.append('file', files[0]);
+                formData.append('file', await window.lunarayCompressImage(files[0]));
                 formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
                 Swal.fire({ title: 'Uploading...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 $.ajax({
@@ -376,9 +377,9 @@ $(document).ready(function() {
                             $('.summernote').summernote('insertNode', img[0]);
                         }
                     },
-                    error: function() { 
+                    error: function(xhr) { 
                         Swal.close(); 
-                        Swal.fire('Error', 'Gagal mengunggah gambar.', 'error'); 
+                        Swal.fire('Error', (xhr.responseJSON && xhr.responseJSON.error) || 'Gagal mengunggah gambar.', 'error'); 
                     }
                 });
             },
