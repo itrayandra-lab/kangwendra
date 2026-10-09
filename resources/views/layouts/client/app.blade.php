@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <!-- Basic SEO Meta Tags -->
     <title>{{ $meta->meta_title ?? 'Portal Berita' }}</title>
@@ -311,7 +312,18 @@
     <link rel="stylesheet" href="{{ asset('client/assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('client/assets/css/venobox.min.css') }}">
     <link rel="stylesheet" href="{{ asset('client/assets/css/swiper.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('client/assets/css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="{{ asset('fonts/nexa/Nexa-Light.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('fonts/nexa/Nexa-Bold.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&display=swap"></noscript>
+    <link rel="stylesheet" href="{{ asset('client/assets/css/main.css') }}?v={{ @filemtime(public_path('client/assets/css/main.css')) }}">
+    <link rel="stylesheet" href="{{ asset('client/assets/css/lunaray-brand.css') }}?v={{ @filemtime(public_path('client/assets/css/lunaray-brand.css')) }}">
+    <link rel="stylesheet" href="{{ asset('client/assets/css/lunaray-header.css') }}?v={{ @filemtime(public_path('client/assets/css/lunaray-header.css')) }}">
+    <link rel="stylesheet" href="{{ asset('client/assets/css/lunaray-footer.css') }}?v={{ @filemtime(public_path('client/assets/css/lunaray-footer.css')) }}">
+    <link rel="stylesheet" href="{{ asset('client/assets/css/aray-chat.css') }}?v={{ @filemtime(public_path('client/assets/css/aray-chat.css')) }}">
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
         /* Global Image Rounded Corners */
@@ -373,6 +385,7 @@
     </style>
 
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('client/assets/css/lunaray-type.css') }}?v={{ @filemtime(public_path('client/assets/css/lunaray-type.css')) }}">
     
     <script type="application/ld+json">
     {
@@ -400,149 +413,28 @@
 </head>
 
 <body>
-    
+    <script>(function(){ document.body.classList.add('loaded'); })();</script>
     @include('widget.client.header')
 
-    <main>
+    <main class="{{ request()->routeIs('beranda') ? '' : 'has-fixed-header-offset' }}">
         @yield('header')
         @yield('content')
     </main>
 
-    <footer class="footer-section bg-light-red">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-3 col-md-6">
-                    <div class="footer-widget widget">
-                        <div class="widget-about">
-                            <div class="footer-logo">
-                                <a href="{{ url('/') }}">
-                                    <img src="{{ getFile($meta->logo) }}" alt="{{ $meta->web_name ?? 'Portal' }}" height="80"> <br>
-                                </a>
-                            </div>
-                            <p>{{ App\Models\WebIdentity::orderBy('id', 'desc')->first()?->meta_description ?? 'Portal berita terpercaya dengan informasi terkini dan akurat.' }}</p>
-                            <ul class="footer-social">
-                                @if(!empty($meta->facebook_link) && $meta->facebook_link !== '#')
-                                <li><a href="{{ $meta->facebook_link }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M512 256C512 114.6 397.4 0 256 0S0 114.6 0 256C0 376 82.7 476.8 194.2 504.5V334.2H141.4V256h52.8V222.3c0-87.1 39.4-127.5 125-127.5c16.2 0 44.2 3.2 55.7 6.4V172c-6-.6-16.5-1-29.6-1c-42 0-58.2 15.9-58.2 57.2V256h83.6l-14.4 78.2H287V510.1C413.8 494.8 512 386.9 512 256h0z"></path></svg></a></li>
-                                @endif
-                                @if(!empty($meta->twitter_link) && $meta->twitter_link !== '#')
-                                <li><a href="{{ $meta->twitter_link }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path></svg></a></li>
-                                @endif
-                                @if(!empty($meta->instagram_link) && $meta->instagram_link !== '#')
-                                <li><a href="{{ $meta->instagram_link }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"></path></svg></a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-6">
-                    <div class="footer-widget widget">
-                        <div class="widget-nav-menu">
-                            <h3 class="widget-title">Kategori</h3>
-                            <ul class="menu">
-                                @php $categories = App\Models\PostCategory::take(6)->get(); @endphp
-                                @if($categories->count() > 0)
-                                    @foreach($categories as $category)
-                                    <li><a href="/{{ $category->slug ?? '#' }}">{{ $category->name ?? 'Kategori' }}</a></li>
-                                    @endforeach
-                                @else
-                                    <li><a href="#">Belum ada kategori</a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <div class="footer-widget widget">
-                        <div class="widget-post-items">
-                            <h3 class="widget-title">Artikel Terbaru</h3>
-                            @php $latestPosts = App\Models\Posts::with('category')->where('status', 'active')->whereNotNull('published_at')->where('published_at', '<=', \Carbon\Carbon::now())->latest('published_at')->take(2)->get(); @endphp
-                            @if($latestPosts->count() > 0)
-                                @foreach($latestPosts as $post)
-                                <div class="widget-post-item img-hover-move {{ !$post->image ? 'no-image' : '' }}">
-                                    @if($post->image)
-                                        <div class="widget-post-thumb media">
-                                            <a href="/{{ $post->category?->slug ?? 'news' }}/{{ $post->slug }}"><img src="{{ getFile($post->image) }}" alt="{{ $post->title }}"></a>
-                                        </div>
-                                    @endif
-                                    <div class="widget-post-content">
-                                        <h3><a href="/{{ $post->category?->slug ?? 'news' }}/{{ $post->slug }}" class="text-hover">{{ $post->title }}</a></h3>
-                                        <ul class="post-meta">
-                                            <li><a href="/{{ $post->category?->slug ?? 'news' }}">{{ $post->category?->name ?? 'Berita' }}</a></li>
-                                            <li class="sep"></li>
-                                            <li><a href="#" class="date">{{ $post->published_at ? \Carbon\Carbon::parse($post->published_at)->format('d.m.Y') : date('d.m.Y') }}</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                @endforeach
-                            @else
-                                <div class="widget-post-item">
-                                    <div class="widget-post-content">
-                                        <h3>Belum ada artikel terbaru</h3>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="footer-widget widget">
-                        <div class="contact-widget">
-                            <h3 class="widget-title">Info Kontak</h3>
-                            <ul class="contact-info">
-                                @if(!empty($meta->address))
-                                <li><span>Alamat:</span>{{ $meta->address }}</li>
-                                @endif
-                                @if(!empty($meta->phone))
-                                <li><span>Telepon:</span><a href="tel:{{ $meta->phone }}">{{ $meta->phone }}</a></li>
-                                @endif
-                                @if(!empty($meta->email))
-                                <li><span>Email:</span><a href="mailto:{{ $meta->email }}">{{ $meta->email }}</a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="copyright-area">
-                <div class="copyright-text">
-                    © <span id="currentYear"></span> {{ $meta->web_name ?? 'Portal' }}, All Rights Reserved.
-                </div>
-                <ul class="footer-social">
-                    <li>Ikuti:</li>
-                    @if(!empty($meta->facebook_link) && $meta->facebook_link !== '#')
-                    <li><a href="{{ $meta->facebook_link }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M512 256C512 114.6 397.4 0 256 0S0 114.6 0 256C0 376 82.7 476.8 194.2 504.5V334.2H141.4V256h52.8V222.3c0-87.1 39.4-127.5 125-127.5c16.2 0 44.2 3.2 55.7 6.4V172c-6-.6-16.5-1-29.6-1c-42 0-58.2 15.9-58.2 57.2V256h83.6l-14.4 78.2H287V510.1C413.8 494.8 512 386.9 512 256h0z"></path></svg></a></li>
-                    @endif
-                    @if(!empty($meta->twitter_link) && $meta->twitter_link !== '#')
-                    <li><a href="{{ $meta->twitter_link }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path></svg></a></li>
-                    @endif
-                    @if(!empty($meta->instagram_link) && $meta->instagram_link !== '#')
-                    <li><a href="{{ $meta->instagram_link }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"></path></svg></a></li>
-                    @endif
-                </ul>
-            </div>
-        </div>
-    </footer>
+    @include('widget.client.footer')
 
-    <div id="scrollup">
-        <button id="scroll-top" class="scroll-to-top">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                <path d="M450.001-180.001v-485.077L222.154-437.232 180.001-480 480-779.999 779.999-480l-42.153 42.768-227.847-227.846v485.077h-59.998Z" />
-            </svg>
-        </button>
-    </div>
+    @include('widget.client.aray-chat')
 
-    <script src="{{ asset('client/assets/js/vendor/jquary-3.6.0.min.js') }}"></script>
-    <script src="{{ asset('client/assets/js/vendor/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('client/assets/js/vendor/popper.min.js') }}"></script>
-    <script src="{{ asset('client/assets/js/vendor/venobox.min.js') }}"></script>
-    <script src="{{ asset('client/assets/js/vendor/swiper.min.js') }}"></script>
-    <script src="{{ asset('client/assets/js/vendor/smooth-scroll.js') }}"></script>
+    <script src="{{ asset('client/assets/js/vendor/jquery-3.6.0.min.js') }}"></script>
     <script src="{{ asset('client/assets/js/main.js') }}"></script>
+    <script src="{{ asset('client/assets/js/lunaray-beranda.js') }}"></script>
+    <script src="{{ asset('client/assets/js/vendor/swiper.min.js') }}"></script>
+    <script src="{{ asset('client/assets/js/aray-chat.js') }}?v={{ @filemtime(public_path('client/assets/js/aray-chat.js')) }}"></script>
 
     @stack('scripts')
 
     <script>
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        var cy = document.getElementById('currentYear'); if (cy) cy.textContent = new Date().getFullYear();
     </script>
 
 </body>
