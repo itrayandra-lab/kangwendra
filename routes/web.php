@@ -257,7 +257,7 @@ Route::get('/llms.txt', [\App\Http\Controllers\SeoController::class, 'llms'])->n
 Route::get('/opensearch.xml', [\App\Http\Controllers\SeoController::class, 'opensearch'])->name('opensearch');
 Route::get('/sitemap.xml', [\App\Http\Controllers\SeoController::class, 'sitemapIndex'])->name('sitemap.index');
 Route::post('/aray/chat', [ArayChatController::class, 'chat'])
-    ->middleware('throttle:12,1')
+    ->middleware('throttle:aray')
     ->name('aray.chat');
 
 Route::get('/sitemap-news.xml', [\App\Http\Controllers\SeoController::class, 'sitemapNews'])->name('sitemap.news');
