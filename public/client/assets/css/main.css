@@ -20,11 +20,65 @@
     @DynamicLayers
 ====================================================*/
 
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Thin.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Thin.otf') format('opentype');
+    font-display: swap;
+    font-weight: 100;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Light.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Light.otf') format('opentype');
+    font-display: swap;
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Regular.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Regular.otf') format('opentype');
+    font-display: swap;
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Bold.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Bold.otf') format('opentype');
+    font-display: swap;
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Heavy.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Heavy.otf') format('opentype');
+    font-display: swap;
+    font-weight: 800;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-XBold.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-XBold.otf') format('opentype');
+    font-display: swap;
+    font-weight: 900;
+    font-style: normal;
+}
+
 @import url("https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap");
 
 :root {
-    --dl-heading-font: "Jost", sans-serif;
-    --dl-body-font: "Jost", sans-serif;
+    --dl-heading-font: "Nexa", "Jost", sans-serif;
+    --dl-body-font: "Nexa", "Jost", sans-serif;
     --dl-primary-color: #f9e498;
     --dl-secondary-color: #089fac;
     --dl-heading-color: #000;

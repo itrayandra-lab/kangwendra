@@ -1,0 +1,70 @@
+/* ===== Site-wide type system: Cormorant Garamond for display, Nexa for everything else ===== */
+
+:root {
+    --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    /* Cormorant has a small x-height; this renders it at the optical size the layouts were drawn for. */
+    --display-adjust: .46;
+}
+
+.hero-heading,
+.ailuna-card-title,
+.path-panel-name,
+.cat-specialty-heading,
+.ai-simulator-title,
+.faq-cta-heading,
+.faqp-cta-heading,
+.wl-that-is-why-statement,
+.cap-title,
+.cap-cta-headline,
+.start-cta-signature-name {
+    font-family: var(--font-display);
+    font-size-adjust: var(--display-adjust);
+    letter-spacing: 0;
+}
+
+.hero-heading {
+    line-height: 1.08;
+}
+
+.hero-heading-bold,
+.hero-heading-accent-bold {
+    font-weight: 600;
+}
+
+.hero-heading-accent {
+    font-weight: 500;
+    font-style: italic;
+}
+
+/* Contact header: the legacy h2 rules, mirrored for the page's real h1. */
+.page-header .page-content h1 {
+    font-size: 42px;
+    font-weight: 400;
+    letter-spacing: 0;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+}
+
+.page-header .page-content h1 span {
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 400;
+    letter-spacing: 0;
+    position: relative;
+    padding-left: 35px;
+    margin-left: 10px;
+    margin-top: 5px;
+}
+
+.page-header .page-content h1 span:before {
+    background-color: var(--dl-grey-color);
+    content: "";
+    width: 30px;
+    height: 1px;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}

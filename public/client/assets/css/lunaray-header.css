@@ -1,0 +1,460 @@
+.has-fixed-header-offset {
+    padding-top: 104px;
+}
+
+@media (max-width: 992px) {
+    .has-fixed-header-offset {
+        padding-top: 84px;
+    }
+}
+
+/* ===== Lunaray Header ===== */
+.lunaray-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999;
+    padding: 26px 0;
+    background: transparent;
+    transition: background .35s ease, box-shadow .35s ease, padding .35s ease;
+}
+
+.lunaray-header.is-scrolled {
+    background: rgba(255, 255, 255, .92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 6px 24px rgba(28, 43, 69, .08);
+    padding: 14px 0;
+}
+
+.lunaray-header-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 5vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: nowrap;
+}
+
+.lunaray-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.lunaray-header-logo:hover {
+    text-decoration: none;
+}
+
+.logo-img {
+    height: 40px;
+    width: auto;
+    display: block;
+}
+
+.logo-tagline {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--lunaray-navy, #1c2b45);
+    opacity: .65;
+    line-height: 1.5;
+    border-left: 1px solid rgba(28, 43, 69, .25);
+    padding-left: 12px;
+}
+
+.lunaray-header-nav {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+    /* visible (not hidden) so the Capabilities dropdown can hang below the bar;
+       the breakpoints below shrink gap/font so the links still fit on one row. */
+    overflow: visible;
+}
+
+.lunaray-header-nav ul {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-wrap: nowrap;
+}
+
+.lunaray-header-nav a {
+    font-family: 'Nexa', sans-serif;
+    font-size: 14.5px;
+    font-weight: 300;
+    color: var(--lunaray-navy, #1c2b45);
+    text-decoration: none;
+    white-space: nowrap;
+    position: relative;
+    padding-bottom: 4px;
+}
+
+.lunaray-header-nav a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background: var(--lunaray-salmon-dark, #c97768);
+    transition: width .25s ease;
+}
+
+.lunaray-header-nav a:hover {
+    text-decoration: none;
+    color: var(--lunaray-navy, #1c2b45);
+}
+
+.lunaray-header-nav a:hover::after {
+    width: 100%;
+}
+
+/* ----- Nav dropdown (Capabilities) ----- */
+.lunaray-nav-item.has-menu {
+    position: relative;
+}
+
+.lunaray-nav-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    /* Plain nav links are inline, so their box height comes from font metrics, not
+       line-height; being inline-flex, this one sizes by line-height instead, which
+       made it taller and vertically offset from its siblings. Match their height. */
+    line-height: 18px;
+}
+
+.lunaray-nav-caret {
+    transition: transform .25s ease;
+}
+
+.lunaray-nav-item.is-open .lunaray-nav-caret {
+    transform: rotate(180deg);
+}
+
+.lunaray-nav-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 300px;
+    padding: 8px;
+    margin-top: 14px;
+    background: rgba(255, 255, 255, .97);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(28, 43, 69, .08);
+    border-radius: 16px;
+    box-shadow: 0 22px 48px -18px rgba(28, 43, 69, .35);
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 6px);
+    transition: opacity .2s ease, transform .2s ease, visibility 0s linear .2s;
+    z-index: 5;
+}
+
+/* Invisible bridge across the gap so moving the pointer down doesn't close the menu. */
+.lunaray-nav-menu::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -16px;
+    height: 16px;
+}
+
+.lunaray-nav-item.is-open .lunaray-nav-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    transition: opacity .2s ease, transform .2s ease, visibility 0s;
+}
+
+/* The ID + extra classes outrank the homepage's dark-hero rule that turns nav links
+   white, which would otherwise make these links vanish on the white panel. */
+#site-header .lunaray-header-nav .lunaray-nav-menu .lunaray-nav-menu-link {
+    display: block;
+    padding: 12px 14px;
+    border-radius: 10px;
+    white-space: normal;
+    color: var(--lunaray-navy, #1c2b45);
+    text-decoration: none;
+    transition: background .2s ease;
+}
+
+#site-header .lunaray-header-nav .lunaray-nav-menu .lunaray-nav-menu-link::after {
+    display: none;
+}
+
+#site-header .lunaray-header-nav .lunaray-nav-menu a.lunaray-nav-menu-link:hover,
+#site-header .lunaray-header-nav .lunaray-nav-menu a.lunaray-nav-menu-link:focus-visible {
+    background: rgba(217, 141, 128, .1);
+}
+
+.lunaray-nav-menu-link strong {
+    display: block;
+    font-family: 'Nexa', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+
+.lunaray-nav-menu-link span {
+    display: block;
+    font-family: 'Nexa', sans-serif;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--lunaray-text, #4a5568);
+}
+
+.lunaray-nav-menu-link.is-disabled {
+    opacity: .55;
+    cursor: default;
+}
+
+.lunaray-nav-menu-link em,
+.lunaray-mobile-sub em {
+    font-style: normal;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--lunaray-salmon-dark, #c97768);
+    background: rgba(217, 141, 128, .14);
+    padding: 3px 7px;
+    border-radius: 999px;
+    margin-left: 6px;
+    vertical-align: 1px;
+}
+
+.lunaray-mobile-sub {
+    list-style: none;
+    margin: 0 0 6px;
+    padding: 0 0 0 16px;
+}
+
+.lunaray-mobile-nav .lunaray-mobile-sub a,
+.lunaray-mobile-sub .is-disabled {
+    display: block;
+    padding: 10px 0;
+    font-family: 'Nexa', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--lunaray-navy, #1c2b45);
+    border-bottom: 1px solid rgba(28, 43, 69, .06);
+}
+
+.lunaray-mobile-sub .is-disabled {
+    opacity: .55;
+}
+
+.lunaray-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+/* .lunaray-header-cta sizing comes from .glass-btn-sm (lunaray-brand.css) */
+
+.lunaray-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--lunaray-navy, #1c2b45);
+    cursor: pointer;
+    padding: 6px;
+}
+
+.lunaray-mobile-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.lunaray-mobile-toggle span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--lunaray-navy, #1c2b45);
+    border-radius: 2px;
+    transition: transform .25s ease, opacity .25s ease;
+}
+
+.lunaray-mobile-toggle.is-active span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.lunaray-mobile-toggle.is-active span:nth-child(2) {
+    opacity: 0;
+}
+
+.lunaray-mobile-toggle.is-active span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+.lunaray-mobile-nav {
+    display: none;
+    max-height: 0;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .97);
+    backdrop-filter: blur(14px);
+    transition: max-height .35s ease;
+}
+
+.lunaray-mobile-nav.is-open {
+    max-height: min(640px, calc(100vh - 68px));
+    overflow-y: auto;
+}
+
+.lunaray-mobile-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 20px 5vw 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lunaray-mobile-nav a {
+    display: block;
+    padding: 12px 0;
+    font-family: 'Nexa', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--lunaray-navy, #1c2b45);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(28, 43, 69, .08);
+}
+
+.lunaray-mobile-nav .glass-btn {
+    /* ".lunaray-mobile-nav a" above sets display:block at higher specificity,
+       collapsing this into a full-width box with the text stuck at the left
+       instead of the centered pill every other .glass-btn renders as. */
+    display: inline-flex;
+    justify-content: center;
+    /* width:100% here would add to the side margins below instead of being
+       inset by them, overflowing off the right edge of the screen. */
+    width: calc(100% - 10vw);
+    box-sizing: border-box;
+    margin: 20px 5vw;
+    border-bottom: none;
+}
+
+@media (max-width: 1550px) {
+    .lunaray-header-nav ul {
+        gap: 18px;
+    }
+
+    .lunaray-header-nav a {
+        font-size: 13.5px;
+    }
+}
+
+@media (max-width: 1320px) {
+    .lunaray-header-nav ul {
+        gap: 13px;
+    }
+
+    .lunaray-header-nav a {
+        font-size: 12.5px;
+    }
+
+    .lunaray-header-actions {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 1140px) {
+    .lunaray-header-nav {
+        display: none;
+    }
+
+    .lunaray-header-cta {
+        display: none;
+    }
+
+    .lunaray-mobile-toggle {
+        display: flex;
+    }
+
+    .lunaray-mobile-nav {
+        display: block;
+        position: fixed;
+        top: 68px;
+        left: 0;
+        width: 100%;
+    }
+
+    .lunaray-header.is-scrolled {
+        padding: 14px 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .logo-img {
+        height: 32px;
+    }
+
+    .lunaray-header-logo {
+        gap: 8px;
+    }
+
+    .logo-tagline {
+        font-size: 7px;
+        letter-spacing: .4px;
+        padding-left: 8px;
+    }
+
+    .lunaray-header-actions {
+        gap: 8px;
+    }
+}
+
+#site-header .lunaray-nav-menu-link strong {
+    color: var(--lunaray-navy, #16204a);
+}
+
+/* ===== Inner pages (article, category, tag, search, ...) =====
+   The new brand sets a dark navy body, but these pages use the light template styles,
+   so give them a light reading surface and a solid header instead of a see-through one. */
+main.has-fixed-header-offset {
+    background-color: #faf6ef;
+    color: #1f2937;
+    min-height: 60vh;
+}
+body:has(main.has-fixed-header-offset) .kw-header {
+    background: rgba(7, 21, 33, 0.97);
+    box-shadow: 0 1px 0 rgba(222, 193, 154, 0.12), 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+main.has-fixed-header-offset .single-post-content,
+main.has-fixed-header-offset .single-post-content p,
+main.has-fixed-header-offset .single-post-content li { color: #1f2937; }
+main.has-fixed-header-offset .post-title,
+main.has-fixed-header-offset .single-post-content h1,
+main.has-fixed-header-offset .single-post-content h2,
+main.has-fixed-header-offset .single-post-content h3,
+main.has-fixed-header-offset .single-post-content h4 { color: #07162b; }
+main.has-fixed-header-offset .single-post-content a { color: #b57b42; text-decoration: underline; }

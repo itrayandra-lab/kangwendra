@@ -1,0 +1,1303 @@
+/* ================================================================
+   KANG WENDRA — Brand Design System
+   v2.0 · Complete Brand Token & Base Styles
+================================================================ */
+
+/* ===== COLOR PALETTE ===== */
+:root {
+    /* Navy — darkest surfaces & backgrounds */
+    --kw-navy-950: #071521;
+    --kw-navy-900: #0c1d2b;
+    --kw-navy-800: #152a3b;
+
+    /* Ivory — light surfaces, text on dark */
+    --kw-ivory-50: #faf6ef;
+    --kw-ivory-100: #f0e8dc;
+
+    /* Ink — text on light surfaces */
+    --kw-ink-900: #15202b;
+    --kw-ink-600: #4f555b;
+
+    /* Gold — accent, fill buttons, highlights */
+    --kw-gold-400: #dec19a;
+    --kw-gold-500: #c6a274;
+    --kw-gold-700: #886338;
+
+    /* Semantic text colors */
+    --kw-text-dark: #d4dae0;
+    --kw-text-dark-dim: rgba(212, 218, 224, 0.6);
+    --kw-text-light: var(--kw-ink-900);
+    --kw-text-light-dim: var(--kw-ink-600);
+
+    /* Borders */
+    --kw-border-dark: rgba(222, 193, 154, 0.24);
+    --kw-border-light: rgba(21, 32, 43, 0.16);
+
+    /* Surface colors */
+    --kw-surface-dark: var(--kw-navy-900);
+    --kw-surface-dark-elevated: var(--kw-navy-800);
+    --kw-surface-light: var(--kw-ivory-50);
+    --kw-surface-light-secondary: var(--kw-ivory-100);
+
+    /* Semantic aliases */
+    --kw-bg: var(--kw-navy-950);
+    --kw-bg-surface: var(--kw-navy-900);
+    --kw-bg-elevated: var(--kw-navy-800);
+    --kw-text: var(--kw-ivory-50);
+    --kw-text-2: rgba(250, 246, 239, 0.6);
+    --kw-text-3: rgba(250, 246, 239, 0.35);
+    --kw-text-4: rgba(250, 246, 239, 0.2);
+    --kw-border: rgba(250, 246, 239, 0.07);
+    --kw-border-2: rgba(250, 246, 239, 0.04);
+    --kw-accent: var(--kw-gold-400);
+    --kw-accent-dim: rgba(198, 162, 116, 0.15);
+    --kw-accent-glow: rgba(198, 162, 116, 0.08);
+}
+
+/* ===== TYPOGRAPHY ===== */
+:root {
+    --kw-font-heading: "Cormorant Garamond", Georgia, serif;
+    --kw-font-body: "Jost", system-ui, -apple-system, sans-serif;
+    --kw-font-ui: "Inter", system-ui, -apple-system, sans-serif;
+
+    /* Font size scale */
+    --kw-fs-wordmark: clamp(48px, 5vw, 66px);
+    --kw-fs-role: clamp(20px, 2.5vw, 32px);
+    --kw-fs-h2-narrative: clamp(28px, 3vw, 42px);
+    --kw-fs-h2-section: clamp(32px, 3.5vw, 46px);
+    --kw-fs-manifesto: clamp(36px, 4vw, 54px);
+    --kw-fs-subheading: clamp(20px, 2.2vw, 28px);
+    --kw-fs-card-title-featured: clamp(20px, 1.8vw, 25px);
+    --kw-fs-card-title-secondary: clamp(16px, 1.4vw, 19px);
+    --kw-fs-body: clamp(16px, 1.3vw, 18px);
+    --kw-fs-card-excerpt: clamp(13px, 1.1vw, 15px);
+    --kw-fs-metadata: 12px;
+    --kw-fs-eyebrow: 11px;
+    --kw-fs-button: 14px;
+
+    /* Line heights */
+    --kw-lh-tight: 1;
+    --kw-lh-snug: 1.12;
+    --kw-lh-normal: 1.2;
+    --kw-lh-relaxed: 1.4;
+    --kw-lh-body: 1.6;
+    --kw-lh-loose: 1.8;
+
+    /* Letter spacing */
+    --kw-ls-tight: -0.03em;
+    --kw-ls-normal: 0;
+    --kw-ls-wide: 0.06em;
+    --kw-ls-wider: 0.12em;
+    --kw-ls-widest: 0.15em;
+
+    /* Font weights */
+    --kw-fw-light: 300;
+    --kw-fw-regular: 400;
+    --kw-fw-medium: 500;
+    --kw-fw-semibold: 600;
+    --kw-fw-bold: 700;
+    --kw-fw-extrabold: 800;
+}
+
+/* ===== SPACING ===== */
+:root {
+    --kw-space-xs: 4px;
+    --kw-space-sm: 8px;
+    --kw-space-md: 12px;
+    --kw-space-lg: 16px;
+    --kw-space-xl: 20px;
+    --kw-space-2xl: 24px;
+    --kw-space-3xl: 32px;
+    --kw-space-4xl: 40px;
+    --kw-space-5xl: 48px;
+    --kw-space-6xl: 56px;
+    --kw-space-7xl: 64px;
+    --kw-space-8xl: 80px;
+    --kw-space-9xl: 96px;
+    --kw-space-10xl: 120px;
+}
+
+/* ===== LAYOUT ===== */
+:root {
+    --kw-container-max: 1280px;
+    --kw-gutter-desktop: 80px;
+    --kw-gutter-tablet: 48px;
+    --kw-gutter-mobile: 20px;
+    --kw-copy-width: 720px;
+    --kw-header-height: 80px;
+    --kw-header-height-mobile: 64px;
+}
+
+/* ===== GLOBAL RESET ===== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+body {
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-body);
+    line-height: var(--kw-lh-body);
+    color: var(--kw-text);
+    background-color: var(--kw-bg);
+    overflow-x: hidden;
+}
+
+img,
+video {
+    max-width: 100%;
+    display: block;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+ul,
+ol {
+    list-style: none;
+}
+
+/* ===== SELECTION ===== */
+::selection {
+    background: rgba(198, 162, 116, 0.3);
+    color: var(--kw-ivory-50);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--kw-navy-950);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--kw-gold-700);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--kw-gold-500);
+}
+
+/* ===== FOCUS ===== */
+:focus-visible {
+    outline: 2px solid var(--kw-gold-400);
+    outline-offset: 3px;
+}
+
+/* ================================================================
+   TYPOGRAPHY CLASSES
+================================================================ */
+
+/* --- Eyebrow --- */
+.kw-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--kw-space-md);
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-eyebrow);
+    font-weight: var(--kw-fw-semibold);
+    letter-spacing: var(--kw-ls-widest);
+    text-transform: uppercase;
+    color: var(--kw-gold-500);
+    margin-bottom: var(--kw-space-xl);
+}
+
+.kw-eyebrow-dash {
+    display: inline-block;
+    width: 28px;
+    height: 1px;
+    background: var(--kw-gold-500);
+    flex-shrink: 0;
+}
+
+/* --- Headlines --- */
+.kw-h1,
+.kw-headline {
+    font-family: var(--kw-font-heading);
+    font-size: var(--kw-fs-h2-narrative);
+    font-weight: var(--kw-fw-bold);
+    line-height: var(--kw-lh-snug);
+    letter-spacing: var(--kw-ls-tight);
+    color: var(--kw-ivory-50);
+    margin-bottom: var(--kw-space-xl);
+}
+
+.kw-headline--serif {
+    font-family: var(--kw-font-heading);
+}
+
+.kw-headline--large {
+    font-size: var(--kw-fs-manifesto);
+    font-weight: var(--kw-fw-extrabold);
+    letter-spacing: var(--kw-ls-tight);
+    text-transform: uppercase;
+    line-height: var(--kw-lh-tight);
+    margin-bottom: var(--kw-space-2xl);
+}
+
+.kw-headline-accent {
+    color: var(--kw-gold-400);
+    font-weight: var(--kw-fw-light);
+}
+
+.kw-h2 {
+    font-family: var(--kw-font-heading);
+    font-size: var(--kw-fs-h2-section);
+    font-weight: var(--kw-fw-bold);
+    line-height: 1.08;
+    letter-spacing: var(--kw-ls-tight);
+    color: var(--kw-ivory-50);
+}
+
+.kw-h3 {
+    font-family: var(--kw-font-heading);
+    font-size: var(--kw-fs-subheading);
+    font-weight: var(--kw-fw-semibold);
+    line-height: var(--kw-lh-normal);
+    color: var(--kw-ivory-50);
+}
+
+/* --- Body --- */
+.kw-body {
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-body);
+    line-height: var(--kw-lh-body);
+    font-weight: var(--kw-fw-regular);
+    color: var(--kw-body-dark);
+    margin-bottom: var(--kw-space-xl);
+    max-width: var(--kw-copy-width);
+}
+
+.kw-body--dim {
+    color: var(--kw-text-dark-dim);
+}
+
+.kw-body--center {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.kw-body--meta {
+    font-size: var(--kw-fs-metadata);
+    color: var(--kw-text-3);
+    letter-spacing: 0.02em;
+    margin-bottom: var(--kw-space-3xl);
+}
+
+.kw-small {
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-card-excerpt);
+    line-height: var(--kw-lh-relaxed);
+    color: var(--kw-text-dark-dim);
+}
+
+/* --- Opening / Pull quote --- */
+.kw-opening {
+    font-family: var(--kw-font-heading);
+    font-size: var(--kw-fs-subheading);
+    font-weight: var(--kw-fw-medium);
+    font-style: italic;
+    line-height: var(--kw-lh-relaxed);
+    color: var(--kw-gold-400);
+    margin-bottom: var(--kw-space-2xl);
+    max-width: var(--kw-copy-width);
+}
+
+/* --- Underline statement --- */
+.kw-underline-statement {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--kw-space-xl);
+    margin: var(--kw-space-3xl) 0;
+    padding-top: var(--kw-space-xl);
+    border-top: 1px solid var(--kw-line-dark);
+}
+
+.kw-underline-statement .kw-eyebrow-dash {
+    flex-shrink: 0;
+    margin-top: 8px;
+}
+
+.kw-underline-statement p {
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-body);
+    font-weight: var(--kw-fw-regular);
+    line-height: var(--kw-lh-relaxed);
+    color: var(--kw-text-dark-dim);
+    margin: 0;
+}
+
+/* ================================================================
+   BUTTONS
+================================================================ */
+.kw-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--kw-space-sm);
+    min-height: 48px;
+    padding: 14px 24px;
+    border-radius: 999px;
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-button);
+    font-weight: var(--kw-fw-semibold);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        background 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease;
+    border: 1px solid transparent;
+}
+
+.kw-btn:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.kw-btn:active {
+    transform: translateY(0);
+}
+
+/* Primary — Gold fill */
+.kw-btn-primary {
+    color: var(--kw-ink-900);
+    background: var(--kw-gold-400);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 4px 20px rgba(222, 193, 154, 0.25),
+        inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.kw-btn-primary:hover {
+    background: var(--kw-gold-500);
+    box-shadow:
+        0 8px 28px rgba(222, 193, 154, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.4);
+    color: var(--kw-ink-900);
+}
+
+/* Secondary / Outline — Gold outline */
+.kw-btn-outline {
+    color: var(--kw-gold-400);
+    background: transparent;
+    border-color: var(--kw-border-dark);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.kw-btn-outline:hover {
+    background: rgba(222, 193, 154, 0.1);
+    border-color: rgba(222, 193, 154, 0.45);
+    color: var(--kw-gold-400);
+}
+
+/* Ghost */
+.kw-btn-ghost {
+    color: var(--kw-text-dark-dim);
+    background: transparent;
+    border-color: var(--kw-border);
+}
+
+.kw-btn-ghost:hover {
+    background: var(--kw-navy-800);
+    color: var(--kw-ivory-50);
+    border-color: rgba(250, 246, 239, 0.12);
+}
+
+.kw-btn-sm {
+    min-height: 36px;
+    padding: 9px 18px;
+    font-size: 12px;
+}
+
+.kw-btn-lg {
+    min-height: 56px;
+    padding: 18px 32px;
+    font-size: 16px;
+}
+
+.kw-btn svg {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.kw-btn:hover svg {
+    transform: translateX(3px);
+}
+
+/* ================================================================
+   BADGES & LABELS
+================================================================ */
+.kw-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-metadata);
+    font-weight: var(--kw-fw-semibold);
+    letter-spacing: var(--kw-ls-wider);
+    text-transform: uppercase;
+}
+
+.kw-badge--accent {
+    background: rgba(198, 162, 116, 0.15);
+    color: var(--kw-gold-400);
+    border: 1px solid rgba(198, 162, 116, 0.2);
+}
+
+.kw-badge--dark {
+    background: rgba(250, 246, 239, 0.1);
+    color: var(--kw-ivory-50);
+    border: 1px solid rgba(250, 246, 239, 0.15);
+}
+
+/* ================================================================
+   CARDS
+================================================================ */
+.kw-card {
+    background: var(--kw-navy-800);
+    border: 1px solid var(--kw-border-dark);
+    border-radius: 16px;
+    padding: var(--kw-space-3xl);
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.kw-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border-color: rgba(222, 193, 154, 0.35);
+}
+
+.kw-card-title {
+    font-family: var(--kw-font-heading);
+    font-size: var(--kw-fs-card-title-secondary);
+    font-weight: var(--kw-fw-semibold);
+    line-height: var(--kw-lh-normal);
+    color: var(--kw-ivory-50);
+    margin-bottom: var(--kw-space-md);
+}
+
+.kw-card-excerpt {
+    font-size: var(--kw-fs-card-excerpt);
+    line-height: var(--kw-lh-relaxed);
+    color: var(--kw-text-dark-dim);
+    margin-bottom: var(--kw-space-xl);
+}
+
+/* ================================================================
+   LAYOUT UTILITIES
+================================================================ */
+.kw-container {
+    max-width: var(--kw-container-max);
+    margin: 0 auto;
+    padding: 0 var(--kw-gutter-desktop);
+}
+
+.kw-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.kw-section--light {
+    background-color: var(--kw-ivory-50);
+    color: var(--kw-ink-900);
+}
+
+.kw-section--dark {
+    background-color: var(--kw-navy-950);
+    color: var(--kw-ivory-50);
+}
+
+.kw-section-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    /* Extend beyond container so background is always full-width */
+    width: 100%;
+    left: 0;
+}
+
+.kw-section-bg-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+}
+
+.kw-section-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    /* Default scrim: left-weighted (dark on left, fades to transparent right)
+       for text readability while letting bg image show on right side. */
+    background: linear-gradient(
+        100deg,
+        rgba(7, 21, 33, 0.88) 0%,
+        rgba(7, 21, 33, 0.65) 28%,
+        rgba(7, 21, 33, 0.35) 50%,
+        rgba(7, 21, 33, 0.12) 68%,
+        transparent 85%
+    );
+}
+
+.kw-section-inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    /* NO max-width, NO margin — full viewport width */
+    padding: var(--kw-space-9xl) var(--kw-gutter-desktop);
+}
+
+.kw-section-inner--split {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    align-items: center;
+    gap: var(--kw-space-8xl);
+    width: 100%;
+    /* NO max-width, NO margin */
+    padding: 0 var(--kw-gutter-desktop);
+}
+
+.kw-section-media {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    min-height: 400px;
+}
+
+.kw-section-content {
+    /* NO max-width — natural flow */
+}
+
+.kw-section-content--center {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.kw-section-content--center .kw-body,
+.kw-section-content--center .kw-headline {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ================================================================
+   SECTION INNER — OVERRIDE FLEX CENTERING
+   Sections use display:flex on the <section>, which makes
+   .kw-section-inner a centered flex child (margin: 0 auto).
+   This overrides that so content starts at the left gutter.
+ ================================================================ */
+.kw-section-inner {
+    margin-left: 0;
+    margin-right: 0;
+    align-self: flex-start;
+}
+
+/* ================================================================
+   HEADER
+================================================================ */
+.kw-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999;
+    height: var(--kw-header-height);
+    display: flex;
+    align-items: center;
+    background: transparent;
+    transition:
+        background 0.4s ease,
+        box-shadow 0.4s ease;
+}
+
+.kw-header.is-scrolled {
+    background: rgba(7, 21, 33, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    -ms-backdrop-filter: blur(20px);
+    box-shadow:
+        0 1px 0 rgba(222, 193, 154, 0.12),
+        0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.kw-header-inner {
+    /* NO max-width, NO margin — full viewport width, starts at gutter */
+    width: 100%;
+    padding: 0 var(--kw-gutter-desktop);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--kw-space-4xl);
+}
+
+/* LOGO */
+.kw-logo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.kw-logo:hover {
+    text-decoration: none;
+}
+
+.kw-logo-name {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--kw-ivory-50);
+    line-height: 1;
+    transition: color 0.25s ease;
+}
+
+.kw-logo:hover .kw-logo-name {
+    color: var(--kw-gold-400);
+}
+
+.kw-logo-role {
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--kw-gold-500);
+    line-height: 1;
+}
+
+/* NAV */
+.kw-nav {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.kw-nav-list {
+    display: flex;
+    align-items: center;
+    gap: var(--kw-space-3xl);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.kw-nav-item {
+    position: relative;
+}
+
+.kw-nav-link {
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 13.5px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: rgba(250, 246, 239, 0.72);
+    text-decoration: none;
+    padding: 6px 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.25s ease;
+    position: relative;
+}
+
+.kw-nav-link::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--kw-gold-400);
+    transition: width 0.3s ease;
+}
+
+.kw-nav-link:hover {
+    color: var(--kw-ivory-50);
+    text-decoration: none;
+}
+
+.kw-nav-link:hover::after {
+    width: 100%;
+}
+
+.kw-nav-link.kw-nav-active {
+    color: var(--kw-ivory-50);
+}
+
+.kw-nav-link.kw-nav-active::after {
+    width: 100%;
+    background: var(--kw-gold-400);
+}
+
+/* ACTIONS */
+.kw-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--kw-space-lg);
+    flex-shrink: 0;
+}
+
+.kw-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: rgba(250, 246, 239, 0.65);
+    background: transparent;
+    border: 1px solid rgba(222, 193, 154, 0.15);
+    cursor: pointer;
+    transition:
+        color 0.25s ease,
+        background 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.kw-icon-btn:hover {
+    color: var(--kw-ivory-50);
+    background: rgba(222, 193, 154, 0.1);
+    border-color: rgba(222, 193, 154, 0.35);
+}
+
+.kw-btn-work {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 999px;
+    background: var(--kw-gold-400);
+    color: var(--kw-ink-900);
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        background 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+    box-shadow: 0 2px 12px rgba(212, 167, 104, 0.25);
+}
+
+.kw-btn-work:hover {
+    background: var(--kw-gold-500);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(212, 167, 104, 0.4);
+    text-decoration: none;
+    color: var(--kw-ink-900);
+}
+
+.kw-btn-work:active {
+    transform: translateY(0);
+}
+
+.kw-btn-work svg {
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.kw-btn-work:hover svg {
+    transform: translateX(3px);
+}
+
+/* ================================================================
+   RESPONSIVE BREAKPOINTS
+================================================================ */
+@media (max-width: 1279px) {
+    :root {
+        --kw-gutter-desktop: var(--kw-gutter-tablet);
+    }
+    .kw-nav-list {
+        gap: var(--kw-space-2xl);
+    }
+    .kw-nav-link {
+        font-size: 13px;
+    }
+    .kw-header-inner {
+        padding: 0 var(--kw-gutter-tablet);
+        gap: var(--kw-space-3xl);
+    }
+}
+
+@media (max-width: 1023px) {
+    .kw-nav {
+        display: none;
+    }
+    .kw-header-actions {
+        gap: var(--kw-space-md);
+    }
+    .kw-btn-work {
+        height: 36px;
+        padding: 0 16px;
+        font-size: 12.5px;
+    }
+}
+
+@media (max-width: 767px) {
+    :root {
+        --kw-gutter-desktop: var(--kw-gutter-mobile);
+        --kw-header-height: var(--kw-header-height-mobile);
+    }
+    .kw-header {
+        height: var(--kw-header-height-mobile);
+    }
+    .kw-header-inner {
+        padding: 0 var(--kw-gutter-mobile);
+    }
+    .kw-logo-name {
+        font-size: 18px;
+    }
+    .kw-logo-role {
+        font-size: 9px;
+    }
+    .kw-btn-work {
+        display: none;
+    }
+    .kw-icon-btn {
+        width: 32px;
+        height: 32px;
+    }
+    .kw-section-inner {
+        padding: var(--kw-space-7xl) var(--kw-gutter-mobile);
+    }
+    .kw-section-inner--split {
+        grid-template-columns: 1fr;
+        gap: var(--kw-space-5xl);
+    }
+    .kw-section-content {
+        max-width: 100%;
+    }
+    .kw-headline {
+        font-size: clamp(24px, 6vw, 36px);
+    }
+    .kw-headline--large {
+        font-size: clamp(28px, 8vw, 42px);
+    }
+    .kw-body {
+        font-size: 15px;
+    }
+    .kw-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .kw-underline-statement {
+        flex-direction: column;
+        gap: var(--kw-space-lg);
+    }
+}
+
+/* ================================================================
+   ANIMATIONS
+================================================================ */
+@keyframes kw-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
+
+@keyframes kw-fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes kw-scroll-dot {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    70% {
+        transform: translateY(8px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+}
+
+.kw-animate-in {
+    animation: kw-fadeInUp 0.6s ease forwards;
+}
+
+.kw-animate-delay-1 {
+    animation-delay: 0.1s;
+}
+.kw-animate-delay-2 {
+    animation-delay: 0.2s;
+}
+.kw-animate-delay-3 {
+    animation-delay: 0.3s;
+}
+.kw-animate-delay-4 {
+    animation-delay: 0.4s;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ================================================================
+   BRAND & BRANDING SPLIT SECTION — S03
+   Reference: gambar review final
+   Layout: text-left (55%) | visual-right (45%)
+============================================================ */
+
+/* --- Section split: flex row, content-driven height --- */
+.kw-section--split {
+    display: flex;
+    align-items: stretch;
+    min-height: 80vh;
+    /* S03 stays as horizontal split (text left, visual right) */
+}
+
+/* S03 background: dark navy to fill any gaps from object-fit: contain.
+    The actual image is contained right-aligned so nothing is cropped. */
+#beranda--brand-branding {
+    background-color: var(--kw-navy-950);
+}
+
+/* --- S03 background image: cover from top-to-bottom, anchored to right
+    so the AI head, perfume bottle, and city lights stay in the visual
+    column. Left side fades to dark overlay. --- */
+#beranda--brand-branding .kw-section-bg-img {
+    object-fit: cover;
+    object-position: right center;
+    width: 100%;
+    height: 100%;
+}
+
+/* --- Section bg: LEFT-weighted overlay, fades to transparent on right side.
+    This ensures text readability on the left while letting the
+    background image show through on the right visual column. --- */
+.kw-section-overlay--left {
+    background: linear-gradient(
+        90deg,
+        rgba(7, 21, 33, 0.92) 0%,
+        rgba(7, 21, 33, 0.78) 22%,
+        rgba(7, 21, 33, 0.45) 42%,
+        rgba(7, 21, 33, 0.15) 55%,
+        transparent 68%
+    );
+}
+
+/* --- TEXT COLUMN (left, ~55%) --- */
+.kw-brand-content {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 55%;
+    padding: clamp(48px, 5vw, 80px) clamp(40px, 5vw, 80px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* --- Eyebrow: tight margin --- */
+.kw-brand-content .kw-eyebrow {
+    margin-bottom: var(--kw-space-lg);
+}
+
+/* --- Headline: bold, tighter sizing --- */
+.kw-brand-headline {
+    font-family: var(--kw-font-heading);
+    font-size: clamp(26px, 2.6vw, 42px);
+    font-weight: var(--kw-fw-bold);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: var(--kw-ivory-50);
+    margin: 0 0 var(--kw-space-lg);
+    max-width: 540px;
+}
+
+.kw-brand-headline-strong {
+    display: block;
+    font-weight: var(--kw-fw-bold);
+    color: var(--kw-ivory-50);
+}
+
+/* --- Single lines (Logo bisa dikenali, Campaign bisa ramai, etc.) --- */
+.kw-brand-line {
+    font-family: var(--kw-font-body);
+    font-size: clamp(13px, 1vw, 15px);
+    font-weight: var(--kw-fw-regular);
+    line-height: 1.65;
+    color: rgba(250, 246, 239, 0.72);
+    margin: 0 0 2px;
+    max-width: 520px;
+}
+
+/* --- Body paragraphs: tighter, more compact --- */
+.kw-brand-body {
+    font-family: var(--kw-font-body);
+    font-size: clamp(13px, 1vw, 14.5px);
+    font-weight: var(--kw-fw-regular);
+    line-height: 1.65;
+    color: rgba(250, 246, 239, 0.65);
+    margin: 0 0 var(--kw-space-md);
+    max-width: 520px;
+}
+
+/* --- Statement block: gold vertical line + italic text --- */
+.kw-brand-statement {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--kw-space-lg);
+    margin: var(--kw-space-lg) 0 var(--kw-space-xl);
+    padding-top: var(--kw-space-lg);
+    border-top: 1px solid rgba(198, 162, 116, 0.22);
+    width: 100%;
+    max-width: 520px;
+}
+
+.kw-brand-statement-line {
+    flex-shrink: 0;
+    width: 2px;
+    height: 40px;
+    background: var(--kw-gold-500);
+    margin-top: 3px;
+}
+
+.kw-brand-statement-text {
+    font-family: var(--kw-font-heading);
+    font-size: clamp(14px, 1.1vw, 17px);
+    font-weight: var(--kw-fw-medium);
+    font-style: italic;
+    line-height: 1.45;
+    color: rgba(250, 246, 239, 0.55);
+    margin: 0;
+}
+
+/* --- CTA button: tight spacing --- */
+.kw-brand-content .kw-btn {
+    margin-top: var(--kw-space-lg);
+}
+
+/* --- VISUAL COLUMN (right, ~45%) --- */
+.kw-brand-visual {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 480px;
+    overflow: hidden;
+}
+
+.kw-brand-visual-stack {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+/* Base composition image */
+.kw-brand-visual-base {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Individual overlay layers */
+.kw-brand-visual-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Glow accents */
+.kw-brand-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.kw-brand-glow--blue {
+    bottom: -10%;
+    right: -5%;
+    width: 60%;
+    height: 70%;
+    background: radial-gradient(
+        ellipse,
+        rgba(59, 130, 246, 0.2) 0%,
+        transparent 70%
+    );
+}
+
+.kw-brand-glow--orange {
+    top: 15%;
+    right: 8%;
+    width: 40%;
+    height: 45%;
+    background: radial-gradient(
+        ellipse,
+        rgba(217, 141, 128, 0.24) 0%,
+        transparent 70%
+    );
+}
+
+.kw-brand-glow--top {
+    top: -5%;
+    right: 20%;
+    width: 30%;
+    height: 25%;
+    background: radial-gradient(
+        ellipse,
+        rgba(250, 246, 239, 0.06) 0%,
+        transparent 70%
+    );
+}
+
+/* --- Responsive --- */
+@media (max-width: 1279px) {
+    .kw-brand-content {
+        padding: clamp(40px, 4.5vw, 64px) clamp(32px, 4vw, 56px);
+        flex: 0 0 58%;
+    }
+    .kw-brand-headline {
+        font-size: clamp(24px, 2.4vw, 38px);
+    }
+}
+
+@media (max-width: 1023px) {
+    .kw-section--split {
+        flex-direction: column;
+        min-height: auto;
+    }
+    .kw-brand-content {
+        flex: none;
+        width: 100%;
+        padding: clamp(48px, 5vw, 72px) clamp(32px, 4vw, 56px);
+    }
+    .kw-brand-visual {
+        min-height: 320px;
+        height: 50vw;
+        flex: none;
+        order: -1;
+    }
+    .kw-brand-headline {
+        font-size: clamp(24px, 3.5vw, 36px);
+    }
+    /* Mobile overlay: top fade blends image into content below */
+    .kw-section-overlay--left {
+        background: linear-gradient(
+            180deg,
+            rgba(7, 21, 33, 0.78) 0%,
+            rgba(7, 21, 33, 0.48) 38%,
+            transparent 100%
+        );
+    }
+}
+
+@media (max-width: 767px) {
+    .kw-brand-content {
+        padding: clamp(40px, 6vw, 56px) var(--kw-gutter-mobile);
+    }
+    .kw-brand-headline {
+        font-size: clamp(22px, 5vw, 32px);
+        margin-bottom: var(--kw-space-md);
+    }
+    .kw-brand-line,
+    .kw-brand-body {
+        font-size: 13.5px;
+        max-width: 100%;
+    }
+    .kw-brand-statement {
+        flex-direction: column;
+        gap: var(--kw-space-md);
+    }
+    .kw-brand-statement-line {
+        width: 40px;
+        height: 2px;
+        margin-top: 0;
+    }
+    .kw-brand-visual {
+        height: 60vw;
+        min-height: 240px;
+    }
+    .kw-section-inner--split {
+        grid-template-columns: 1fr;
+        gap: var(--kw-space-5xl);
+    }
+    .kw-headline {
+        font-size: clamp(24px, 6vw, 36px);
+    }
+    .kw-headline--large {
+        font-size: clamp(28px, 8vw, 42px);
+    }
+    .kw-body {
+        font-size: 15px;
+    }
+    .kw-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .kw-underline-statement {
+        flex-direction: column;
+        gap: var(--kw-space-lg);
+    }
+}
