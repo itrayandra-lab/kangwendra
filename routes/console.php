@@ -16,3 +16,8 @@ Schedule::command('app:auto-pipeline --max=5')
     ->timezone('Asia/Jakarta')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/auto-pipeline.log'));
+
+Schedule::command('youtube:sync-kang-wendra')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/youtube-sync.log'));

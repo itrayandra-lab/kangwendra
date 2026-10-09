@@ -43,4 +43,9 @@ return [
         'max_tokens' => env('DEEPSEEK_MAX_TOKENS', 16384),
     ],
 
+    'youtube' => [
+        'kang_wendra_channel_id' => env('YOUTUBE_KANG_WENDRA_CHANNEL_ID', 'UC8LU8ESSCGDWxaTsMWtzv9Q'),
+        'kang_wendra_channel_url' => env('YOUTUBE_KANG_WENDRA_CHANNEL_URL', 'https://www.youtube.com/@winwithwen/videos'),
+    ],
+
 ];
