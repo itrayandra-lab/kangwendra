@@ -525,11 +525,10 @@ $heroSlides = [
             @if($signalPosts->isNotEmpty())
                 <div class="kw-signals-grid">
                     @foreach($signalPosts as $signal)
-                        @php($sourceDomain = parse_url((string) $signal->source, PHP_URL_HOST) ?: 'AI SIGNAL')
-                        <a href="{{ $homepagePostUrl($signal) }}" class="kw-signal-card {{ $loop->first ? 'kw-signal-card--featured' : '' }}">
+                                                <a href="{{ $homepagePostUrl($signal) }}" class="kw-signal-card {{ $loop->first ? 'kw-signal-card--featured' : '' }}">
                             <div class="kw-card-media" style="background-image:url('{{ $homepagePostImage($signal, 'assets/img/background/section-9-bg.png') }}')"></div>
                             <div class="kw-card-copy">
-                                <span class="kw-signal-domain">{{ strtoupper(preg_replace('/^www\./', '', $sourceDomain)) }} &middot; {{ optional($signal->published_at)->format('d M Y') }}</span>
+                                <span class="kw-signal-domain">{{ strtoupper($signal->category?->name ?? 'KANG WENDRA') }} &middot; {{ optional($signal->published_at)->format('d M Y') }}</span>
                                 <span class="kw-signal-badge">MY TAKE</span>
                                 <p class="kw-signal-title">{{ $signal->title }}</p>
                                 <p class="kw-signal-excerpt">{{ $homepagePostExcerpt($signal, $loop->first ? 170 : 100) }}</p>
