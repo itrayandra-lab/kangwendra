@@ -1,0 +1,70 @@
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Thin.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Thin.otf') format('opentype');
+    font-display: swap;
+    font-weight: 100;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Light.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Light.otf') format('opentype');
+    font-display: swap;
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Regular.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Regular.otf') format('opentype');
+    font-display: swap;
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Bold.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Bold.otf') format('opentype');
+    font-display: swap;
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-Heavy.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-Heavy.otf') format('opentype');
+    font-display: swap;
+    font-weight: 800;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nexa';
+    src: url('/fonts/nexa/Nexa-XBold.woff2') format('woff2'),
+         url('/fonts/nexa/Nexa-XBold.otf') format('opentype');
+    font-display: swap;
+    font-weight: 900;
+    font-style: normal;
+}
+
+/* Apply Nexa to all client pages */
+body {
+    font-family: 'Nexa', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nexa', sans-serif;
+}
+
+.btn, button, input, select, textarea {
+    font-family: 'Nexa', sans-serif;
+}
+
+.navbar, .nav {
+    font-family: 'Nexa', sans-serif;
+}
