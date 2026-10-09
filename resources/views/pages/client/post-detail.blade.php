@@ -73,12 +73,6 @@
         "cssSelector": [".post-title", ".entry-content p:first-of-type", ".article-excerpt"],
         "xpath": ["/html/head/title", "//article/h1", "//article/p[1]"]
     },
-    "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.5",
-        "bestRating": "5",
-        "ratingCount": "{{ $post->counter ?? 0 }}"
-    },
     "about": {
         "@type": "Thing",
         "name": "{{ $post->category?->name ?? 'AI & Teknologi' }}"
