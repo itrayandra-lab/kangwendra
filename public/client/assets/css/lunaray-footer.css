@@ -1,0 +1,559 @@
+/* Footer styles, shared by every page (extracted from lunaray-beranda.css, which only loads on the home page). */
+.kw-footer {
+    background: #050507;
+    border-top: 1px solid var(--kw-border);
+    padding: 80px 0 40px;
+}
+.kw-footer-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 5vw;
+}
+.kw-footer-top {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 48px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--kw-border);
+}
+.kw-footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.kw-footer-logo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.kw-footer-logo-name {
+    font-family: var(--kw-font);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--kw-text);
+}
+.kw-footer-logo-tag {
+    font-family: var(--kw-font);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--kw-amber);
+}
+.kw-footer-brand-desc {
+    font-family: var(--kw-font);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--kw-text-3);
+    margin: 0;
+    letter-spacing: 1px;
+}
+.kw-footer-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.kw-footer-identity p {
+    font-family: var(--kw-font);
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--kw-text-3);
+    margin: 0;
+}
+.kw-footer-social {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+.kw-footer-social-link {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--kw-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--kw-text-3);
+    transition: all 0.2s;
+}
+.kw-footer-social-link:hover {
+    color: var(--kw-amber);
+    border-color: rgba(232, 184, 75, 0.3);
+    background: var(--kw-amber-glow);
+}
+.kw-footer-title {
+    font-family: var(--kw-font);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--kw-amber);
+    margin: 0 0 20px;
+}
+.kw-footer-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.kw-footer-links li a {
+    font-family: var(--kw-font);
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--kw-text-3);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.kw-footer-links li a:hover {
+    color: var(--kw-text);
+}
+.kw-footer-stay {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px 0;
+    border-bottom: 1px solid var(--kw-border);
+}
+.kw-footer-stay-label {
+    font-family: var(--kw-font);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--kw-text-3);
+    margin: 0;
+}
+.kw-footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 24px;
+}
+.kw-footer-copy {
+    font-family: var(--kw-font);
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--kw-text-3);
+    margin: 0;
+}
+.kw-footer-legal {
+    display: flex;
+    gap: 20px;
+}
+.kw-footer-legal a {
+    font-family: var(--kw-font);
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--kw-text-3);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.kw-footer-legal a:hover {
+    color: var(--kw-text);
+}
+@media (max-width: 1024px) {
+    .kw-footer-top {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+    }
+}
+@media (max-width: 768px) {
+    .kw-footer-top {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    .kw-footer-stay {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+    }
+    .kw-footer-bottom {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+}
+.kw-footer-main {
+    max-width: var(--kw-container-max);
+    margin: 0 auto;
+    padding: var(--kw-space-9xl) var(--kw-gutter-desktop) var(--kw-space-7xl);
+}
+.kw-footer-top {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: var(--kw-space-7xl);
+    padding-bottom: var(--kw-space-7xl);
+    border-bottom: 1px solid var(--kw-border-dark);
+}
+.kw-footer-brand .kw-logo-name {
+    font-family: var(--kw-font-heading);
+    font-size: 28px;
+    font-weight: var(--kw-fw-bold);
+    letter-spacing: 0.02em;
+    color: var(--kw-ivory-50);
+    text-transform: uppercase;
+    margin-bottom: var(--kw-space-md);
+}
+.kw-footer-brand .kw-logo-tagline {
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-eyebrow);
+    font-weight: var(--kw-fw-semibold);
+    letter-spacing: var(--kw-ls-widest);
+    text-transform: uppercase;
+    color: var(--kw-gold-500);
+    margin-bottom: var(--kw-space-xl);
+}
+.kw-footer-brand p {
+    font-size: var(--kw-fs-card-excerpt);
+    line-height: var(--kw-lh-relaxed);
+    color: var(--kw-text-dark-dim);
+    max-width: 280px;
+}
+.kw-footer-col-title {
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-eyebrow);
+    font-weight: var(--kw-fw-bold);
+    letter-spacing: var(--kw-ls-widest);
+    text-transform: uppercase;
+    color: var(--kw-ivory-50);
+    margin-bottom: var(--kw-space-xl);
+}
+.kw-footer-col ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--kw-space-md);
+}
+.kw-footer-col ul li a {
+    font-size: var(--kw-fs-card-excerpt);
+    color: var(--kw-text-dark-dim);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--kw-space-sm);
+}
+.kw-footer-col ul li a:hover {
+    color: var(--kw-gold-400);
+}
+.kw-footer-col ul li a svg {
+    flex-shrink: 0;
+    opacity: 0.6;
+}
+.kw-footer-stay {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--kw-space-3xl);
+    padding: var(--kw-space-4xl) 0;
+    border-bottom: 1px solid var(--kw-border-dark);
+}
+.kw-footer-stay-label {
+    font-family: var(--kw-font-body);
+    font-size: var(--kw-fs-body);
+    font-weight: var(--kw-fw-semibold);
+    color: var(--kw-ivory-50);
+}
+.kw-footer-subscribe {
+    display: flex;
+    gap: var(--kw-space-sm);
+    flex: 1;
+    max-width: 480px;
+}
+.kw-footer-subscribe input {
+    flex: 1;
+    min-width: 0;
+    height: 48px;
+    padding: 0 var(--kw-space-xl);
+    border-radius: 999px;
+    border: 1px solid var(--kw-border-dark);
+    background: rgba(250, 246, 239, 0.04);
+    color: var(--kw-ivory-50);
+    font-family: var(--kw-font-body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+.kw-footer-subscribe input::placeholder {
+    color: var(--kw-text-3);
+}
+.kw-footer-subscribe input:focus {
+    border-color: var(--kw-gold-500);
+}
+.kw-footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--kw-space-3xl);
+    gap: var(--kw-space-xl);
+}
+.kw-footer-copyright {
+    font-size: var(--kw-fs-metadata);
+    color: var(--kw-text-3);
+}
+.kw-footer-legal {
+    display: flex;
+    gap: var(--kw-space-xl);
+}
+.kw-footer-legal a {
+    font-size: var(--kw-fs-metadata);
+    color: var(--kw-text-3);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.kw-footer-legal a:hover {
+    color: var(--kw-gold-400);
+}
+.kw-footer-social {
+    display: flex;
+    gap: var(--kw-space-md);
+}
+.kw-footer-social a {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--kw-border-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--kw-text-dark-dim);
+    transition: all 0.25s ease;
+}
+.kw-footer-social a:hover {
+    border-color: var(--kw-gold-500);
+    color: var(--kw-gold-400);
+    background: rgba(198, 162, 116, 0.08);
+}
+@media (max-width: 1279px) {
+    .kw-footer-top {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--kw-space-5xl);
+    }
+}
+@media (max-width: 767px) {
+    .kw-footer-main {
+        padding: var(--kw-space-7xl) var(--kw-gutter-mobile) var(--kw-space-5xl);
+    }
+    .kw-footer-top {
+        grid-template-columns: 1fr;
+        gap: var(--kw-space-4xl);
+    }
+    .kw-footer-stay {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--kw-space-xl);
+    }
+    .kw-footer-subscribe {
+        max-width: 100%;
+        width: 100%;
+    }
+    .kw-footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--kw-space-lg);
+    }
+    .kw-footer-social {
+        order: -1;
+    }
+}
+.kw-aray-section + .kw-footer {
+    margin-top: 0 !important;
+}
+.kw-footer[data-page="beranda"] {
+    position: relative !important;
+    overflow: hidden !important;
+    min-height: clamp(600px, 40vw, 770px) !important;
+    margin: 0 !important;
+    padding: clamp(90px,8vw,150px) var(--kw-home-gutter) 70px !important;
+    background: radial-gradient(circle at 50% 45%, #0a2540 0%, #061625 60%, #04111e 100%) !important;
+    color: #f7f2e9 !important;
+}
+.kw-footer-inner {
+    max-width: none !important; margin: 0 !important; padding: 0 !important;
+}
+.kw-footer-top {
+    display: grid !important; grid-template-columns: 1.65fr 1.1fr .8fr .72fr !important; gap: 0 !important;
+}
+.kw-footer-brand,
+.kw-footer-col {
+    min-height: 310px !important; padding: 0 54px !important; border-right: 1px solid rgba(255,255,255,.24) !important;
+}
+.kw-footer-brand {
+    padding-left: 54px !important;
+}
+.kw-footer-col:last-child {
+    border-right: 0 !important;
+}
+.kw-footer-logo-name {
+    font: 700 clamp(34px,3vw,58px)/1 "Nexa",sans-serif !important; letter-spacing: .03em !important;
+}
+.kw-footer-logo-tag {
+    margin-top: 14px !important; font: 400 clamp(20px,1.7vw,32px)/1.2 "Nexa",sans-serif !important; letter-spacing: .1em !important;
+}
+.kw-footer-brand-desc {
+    margin-top: 62px !important; font: 400 clamp(18px,1.4vw,27px)/1.3 "Nexa",sans-serif !important; letter-spacing: .15em !important;
+}
+.kw-footer-title {
+    color: var(--kw-home-gold) !important; font: 700 clamp(18px,1.35vw,26px)/1 "Nexa",sans-serif !important; letter-spacing: .18em !important; text-transform: uppercase !important;
+}
+.kw-footer-title::after {
+    content: ""; display: block; width: 48px; height: 2px; margin: 24px 0 34px; background: var(--kw-home-gold);
+}
+.kw-footer-links {
+    display: grid !important; gap: 18px !important;
+}
+.kw-footer-links li a {
+    color: #f7f2e9 !important; font: 400 clamp(16px,1.2vw,23px)/1.25 "Nexa",sans-serif !important;
+}
+.kw-footer-bottom {
+    display: grid !important; grid-template-columns: 1fr auto auto !important; gap: 34px !important; align-items: center !important; margin-top: 72px !important; padding-top: 48px !important; border-top: 1px solid rgba(221,169,111,.55) !important;
+}
+.kw-footer-identity,
+.kw-footer-copy,
+.kw-footer-legal a {
+    margin: 0 !important; color: rgba(255,255,255,.86) !important; font: 400 clamp(14px,1vw,20px)/1.3 "Nexa",sans-serif !important;
+}
+.kw-footer-legal {
+    display: flex !important; gap: 34px !important;
+}
+@media (max-width: 767px) {
+    .kw-footer[data-page="beranda"] {
+        min-height: 0 !important; padding: 72px var(--kw-mobile-gutter) 40px !important;
+    }
+    .kw-footer-top {
+        grid-template-columns: 1fr !important; gap: 46px !important;
+    }
+    .kw-footer-brand,
+.kw-footer-col {
+        min-height: 0 !important; padding: 0 !important; border-right: 0 !important;
+    }
+    .kw-footer-logo-name {
+        font-size: 34px !important;
+    }
+    .kw-footer-logo-tag {
+        font-size: 18px !important;
+    }
+    .kw-footer-brand-desc {
+        margin-top: 28px !important; font-size: 18px !important;
+    }
+    .kw-footer-bottom {
+        grid-template-columns: 1fr !important; gap: 18px !important; margin-top: 54px !important; padding-top: 32px !important;
+    }
+}
+.kw-footer[data-page="beranda"] {
+    min-height: 0 !important;
+    padding: clamp(62px, 5vw, 88px) var(--kw-home-gutter) 34px !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-top {
+    grid-template-columns: 1.55fr 1.08fr .78fr .68fr !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-brand,
+.kw-footer[data-page="beranda"] .kw-footer-col {
+    min-height: 218px !important;
+    padding: 0 clamp(26px, 2.4vw, 42px) !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-brand {
+    padding-left: clamp(26px, 2.4vw, 42px) !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-logo-name {
+    font: 600 clamp(38px, 3.1vw, 54px)/.92 "Cormorant Garamond", Georgia, serif !important;
+    letter-spacing: .025em !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-logo-tag {
+    margin-top: 9px !important;
+    font: 500 clamp(15px, 1.15vw, 19px)/1.2 "Nexa", "Jost", sans-serif !important;
+    letter-spacing: .13em !important;
+    text-transform: uppercase !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-brand-desc {
+    max-width: 250px !important;
+    margin-top: 36px !important;
+    font: 500 clamp(20px, 1.55vw, 27px)/1.15 "Cormorant Garamond", Georgia, serif !important;
+    letter-spacing: .04em !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-title {
+    font: 600 clamp(14px, 1vw, 17px)/1 "Nexa", "Jost", sans-serif !important;
+    letter-spacing: .2em !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-title::after {
+    width: 38px !important;
+    height: 1px !important;
+    margin: 18px 0 24px !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-links {
+    gap: 12px !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-links li a {
+    font: 400 clamp(14px, 1vw, 17px)/1.3 "Nexa", "Jost", sans-serif !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-bottom {
+    gap: 26px !important;
+    margin-top: 36px !important;
+    padding-top: 26px !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-identity,
+.kw-footer[data-page="beranda"] .kw-footer-copy,
+.kw-footer[data-page="beranda"] .kw-footer-legal a {
+    font: 400 clamp(13px, .9vw, 16px)/1.35 "Nexa", "Jost", sans-serif !important;
+}
+.kw-footer[data-page="beranda"] .kw-footer-legal {
+    gap: 24px !important;
+}
+@media (max-width: 1100px) and (min-width: 768px) {
+    .kw-footer[data-page="beranda"] .kw-footer-top {
+        grid-template-columns: 1.35fr 1fr .72fr .68fr !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-brand,
+.kw-footer[data-page="beranda"] .kw-footer-col {
+        padding-inline: 22px !important;
+    }
+}
+@media (max-width: 767px) {
+    .kw-footer[data-page="beranda"] {
+        padding: 52px var(--kw-mobile-gutter) 28px !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-top {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 30px 24px !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-brand,
+.kw-footer[data-page="beranda"] .kw-footer-col {
+        min-height: 0 !important;
+        padding: 0 !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-brand,
+.kw-footer[data-page="beranda"] .kw-footer-col:nth-child(2) {
+        grid-column: 1 / -1 !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-col:nth-child(2) .kw-footer-links {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        column-gap: 20px !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-logo-name {
+        font-size: 40px !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-logo-tag {
+        font-size: 14px !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-brand-desc {
+        margin-top: 24px !important;
+        font-size: 22px !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-title::after {
+        margin-bottom: 18px !important;
+    }
+    .kw-footer[data-page="beranda"] .kw-footer-bottom {
+        gap: 13px !important;
+        margin-top: 36px !important;
+        padding-top: 24px !important;
+    }
+}
+
+:root {
+    --kw-home-gutter: clamp(72px, 6.25vw, 120px);
+    --kw-home-gold: #dda96f;
+}
+@media (max-width: 767px) { :root { --kw-home-gutter: 22px; } }
