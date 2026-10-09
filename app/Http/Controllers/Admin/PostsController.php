@@ -133,6 +133,17 @@ class PostsController extends Controller
         return view('pages.admin.posts.create', $data)->with('page', 'Postingan');
     }
 
+    private function uniqueSlug(string $title, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($title) ?: 'post';
+        $slug = $base;
+        $n = 2;
+        while (Posts::where('slug', $slug)->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists()) {
+            $slug = $base . '-' . $n++;
+        }
+        return $slug;
+    }
+
     public function store(Request $request)
     {
 
@@ -144,10 +155,10 @@ class PostsController extends Controller
             'status' => 'required|in:active,inactive',
             'domains' => 'nullable|array',
             'domains.*' => 'string',
-            'featured_image' => 'nullable|image|max:4096',
+            'featured_image' => 'nullable|image|max:20480',
             'published_at' => 'required|date',
             'domain_published_at' => 'nullable|array',
-            'image.*' => 'nullable|image|max:4096',
+            'image.*' => 'nullable|image|max:20480',
         ]);
 
         try {
@@ -158,7 +169,7 @@ class PostsController extends Controller
 
             $post = Posts::create([
                 'title' => $request->title,
-                'slug' => Str::slug($request->title),
+                'slug' => $this->uniqueSlug($request->title),
                 'content' => $request->content,
                 'image' => $mainImagePath,
                 'category_id' => $request->category_id,
@@ -246,7 +257,7 @@ class PostsController extends Controller
     {
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
-            'image' => 'nullable|image|max:4096',
+            'image' => 'nullable|image|max:20480',
             'content' => 'nullable|string',
             'status' => 'required|in:active,inactive',
             'category_id' => 'nullable|exists:post_categories,id',
@@ -257,7 +268,7 @@ class PostsController extends Controller
 
         try {
             $post = Posts::findOrFail($id);
-            $validatedData['slug'] = Str::slug($request->title);
+            $validatedData['slug'] = $this->uniqueSlug($request->title, $post->id);
 
             if ($request->hasFile('image')) {
                 $validatedData['image'] = FileHelper::saveFile($request->file('image'), 'posts', 'image');
