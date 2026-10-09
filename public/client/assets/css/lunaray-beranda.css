@@ -9874,3 +9874,10 @@ html body #hero .kw-hero-slide--brand .kw-hero-category-lead:not(#_a) {
 }
 html body #hero .kw-hero-slide--brand .kw-hero-body:not(#_a) { max-width: 600px !important; }
 html body #hero .kw-hero-slide--brand .kw-hero-body p:not(#_a) { margin: 0 0 4px !important; font-size: clamp(14px, 1.05vw, 18px) !important; line-height: 1.4 !important; }
+
+/* "AI tidak menggantikan manusia…" closing statement: black text (section 04 background is light). */
+html body #ai-environment .kw-underline-statement p:not(#_a):not(#_b),
+html body #ai-environment .kw-underline-statement .kw-us-line:not(#_a):not(#_b) {
+    color: #000 !important;
+    text-shadow: none !important;
+}
