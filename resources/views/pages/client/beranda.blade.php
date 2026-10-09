@@ -34,11 +34,13 @@ $heroSlides = [
     [
         'variant' => 'brand',
         'bg' => 'section-1-hero-2-bg.png',
-        'eyebrow' => 'Eyebrow',
+        'eyebrow' => '',
         'headline' => 'BRAND',
-        'category' => 'Brand tidak pernah sekadar soal terlihat. Ia hidup dari apa yang diingat, dipercaya, lalu dipilih.',
+        'category_lead' => 'Brand tidak pernah sekadar soal terlihat.',
+        'category' => 'Ia hidup dari apa yang diingat, dipercaya, lalu dipilih.',
         'body' => [
-            'Karena brand bukan sekadar komunikasi. Ia adalah meaning yang dibangun, pengalaman yang dirasakan, dan kepercayaan yang terakumulasi dari waktu ke waktu.',
+            'Karena brand bukan sekadar komunikasi.',
+            'Ia adalah meaning yang dibangun, pengalaman yang dirasakan, dan kepercayaan yang terakumulasi dari waktu ke waktu.',
         ],
         'cta_label' => 'Explore Brand Thinking',
         'cta_style' => 'solid',
@@ -95,24 +97,26 @@ $heroSlides = [
             <div class="kw-hero-slide kw-hero-slide--{{ $slide['variant'] }} swiper-slide" style="--kw-slide-bg: url('{{ asset('assets/img/background/' . $slide['bg']) }}')">
                 <div class="kw-hero-slide-inner">
                     <div class="kw-hero-content">
+                        @if (!empty($slide['eyebrow']))
                         <div class="kw-hero-eyebrow">
                             <span class="kw-eyebrow-dash"></span>
                             <span class="kw-eyebrow-text">{{ $slide['eyebrow'] }}</span>
                         </div>
+                        @endif
 
                         @if (isset($slide['opening']))
                         <p class="kw-hero-opening">{{ $slide['opening'] }}</p>
                         @endif
 
                         <h1 class="kw-hero-headline">
-                            <span class="kw-hero-headline-main">{{ $slide['headline'] }}</span>
+                            <span class="kw-hero-headline-main">@if ($slide['variant'] === 'brand')@foreach (mb_str_split($slide['headline']) as $k => $ch)<span class="kw-brand-letter {{ in_array($k, [2, 4]) ? 'is-gold' : '' }}">{{ $ch }}</span>@endforeach @else{{ $slide['headline'] }}@endif</span>
                             @if (isset($slide['headline_accent']))
                                 <span class="kw-hero-headline-accent">{{ $slide['headline_accent'] }}</span>
                             @endif
                         </h1>
 
                         @if (isset($slide['category']))
-                        <p class="kw-hero-category">{{ $slide['category'] }}</p>
+                        <p class="kw-hero-category">@if (isset($slide['category_lead']))<span class="kw-hero-category-lead">{{ $slide['category_lead'] }}</span> @endif{{ $slide['category'] }}</p>
                         @endif
 
                         <div class="kw-hero-body">
