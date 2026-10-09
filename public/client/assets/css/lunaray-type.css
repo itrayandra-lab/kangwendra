@@ -68,3 +68,40 @@
     top: 50%;
     transform: translateY(-50%);
 }
+
+/* ===== Single-family type system: Nexa only — Heavy (900) for headings, Bold (700) for everything else =====
+   Overrides the earlier Cormorant / Jost / Inter rules. The :not(#_x) chain raises specificity so it also
+   beats the ID-scoped !important rules in lunaray-beranda.css. */
+:root {
+    --kw-font-heading: "Nexa", system-ui, sans-serif;
+    --kw-font-body: "Nexa", system-ui, sans-serif;
+    --kw-font-ui: "Nexa", system-ui, sans-serif;
+    --font-display: "Nexa", system-ui, sans-serif;
+    --display-adjust: none;
+}
+html body *:not(#_a):not(#_b):not(#_c) {
+    font-family: "Nexa", system-ui, sans-serif !important;
+    font-weight: 700 !important;
+    font-style: normal !important;
+    font-size-adjust: none !important;
+}
+html body :is(h1, h2, h3, h4, h5, h6, [class*="headline"], .post-title, .kw-logo-name, .kw-footer-logo-name, .kw-hero-opening):not(#_a):not(#_b):not(#_c) {
+    font-weight: 900 !important;
+}
+
+/* Nexa is wider than Cormorant, so the display sizes drawn for Cormorant are scaled down to fit. */
+html body .kw-headline:not(#_a):not(#_b):not(#_c) { font-size: clamp(28px, 2.6vw, 46px) !important; line-height: 1.12 !important; letter-spacing: -.02em !important; }
+html body #signature-principle .kw-headline:not(#_a):not(#_b) { font-size: clamp(34px, 3.6vw, 64px) !important; line-height: 1.05 !important; }
+html body :is(#raymaizing, #where-thinking) .kw-headline:not(#_a):not(#_b) { font-size: clamp(30px, 3vw, 54px) !important; line-height: 1.08 !important; }
+html body #beranda--brand-branding .kw-brand-headline:not(#_a):not(#_b) { font-size: clamp(28px, 2.5vw, 44px) !important; line-height: 1.1 !important; }
+html body #brand-ai-architect .kw-arch-headline:not(#_a):not(#_b) { font-size: clamp(28px, 2.6vw, 48px) !important; line-height: 1.12 !important; }
+html body #hero .kw-hero-headline:not(#_a):not(#_b) { font-size: clamp(34px, 3.5vw, 64px) !important; line-height: 1.04 !important; letter-spacing: -.02em !important; }
+html body #hero .kw-hero-slide--profile .kw-hero-headline:not(#_a) { font-size: clamp(36px, 3.6vw, 66px) !important; }
+html body .post-title:not(#_a):not(#_b) { line-height: 1.2 !important; }
+@media (max-width: 767px) {
+    html body .kw-headline:not(#_a):not(#_b):not(#_c),
+    html body #signature-principle .kw-headline:not(#_a):not(#_b),
+    html body :is(#raymaizing, #where-thinking) .kw-headline:not(#_a):not(#_b),
+    html body #hero .kw-hero-headline:not(#_a):not(#_b),
+    html body #hero .kw-hero-slide--profile .kw-hero-headline:not(#_a) { font-size: clamp(26px, 7.5vw, 34px) !important; }
+}
