@@ -124,4 +124,32 @@ class Posts extends Model
         return $posts;
     }
 
+
+    // The admin form saves tag ids as strings (["6"]) while older rows hold ints ([6]); match both.
+    public function scopeWithTag($query, $tagId)
+    {
+        return $query->where(fn ($q) => $q->whereJsonContains('tags', (int) $tagId)
+            ->orWhereJsonContains('tags', (string) $tagId));
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'active')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now());
+    }
+
+    public function scopeWebSource($query)
+    {
+        return $query->where(fn ($q) => $q->whereNull('source')
+            ->orWhere('source', '')
+            ->orWhere('source', 'web'));
+    }
+
+    public function scopeAiSource($query)
+    {
+        return $query->whereNotNull('source')
+            ->where('source', '!=', '')
+            ->where('source', '!=', 'web');
+    }
 }
