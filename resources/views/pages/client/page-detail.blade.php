@@ -12,7 +12,7 @@
     "dateModified": "{{ $page->updated_at->toISOString() }}",
     "publisher": {
         "@type": "Organization",
-        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
+        "name": "{{ $meta->web_name ?? 'Kang Wendra' }}",
         "logo": {
             "@type": "ImageObject",
             "url": "{{ $meta->logo ? getFile($meta->logo) : '' }}"

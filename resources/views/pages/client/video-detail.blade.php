@@ -8,12 +8,12 @@
     "name": "{{ $video->title }}",
     "description": "{{ Str::limit(strip_tags($video->description), 160) }}",
     "thumbnailUrl": "{{ $video->image ? getFile($video->image) : '' }}",
-    "uploadDate": "{{ $video->created_at->toISOString() }}",
+    "uploadDate": "{{ ($video->youtube_published_at ?? $video->created_at)->toISOString() }}",
     "contentUrl": "{{ $video->link_yt }}",
     "embedUrl": "{{ $video->link_yt }}",
     "publisher": {
         "@type": "Organization",
-        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
+        "name": "{{ $meta->web_name ?? 'Kang Wendra' }}",
         "logo": {
             "@type": "ImageObject",
             "url": "{{ $meta->logo ? getFile($meta->logo) : '' }}"
@@ -44,7 +44,7 @@
             "name": "Kapan video ini dipublikasikan?",
             "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Video ini dipublikasikan pada {{ $video->created_at->format('d M Y') }} dan dapat ditonton langsung melalui platform video kami."
+                "text": "Video ini dipublikasikan pada {{ ($video->youtube_published_at ?? $video->created_at)->format('d M Y') }} dan dapat ditonton langsung melalui platform video kami."
             }
         },
         {
@@ -91,7 +91,7 @@
                                 <ul class="post-meta">
                                     <li><a href="/videos">Video</a></li>
                                     <li class="sep"></li>
-                                    <li><a href="/videos" class="date">{{ $video->created_at ? \Carbon\Carbon::parse($video->created_at)->format('d.m.Y') : date('d.m.Y') }}</a></li>
+                                    <li><a href="/videos" class="date">{{ ($video->youtube_published_at ?? $video->created_at)->format('d.m.Y') }}</a></li>
                                 </ul>
                                 <h1 class="video-title">{{ $video->title }}</h1>
                                 <div class="video-author-meta">
@@ -102,7 +102,7 @@
                                     </div>
                                     <div class="author-info">
                                         <span>Oleh <a href="/author/{{ $video->createdBy?->slug ?? '#' }}">{{ $video->createdBy?->name ?? 'Admin' }}</a></span>
-                                        <span>{{ $video->created_at ? \Carbon\Carbon::parse($video->created_at)->locale('id')->translatedFormat('l, d M Y') : date('d M Y') }} • {{ rand(1, 100) }} views</span>
+                                        <span>{{ ($video->youtube_published_at ?? $video->created_at)->locale('id')->translatedFormat('l, d M Y') }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -756,6 +756,5 @@
         }
     </script>
 @endpush
-
 
 

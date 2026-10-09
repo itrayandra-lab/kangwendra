@@ -46,10 +46,10 @@
                                     <ul class="post-meta">
                                         <li><a href="#">Video</a></li>
                                         <li class="sep"></li>
-                                        <li><a href="#" class="date">{{ $item->published_at ? \Carbon\Carbon::parse($item->published_at)->format('d.m.Y') : date('d.m.Y') }}</a></li>
+                                        <li><a href="#" class="date">{{ ($item->youtube_published_at ?? $item->created_at)->format('d.m.Y') }}</a></li>
                                     </ul>
                                     <h3><a href="{{ route('video_detail', $item->slug) }}" class="text-hover">{{ $item->title }}</a></h3>
-                                    <p>{{ Str::limit(strip_tags($item->content), 120) }}</p>
+                                    <p>{{ Str::limit(strip_tags((string) $item->description), 120) }}</p>
                                     <ul class="post-card-footer">
                                         <li><a href="{{ route('video_detail', $item->slug) }}" class="read-more">Tonton Video</a></li>
                                         <li>
@@ -461,6 +461,5 @@
     }
 </style>
 @endpush
-
 
 

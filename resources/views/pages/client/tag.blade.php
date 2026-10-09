@@ -26,14 +26,14 @@
     "@context": "https://schema.org",
     "@type": "WebPage",
     "@id": "{{ request()->url() }}",
-    "name": "{{ $tag?->meta_title ?? ($tag?->name . ' - ' . ($meta->web_name ?? 'Kangwendra')) }}",
-    "description": "Artikel dengan tag {{ $tag?->name ?? 'Tag' }} - Portal Berita AI Indonesia",
+    "name": "{{ $tag?->meta_title ?? ($tag?->name . ' - ' . ($meta->web_name ?? 'Kang Wendra')) }}",
+    "description": "Artikel dengan tag {{ $tag?->name ?? 'Tag' }} - {{ $meta->web_name ?? 'Kang Wendra' }}",
     "url": "{{ request()->url() }}",
     "inLanguage": "id-ID",
     "isPartOf": {
         "@type": "WebSite",
         "@id": "{{ url('/') }}#website",
-        "name": "{{ $meta->web_name ?? 'Kangwendra' }}",
+        "name": "{{ $meta->web_name ?? 'Kang Wendra' }}",
         "url": "{{ url('/') }}"
     }
 }

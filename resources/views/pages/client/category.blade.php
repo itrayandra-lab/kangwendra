@@ -26,14 +26,14 @@
     "@context": "https://schema.org",
     "@type": "WebPage",
     "@id": "{{ request()->url() }}",
-    "name": "{{ $category->meta_title ?? ($category->name . ' - ' . ($meta->web_name ?? 'Kangwendra')) }}",
+    "name": "{{ $category->meta_title ?? ($category->name . ' - ' . ($meta->web_name ?? 'Kang Wendra')) }}",
     "description": "{{ $category->meta_description ?? ($category->name . ' - Artikel terbaru tentang ' . $category->name) }}",
     "url": "{{ request()->url() }}",
     "inLanguage": "id-ID",
     "isPartOf": {
         "@type": "WebSite",
         "@id": "{{ url('/') }}#website",
-        "name": "{{ $meta->web_name ?? 'Kangwendra' }}",
+        "name": "{{ $meta->web_name ?? 'Kang Wendra' }}",
         "url": "{{ url('/') }}"
     },
     "about": {

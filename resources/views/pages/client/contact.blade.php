@@ -6,7 +6,7 @@
             <div class="page-content-wrap">
                 <div class="page-content">
                     <h4>Hubungi Kami</h4>
-                    <h2>Hubungi <span>Kami</span></h2>
+                    <h1>Hubungi <span>Kami</span></h1>
                     <p>Punya pertanyaan, saran, atau ingin berkolaborasi? Kami senang mendengar dari Anda.</p>
                 </div>
             </div>
