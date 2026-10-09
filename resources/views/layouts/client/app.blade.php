@@ -6,9 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
+    @php
+        $seoTitle = html_entity_decode(trim($__env->yieldContent('seo_title')) ?: ($meta->meta_title ?? 'Kang Wendra'));
+        $seoDesc = html_entity_decode(trim($__env->yieldContent('seo_description')) ?: ($meta->meta_description ?? 'Kang Wendra'));
+        $seoImage = trim($__env->yieldContent('seo_image')) ?: getFile($meta->og_image ?? '');
+    @endphp
     <!-- Basic SEO Meta Tags -->
-    <title>{{ $meta->meta_title ?? 'Portal Berita' }}</title>
-    <meta name="description" content="{{ $meta->meta_description ?? 'Portal Berita' }}">
+    <title>{{ $seoTitle }}</title>
+    <meta name="description" content="{{ $seoDesc }}">
     <meta name="keywords" content="{{ $meta->meta_keywords ?? '' }}">
     <meta name="author" content="{{ $meta->web_name ?? 'Portal Berita' }}">
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -34,11 +39,11 @@
     @endif
     
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{{ isset($post) ? 'article' : 'website' }}">
     <meta property="og:site_name" content="{{ $meta->web_name ?? 'Portal Berita' }}">
-    <meta property="og:title" content="{{ $meta->meta_title ?? 'Portal Berita' }}">
-    <meta property="og:description" content="{{ $meta->meta_description ?? '' }}">
-    <meta property="og:image" content="{{ getFile($meta->og_image ?? '') }}">
+    <meta property="og:title" content="{{ $seoTitle }}">
+    <meta property="og:description" content="{{ $seoDesc }}">
+    <meta property="og:image" content="{{ $seoImage }}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/jpeg">
@@ -50,203 +55,24 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@{{ str_replace(['https://twitter.com/', 'https://x.com/', '@'], '', $meta->twitter_link ?? '') }}">
     <meta name="twitter:creator" content="@{{ str_replace(['https://twitter.com/', 'https://x.com/', '@'], '', $meta->twitter_link ?? '') }}">
-    <meta name="twitter:title" content="{{ $meta->meta_title ?? 'Portal Berita' }}">
-    <meta name="twitter:description" content="{{ $meta->meta_description ?? '' }}">
-    <meta name="twitter:image" content="{{ getFile($meta->og_image ?? '') }}">
+    <meta name="twitter:title" content="{{ $seoTitle }}">
+    <meta name="twitter:description" content="{{ $seoDesc }}">
+    <meta name="twitter:image" content="{{ $seoImage }}">
     <meta name="twitter:image:alt" content="{{ $meta->meta_title ?? 'Portal Berita' }}">
     
     <!-- LinkedIn -->
     <meta property="linkedin:owner" content="{{ $meta->web_name ?? 'Portal Berita' }}">
     
     <!-- WhatsApp -->
-    <meta property="whatsapp:title" content="{{ $meta->meta_title ?? 'Portal Berita' }}">
-    <meta property="whatsapp:description" content="{{ $meta->meta_description ?? '' }}">
-    <meta property="whatsapp:image" content="{{ getFile($meta->og_image ?? '') }}">
+    <meta property="whatsapp:title" content="{{ $seoTitle }}">
+    <meta property="whatsapp:description" content="{{ $seoDesc }}">
+    <meta property="whatsapp:image" content="{{ $seoImage }}">
     
     <!-- Telegram -->
     <meta property="telegram:channel" content="{{ $meta->web_name ?? 'Portal Berita' }}">
     
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "NewsMediaOrganization",
-        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
-        "url": "{{ url('/') }}",
-        "logo": {
-            "@type": "ImageObject",
-            "url": "{{ getFile($meta->logo ?? '') }}",
-            "width": 200,
-            "height": 60
-        },
-        "description": "{{ $meta->meta_description ?? '' }}",
-        "sameAs": [
-            @if(!empty($meta->facebook_link) && $meta->facebook_link !== '#')
-            "{{ $meta->facebook_link }}",
-            @endif
-            @if(!empty($meta->twitter_link) && $meta->twitter_link !== '#')
-            "{{ $meta->twitter_link }}",
-            @endif
-            @if(!empty($meta->instagram_link) && $meta->instagram_link !== '#')
-            "{{ $meta->instagram_link }}",
-            @endif
-            @if(!empty($meta->youtube_link) && $meta->youtube_link !== '#')
-            "{{ $meta->youtube_link }}"
-            @endif
-        ],
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "telephone": "{{ $meta->phone_number ?? '' }}",
-            "contactType": "Customer Service",
-            "email": "{{ $meta->email ?? '' }}"
-        },
-        "address": {
-            "@type": "PostalAddress",
-            "addressCountry": "ID",
-            "addressLocality": "Indonesia"
-        },
-        "founder": {
-            "@type": "Person",
-            "name": "{{ $meta->web_name ?? 'Portal Berita' }}"
-        },
-        "publishingPrinciples": "{{ url('/') }}/about",
-        "diversityPolicy": "{{ url('/') }}/diversity",
-        "ethicsPolicy": "{{ url('/') }}/ethics"
-    }
-    </script>
-    
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
-        "url": "{{ url('/') }}",
-        "description": "{{ $meta->meta_description ?? '' }}",
-        "inLanguage": "id-ID",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": {
-                "@type": "EntryPoint",
-                "urlTemplate": "{{ url('/') }}/search?q={search_term_string}"
-            },
-            "query-input": "required name=search_term_string"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
-            "logo": {
-                "@type": "ImageObject",
-                "url": "{{ getFile($meta->logo ?? '') }}"
-            }
-        }
-    }
-    </script>
-    
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-            {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Beranda",
-                "item": "{{ url('/') }}"
-            }
-            @if(isset($category) && $category)
-            ,{
-                "@type": "ListItem",
-                "position": 2,
-                "name": "{{ $category->name }}",
-                "item": "{{ url('/') }}/{{ $category->slug }}"
-            }
-            @endif
-        ]
-    }
-    </script>
+    @include('layouts.client.partials.schema')
 
-    {{-- AEO: SpeakableSpecification for AI crawlers (GPTBot, PerplexityBot, ClaudeBot) --}}
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        "@id": "{{ $canonicalUrl }}",
-        "name": "{{ $meta->meta_title ?? 'Portal Berita AI Indonesia' }}",
-        "description": "{{ $meta->meta_description ?? 'Portal berita AI dan teknologi terbaru di Indonesia' }}",
-        "url": "{{ $canonicalUrl }}",
-        "inLanguage": "id-ID",
-        "isPartOf": {
-            "@type": "WebSite",
-            "@id": "{{ url('/') }}#website",
-            "name": "{{ $meta->web_name ?? 'Kangwendra' }}",
-            "url": "{{ url('/') }}"
-        },
-        "about": {
-            "@type": "NewsMediaOrganization",
-            "name": "{{ $meta->web_name ?? 'Kangwendra' }}"
-        }
-    }
-    </script>
-
-    {{-- GEO: Organization schema for Generative AI training data --}}
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "@id": "{{ url('/') }}/#organization",
-        "name": "{{ $meta->web_name ?? 'Kangwendra - Portal Berita AI Indonesia' }}",
-        "alternateName": "Kangwendra AI Portal",
-        "description": "{{ $meta->meta_description ?? 'Portal berita AI, SEO, dan teknologi terkini di Indonesia' }}",
-        "url": "{{ url('/') }}",
-        "logo": {
-            "@type": "ImageObject",
-            "url": "{{ getFile($meta->logo ?? '') }}",
-            "width": 200,
-            "height": 60
-        },
-        "image": {
-            "@type": "ImageObject",
-            "url": "{{ getFile($meta->og_image ?? ($meta->logo ?? '')) }}"
-        },
-        "sameAs": [
-            @if(!empty($meta->facebook_link) && $meta->facebook_link !== '#')
-            "{{ $meta->facebook_link }}",
-            @endif
-            @if(!empty($meta->twitter_link) && $meta->twitter_link !== '#')
-            "{{ $meta->twitter_link }}",
-            @endif
-            @if(!empty($meta->instagram_link) && $meta->instagram_link !== '#')
-            "{{ $meta->instagram_link }}",
-            @endif
-            @if(!empty($meta->youtube_link) && $meta->youtube_link !== '#')
-            "{{ $meta->youtube_link }}"
-            @endif
-        ],
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "Customer Service",
-            "email": "{{ $meta->email ?? '' }}",
-            "availableLanguage": "Indonesian",
-            "areaServed": "ID"
-        },
-        "address": {
-            "@type": "PostalAddress",
-            "addressCountry": "ID",
-            "addressLocality": "Indonesia",
-            "addressRegion": "Indonesia"
-        },
-        "foundingDate": "2025",
-        "publishingPrinciples": "{{ url('/') }}/about",
-        "diversityPolicy": "{{ url('/') }}/about",
-        "ethicsPolicy": "{{ url('/') }}/about",
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "bestRating": "5",
-            "ratingCount": "1250"
-        }
-    }
-    </script>
-    
     <!-- Favicon & Icons -->
     <link rel="shortcut icon" type="image/x-icon" href="{{ getFile($meta->favicon ?? '') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ getFile($meta->favicon ?? '') }}">
@@ -383,28 +209,6 @@
 
     @stack('styles')
     <link rel="stylesheet" href="{{ asset('client/assets/css/lunaray-type.css') }}?v={{ @filemtime(public_path('client/assets/css/lunaray-type.css')) }}">
-    
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
-        "url": "{{ url('/') }}",
-        "logo": "{{ $meta->logo ? getFile($meta->logo) : '' }}",
-        "description": "{{ $meta->meta_description ?? 'Portal berita terpercaya dengan informasi terkini' }}",
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "customer service",
-            "email": "{{ $meta->email ?? '' }}"
-        },
-        "sameAs": [
-            "{{ $meta->facebook_link ?? '' }}",
-            "{{ $meta->twitter_link ?? '' }}",
-            "{{ $meta->instagram_link ?? '' }}",
-            "{{ $meta->youtube_link ?? '' }}"
-        ]
-    }
-    </script>
     
     @stack('structured-data')
 </head>
