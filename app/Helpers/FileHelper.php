@@ -12,7 +12,7 @@ use Illuminate\Http\Exceptions\PostTooLargeException;
 class FileHelper
 {
     const MAX_FILE_SIZE = 10;
-    const MAX_IMAGE_SIZE = 3;
+    const MAX_IMAGE_SIZE = 20;
 
     const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'ico', 'svg', 'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'];
 
