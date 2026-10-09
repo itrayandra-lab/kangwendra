@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchOverlay = document.getElementById('search-overlay');
     const trendingSection = document.getElementById('trending-section');
 
+    if (!searchTrigger || !closeSearch || !searchOverlay) {
+        return;
+    }
+
     searchTrigger.addEventListener('click', (e) => {
         e.preventDefault();
 
