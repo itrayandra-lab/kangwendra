@@ -1,1055 +1,789 @@
-﻿@extends('layouts.client.app')
+﻿{{-- ================================================================
+    KANG WENDRA — Official Homepage
+    LOCKED · v1.0 · 07 October 2026
+    Brand & AI Architect · Understand Before You Build
+================================================================ --}}
+@extends('layouts.client.app')
 
-@push('structured-data')
-{{-- WebSite schema --}}
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
-    "description": "{{ $meta->meta_description ?? 'Portal berita terpercaya dengan informasi terkini dan terpercaya' }}",
-    "url": "{{ url('/') }}",
-    "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "{{ url('/search') }}?qr={search_term_string}"
-        },
-        "query-input": "required name=search_term_string"
-    },
-    "publisher": {
-        "@type": "Organization",
-        "name": "{{ $meta->web_name ?? 'Portal Berita' }}",
-        "logo": {
-            "@type": "ImageObject",
-            "url": "{{ $meta->logo ? getFile($meta->logo) : '' }}"
-        }
-    }
-}
-</script>
+@section('title', 'KANG WENDRA — Brand & AI Architect · Understand Before You Build')
 
-{{-- WebPage schema for homepage --}}
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "@id": "{{ url('/') }}",
-    "name": "{{ $meta->meta_title ?? ($meta->web_name ?? 'Kangwendra') }}",
-    "description": "{{ $meta->meta_description ?? '' }}",
-    "url": "{{ url('/') }}",
-    "inLanguage": "id-ID",
-    "isPartOf": {
-        "@type": "WebSite",
-        "@id": "{{ url('/') }}#website",
-        "name": "{{ $meta->web_name ?? 'Kangwendra' }}"
-    },
-    "about": {
-        "@type": "NewsMediaOrganization",
-        "name": "{{ $meta->web_name ?? 'Kangwendra' }}"
-    }
-}
-</script>
-
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "name": "Artikel Terbaru",
-    "description": "Kumpulan artikel berita terbaru dan terpercaya",
-    "itemListElement": [
-        @foreach($latestNews->take(5) as $index => $news)
-        {
-            "@type": "ListItem",
-            "position": {{ $index + 1 }},
-            "item": {
-                "@type": "Article",
-                "headline": "{{ $news->title }}",
-                "description": "{{ Str::limit(strip_tags($news->content), 160) }}",
-                "url": "{{ url('/') }}/{{ $news->category?->slug ?? 'ai-teknologi' }}/{{ $news->slug }}",
-                "datePublished": "{{ $news->published_at ? $news->published_at->toISOString() : $news->created_at->toISOString() }}",
-                "author": {
-                    "@type": "Person",
-                    "name": "{{ $news->createdBy->name ?? 'Admin' }}"
-                },
-                "image": "{{ $news->image ? getFile($news->image) : '' }}"
-            }
-        }{{ !$loop->last ? ',' : '' }}
-        @endforeach
-    ]
-}
-</script>
-
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-        {
-            "@type": "Question",
-            "name": "Apa saja kategori berita yang tersedia?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Kami menyediakan berbagai kategori berita meliputi: {{ $categories->take(5)->pluck('name')->implode(', ') }} dan kategori lainnya untuk memberikan informasi yang komprehensif."
-            }
-        },
-        {
-            "@type": "Question",
-            "name": "Bagaimana cara mencari artikel di website ini?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Anda dapat menggunakan fitur pencarian di bagian atas halaman atau menjelajahi artikel berdasarkan kategori yang tersedia. Semua artikel diorganisir dengan baik untuk memudahkan navigasi."
-            }
-        },
-        {
-            "@type": "Question",
-            "name": "Seberapa sering konten diperbarui?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Konten kami diperbarui secara berkala dengan berita terbaru dan artikel informatif. Tim editorial kami bekerja untuk menyajikan informasi yang akurat dan terkini setiap hari."
-            }
-        }
-    ]
-}
-</script>
+@push('styles')
+<link rel="stylesheet" href="{{ asset('client/assets/css/lunaray-beranda.css') }}?v={{ @filemtime(public_path('client/assets/css/lunaray-beranda.css')) }}">
 @endpush
 
-@section('content')
-
-{{-- ===== HERO BANNER dari Berita ===== --}}
+{{-- ================================================================
+    S01 — HERO SLIDER (5 slides)
+================================================================ --}}
 @php
-    $heroPosts = $featuredPosts->take(4);
-    $heroMain  = $heroPosts->first();
-    $heroSubs  = $heroPosts->skip(1)->values();
+$heroSlides = [
+    [
+        'variant' => 'profile',
+        'bg' => 'section-1-hero-1-bg.png',
+        'eyebrow' => 'WENDRA WILENDRA, M.MT.',
+        'headline' => 'KANG WENDRA',
+        'category' => 'Brand & AI Architect',
+        'body' => [
+            'Di tengah perubahan besar yang dibawa AI, pekerjaan brand tetap sama: membangun kepercayaan.',
+            'Yang berubah adalah cara dunia menemukan, memahami, dan memilihnya.',
+        ],
+        'cta_label' => 'Explore My Thinking',
+        'cta_style' => 'glass',
+        'cta_icon' => true,
+        'cta_href' => '#',
+    ],
+    [
+        'variant' => 'brand',
+        'bg' => 'section-1-hero-2-bg.png',
+        'eyebrow' => 'Eyebrow',
+        'headline' => 'BRAND',
+        'category' => 'Brand tidak pernah sekadar soal terlihat. Ia hidup dari apa yang diingat, dipercaya, lalu dipilih.',
+        'body' => [
+            'Karena brand bukan sekadar komunikasi. Ia adalah meaning yang dibangun, pengalaman yang dirasakan, dan kepercayaan yang terakumulasi dari waktu ke waktu.',
+        ],
+        'cta_label' => 'Explore Brand Thinking',
+        'cta_style' => 'solid',
+        'cta_href' => '#',
+    ],
+    [
+        'variant' => 'tsunami',
+        'bg' => 'section-1-hero-3-bg.png',
+        'eyebrow' => 'AI UNDERSTANDING & DISCOVERY',
+        'opening' => 'Ini bukan sekadar gelombang teknologi berikutnya.',
+        'headline' => 'INI',
+        'headline_accent' => 'TSUNAMI AI.',
+        'body' => [
+            'AI tidak hanya mengubah tools yang kita gunakan. Ia mulai mengubah bagaimana manusia mencari, memahami, memilih—dan bagaimana bisnis ditemukan.',
+        ],
+        'cta_label' => 'Understand What Is Changing',
+        'cta_style' => 'link',
+        'cta_href' => '#',
+    ],
+    [
+        'variant' => 'systems',
+        'bg' => 'section-1-hero-4-bg.png',
+        'eyebrow' => 'INTELLIGENT BUSINESS SYSTEMS',
+        'headline' => 'AI yang berguna bukan yang paling terlihat.',
+        'headline_accent' => 'Tapi yang benar-benar bekerja di dalam bisnis.',
+        'body' => [
+            'Bukan sekadar tools yang berdiri sendiri, tetapi intelligence yang terhubung dengan manusia, knowledge, workflow, dan keputusan.',
+        ],
+        'cta_label' => 'Explore Intelligent Systems',
+        'cta_style' => 'link',
+        'cta_href' => '#',
+    ],
+    [
+        'variant' => 'beauty',
+        'bg' => 'section-1-hero-5-bg.png',
+        'eyebrow' => 'FROM THINKING TO PRACTICE',
+        'headline' => 'THE AI BEAUTY',
+        'headline_accent' => 'REVOLUTION',
+        'category' => 'From Skin & Wellness Intelligence to Data-Driven Product Innovation',
+        'body' => [
+            'Membawa AI dari percakapan tentang teknologi menuju bagaimana intelligence digunakan untuk memahami manusia, mengembangkan produk, dan membangun bisnis.',
+        ],
+        'cta_label' => 'Explore the Experience',
+        'cta_style' => 'link',
+        'cta_href' => '#',
+    ],
+];
 @endphp
 
-@if($heroMain)
-<section class="homepage-hero">
-    <div class="container">
-        <div class="hero-grid">
-
-            {{-- Artikel Utama (besar, kiri) --}}
-            <div class="hero-main">
-                <a href="{{ route('post_detail', [$heroMain->category?->slug ?? 'uncategorized', $heroMain->slug]) }}" class="hero-main-link">
-                    <div class="hero-main-img">
-                        <img src="{{ $heroMain->image ? getFile($heroMain->image) : asset('assets/default.jpg') }}" alt="{{ $heroMain->title }}" width="1200" height="630" loading="eager" fetchpriority="high">
-                        <div class="hero-main-overlay">
-                            <div class="hero-main-content">
-                                <span class="hero-category">{{ $heroMain->category?->name ?? 'Uncategorized' }}</span>
-                                <h2 class="hero-title">{{ Str::limit($heroMain->title, 90) }}</h2>
-                                <div class="hero-meta">
-                                    <span>{{ $heroMain->createdBy?->name ?? 'Admin' }}</span>
-                                    <span class="hero-meta-sep">·</span>
-                                    <span>{{ $heroMain->published_at ? $heroMain->published_at->diffForHumans() : $heroMain->created_at->diffForHumans() }}</span>
-                                </div>
-                            </div>
+<section class="kw-hero" id="hero" data-page="beranda" data-section="s01-hero">
+    <div class="kw-hero-swiper swiper" id="kwHeroSwiper">
+        <div class="swiper-wrapper">
+            @foreach ($heroSlides as $i => $slide)
+            <div class="kw-hero-slide kw-hero-slide--{{ $slide['variant'] }} swiper-slide" style="--kw-slide-bg: url('{{ asset('assets/img/background/' . $slide['bg']) }}')">
+                <div class="kw-hero-slide-inner">
+                    <div class="kw-hero-content">
+                        <div class="kw-hero-eyebrow">
+                            <span class="kw-eyebrow-dash"></span>
+                            <span class="kw-eyebrow-text">{{ $slide['eyebrow'] }}</span>
                         </div>
+
+                        @if (isset($slide['opening']))
+                        <p class="kw-hero-opening">{{ $slide['opening'] }}</p>
+                        @endif
+
+                        <h1 class="kw-hero-headline">
+                            <span class="kw-hero-headline-main">{{ $slide['headline'] }}</span>
+                            @if (isset($slide['headline_accent']))
+                                <span class="kw-hero-headline-accent">{{ $slide['headline_accent'] }}</span>
+                            @endif
+                        </h1>
+
+                        @if (isset($slide['category']))
+                        <p class="kw-hero-category">{{ $slide['category'] }}</p>
+                        @endif
+
+                        <div class="kw-hero-body">
+                            @foreach ($slide['body'] as $paragraph)
+                            <p>{{ $paragraph }}</p>
+                            @endforeach
+                        </div>
+
+                        <a href="{{ $slide['cta_href'] }}" class="kw-hero-cta kw-hero-cta--{{ $slide['cta_style'] }}">
+                            @if (!empty($slide['cta_icon']))
+                            <img src="{{ asset('assets/img/kw-personal-social_yt-transparent.png') }}" alt="" class="kw-hero-cta-icon">
+                            @endif
+                            <span>{{ $slide['cta_label'] }}</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        </a>
                     </div>
-                </a>
+                </div>
+                <div class="kw-hero-overlay"></div>
+            </div>
+            @endforeach
+        </div>
+
+        <div class="kw-hero-pagination swiper-pagination"></div>
+        <div class="kw-hero-prev swiper-button-prev" aria-label="Previous slide"></div>
+        <div class="kw-hero-next swiper-button-next" aria-label="Next slide"></div>
+    </div>
+
+    <div class="kw-hero-scroll-hint" aria-hidden="true">
+        <span>Scroll</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </div>
+</section>
+
+{{-- ================================================================
+    S02 — CATEGORY EXPLANATION
+================================================================ --}}
+<section class="kw-section kw-section--light" id="brand-ai-architect" data-page="beranda" data-section="s02-brand-ai-architect">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-2.png') }}" alt="" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-arch-layout">
+        <div class="kw-arch-copy">
+            <div class="kw-eyebrow">
+                <span class="kw-eyebrow-dash"></span>
+                <span>BRAND &amp; AI ARCHITECT</span>
             </div>
 
-            {{-- Artikel Sub (kecil, kanan) --}}
-            @if($heroSubs->count() > 0)
-            <div class="hero-sub-grid">
-                @foreach($heroSubs->take(3) as $sub)
-                <a href="{{ route('post_detail', [$sub->category?->slug ?? 'uncategorized', $sub->slug]) }}" class="hero-sub-item">
-                    <div class="hero-sub-img">
-                        <img src="{{ $sub->image ? getFile($sub->image) : asset('assets/default.jpg') }}" alt="{{ $sub->title }}" width="600" height="400" loading="lazy">
-                        <div class="hero-sub-overlay">
-                            <div><span class="hero-category">{{ $sub->category?->name ?? 'Uncategorized' }}</span></div>
-                            <h3 class="hero-sub-title">{{ Str::limit($sub->title, 60) }}</h3>
-                            <span class="hero-sub-date">{{ $sub->published_at ? $sub->published_at->diffForHumans() : $sub->created_at->diffForHumans() }}</span>
-                        </div>
-                    </div>
-                </a>
-                @endforeach
-            </div>
-            @endif
+            <h2 class="kw-arch-headline">
+                Brand, manusia, AI, dan sistem bisnis<br>
+                <span class="kw-headline-accent">tidak lagi bekerja sendiri-sendiri.</span>
+            </h2>
 
+            <p class="kw-arch-body">
+                Brand &amp; AI Architect adalah peran yang merancang bagaimana brand, manusia, AI, knowledge, dan intelligent systems bekerja sebagai satu sistem—dari brand architecture dan machine understanding hingga penerapan AI dalam customer journey, marketing, decision-making, workflow, dan operasi bisnis.
+            </p>
+
+            <a href="#" class="kw-btn kw-btn-outline kw-arch-cta">
+                Explore What Brand &amp; AI Architect Means
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="12 5 19 12 12 19"/>
+                </svg>
+            </a>
         </div>
     </div>
 </section>
-@endif
-<section class="main-post-area" style="padding: 40px 0 100px;">
-    <div class="container">
-        <div class="row gy-5 gy-lg-0 main-area">
-            <div class="col-lg-8">
-                <div class="main-post-wrap">
-                    {{-- Section Header --}}
-                    <div class="section-heading mb-4">
-                        <h3>
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                <path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Zm-40 200h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Z"/>
-                            </svg>
-                            <span>Berita Pilihan Hari Ini</span>
-                        </h3>
-                        <p class="section-subtitle">Update terkini seputar teknologi, bisnis, dan lifestyle</p>
-                    </div>
-                    
-                    <div class="row gy-4">
-                        @foreach($latestNews->take(10) as $index => $article)
-                            <article class="col-lg-12 col-md-6">
-                                <div class="post-card horizontal-card img-hover-move">
-                                    @if($article->image)
-                                        <div class="post-thumb media">
-                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
-                                            </a>
-                                        </div>
-                                    @endif
-                                    <div class="post-content">
-                                        <ul class="post-meta">
-                                            <li>
-                                                <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
-                                            </li>
-                                            <li class="sep"></li>
-                                            <li>
-                                                <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
-                                            </li>
-                                        </ul>
-                                        <h3>
-                                            <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                        </h3>
-                                        @if($article->content)
-                                            <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
-                                        @endif
-                                        <ul class="post-card-footer">
-                                            <li>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                            </li>
-                                            <li>
-                                                <a href="#" class="comment">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                        <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q74-137 194-218.5T480-800q146 0 266 81.5T920-500q-74 137-194 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                    </svg>
-                                                    <span>{{ $article->counter }}</span>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
+
+{{-- ================================================================
+    S03 — BRAND & BRANDING
+    Split layout: text-left (55%) | visual-right (45%)
+    Reference: gambar review final — 100% match
+=============================================================== --}}
+<section class="kw-section kw-section--dark kw-section--split" id="beranda--brand-branding" data-page="beranda" data-section="s03-brand-branding">
+
+    {{-- FULL-BLEED BACKGROUND + OVERLAY (left-weighted) --}}
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-3-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay kw-section-overlay--left"></div>
+    </div>
+
+    {{-- TEXT COLUMN (left, ~55%) — sits above overlay --}}
+    <div class="kw-brand-content">
+        <div class="kw-eyebrow">
+            <span class="kw-eyebrow-dash"></span>
+            <span>BRAND &amp; BRANDING</span>
+        </div>
+
+        <h2 class="kw-brand-headline">
+            Brand yang terlihat kuat<br>
+            belum tentu <span class="kw-brand-headline-strong">benar-benar kuat.</span>
+        </h2>
+
+        <p class="kw-brand-line">Logo bisa dikenali.</p>
+        <p class="kw-brand-line">Campaign bisa ramai.</p>
+        <p class="kw-brand-line">Konten bisa muncul setiap hari.</p>
+
+        <p class="kw-brand-body">
+            Tapi brand baru mulai bekerja ketika ia meninggalkan sesuatu di kepala orang&mdash;meaning yang jelas, alasan untuk percaya, dan alasan untuk memilih.
+        </p>
+
+        <p class="kw-brand-body">
+            Itu sebabnya saya tidak melihat branding sebagai pekerjaan mempercantik tampilan. Branding adalah pekerjaan membentuk persepsi, mengarahkan pengalaman, dan membangun memory yang cukup kuat untuk bertahan ketika perhatian sudah pindah ke tempat lain.
+        </p>
+
+        <p class="kw-brand-body">
+            Dan sekarang, ketika AI mulai ikut mencari, membaca, membandingkan, dan merekomendasikan brand, pekerjaan itu menjadi lebih kompleks. Fondasinya tidak berubah. Lingkungan tempat brand hidup yang berubah.
+        </p>
+
+        <div class="kw-brand-statement">
+            <div class="kw-brand-statement-line"></div>
+            <p class="kw-brand-statement-text">
+                Fondasinya tidak berubah.<br>
+                Lingkungan tempat brand hidup yang berubah.
+            </p>
+        </div>
+
+        <a href="#" class="kw-btn kw-btn-outline">
+            Explore Brand &amp; Branding
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+            </svg>
+        </a>
+    </div>
+
+</section>
+
+{{-- ================================================================
+    S04 — AI & THE NEW ENVIRONMENT
+================================================================ --}}
+<section class="kw-section kw-section--light" id="ai-environment" data-page="beranda" data-section="s04-ai-environment">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-4-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content">
+            <div class="kw-eyebrow">
+                <span class="kw-eyebrow-dash"></span>
+                <span>AI &amp; THE NEW ENVIRONMENT</span>
+            </div>
+
+            <h2 class="kw-headline">
+                AI bukan sekadar tools baru.<br>
+                <span class="kw-headline-accent">Ia adalah cara baru dunia memahami.</span>
+            </h2>
+
+            <p class="kw-body">
+                AI mulai ikut membaca konteks,<br>
+                menghubungkan informasi, membandingkan pilihan,<br>
+                dan membentuk jawaban.
+            </p>
+
+            <div class="kw-core-statement">
+                <div class="kw-eyebrow-dash"></div>
+                <p><strong>Brand sekarang punya dua pembaca.</strong></p>
+                <p class="kw-core-line">Manusia yang perlu percaya.</p>
+                <p class="kw-core-line">Mesin yang perlu memahami.</p>
+            </div>
+
+            <p class="kw-body kw-body--dim">
+                Bukan berarti kita membangun brand untuk mesin.<br>
+                Manusia tetap menjadi tujuan.
+            </p>
+
+            <div class="kw-underline-statement">
+                <span class="kw-eyebrow-dash"></span>
+                <p><span class="kw-us-line kw-us-line--bold">AI tidak menggantikan manusia sebagai tujuan.</span><br><span class="kw-us-line kw-us-line--heavy">AI mengubah jalan menuju manusia.</span></p>
+            </div>
+
+            <a href="#" class="kw-btn kw-btn-outline">Explore AI Understanding &amp; Discovery</a>
+        </div>
+    </div>
+</section>
+
+{{-- ================================================================
+    S05 — INTELLIGENT BUSINESS SYSTEMS
+================================================================ --}}
+<section class="kw-section kw-section--dark" id="intelligent-business" data-page="beranda" data-section="s05-intelligent-business">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-5-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content">
+            <div class="kw-eyebrow">
+                <span class="kw-eyebrow-dash"></span>
+                <span>INTELLIGENT BUSINESS SYSTEMS</span>
+            </div>
+
+            <h2 class="kw-headline">
+                Punya AI belum tentu<br>
+                <span class="kw-headline-accent">membuat bisnis lebih intelligent.</span>
+            </h2>
+
+            <p class="kw-body">
+                Tools bertambah.<br>
+                Sistemnya belum tentu berubah.
+            </p>
+
+            <p class="kw-body kw-body--strong">
+                AI yang berguna bukan yang paling terlihat.<br>
+                Tapi yang benar-benar bekerja di dalam bisnis.
+            </p>
+
+            <p class="kw-body kw-body--dim">
+                Intelligent Business Systems merancang bagaimana manusia, knowledge, workflow, data, dan AI bekerja sebagai satu sistem.
+            </p>
+
+            <div class="kw-underline-statement">
+                <span class="kw-eyebrow-dash"></span>
+                <p><span class="kw-us-line kw-us-line--bold">AI tidak menggantikan judgment.</span><br><span class="kw-us-line kw-us-line--heavy">Ia membuat judgment bekerja dengan lebih baik.</span></p>
+            </div>
+
+            <a href="#" class="kw-btn kw-btn-outline">Explore Intelligent Business Systems</a>
+        </div>
+    </div>
+</section>
+
+{{-- ================================================================
+    S06 — IDEAS
+================================================================ --}}
+@php
+    $homepagePostUrl = static fn ($post) => $post->category
+        ? route('post_detail', ['category' => $post->category->slug, 'post' => $post->slug])
+        : route('posts', ['qr' => $post->title]);
+    $homepagePostImage = static fn ($post, $fallback) => $post->image ? getFile($post->image) : asset($fallback);
+    $homepagePostExcerpt = static fn ($post, $length = 125) => \Illuminate\Support\Str::limit(
+        trim(preg_replace('/\s+/', ' ', strip_tags((string) $post->content))),
+        $length
+    );
+@endphp
+<section class="kw-section kw-section--light" id="ideas" data-page="beranda" data-section="s06-ideas">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-6-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content kw-section-content--center">
+            <div class="kw-eyebrow">
+                <span class="kw-eyebrow-dash"></span>
+                <span>IDEAS I&rsquo;M EXPLORING</span>
+            </div>
+
+            <h2 class="kw-headline kw-headline--serif">
+                Some ideas deserve<br>
+                <span class="kw-headline-accent">more than a quick answer.</span>
+            </h2>
+
+            @if($ideaPosts->isNotEmpty())
+                @php($featuredIdea = $ideaPosts->first())
+                <div class="kw-ideas-grid">
+                    <a href="{{ $homepagePostUrl($featuredIdea) }}" class="kw-ideas-featured">
+                        <div class="kw-card-media" style="background-image:url('{{ $homepagePostImage($featuredIdea, 'assets/img/background/section-7-bg.png') }}')"></div>
+                        <div class="kw-card-copy">
+                            <span class="kw-ideas-badge">FEATURED IDEA</span>
+                            <p class="kw-ideas-title">{{ $featuredIdea->title }}</p>
+                            <p class="kw-ideas-excerpt">{{ $homepagePostExcerpt($featuredIdea, 155) }}</p>
+                            <span class="kw-card-arrow" aria-hidden="true">&rarr;</span>
+                        </div>
+                    </a>
+                    <div class="kw-ideas-list">
+                        @foreach($ideaPosts->slice(1, 3) as $idea)
+                            <a href="{{ $homepagePostUrl($idea) }}" class="kw-idea-card {{ $loop->first ? 'kw-idea-card--wide' : '' }}">
+                                <div class="kw-card-media" style="background-image:url('{{ $homepagePostImage($idea, 'assets/img/background/section-8-bg.png') }}')"></div>
+                                <div class="kw-card-copy">
+                                    <span class="kw-idea-type">{{ strtoupper($idea->category?->name ?? 'SELECTED IDEA') }}</span>
+                                    <p class="kw-idea-title">{{ $idea->title }}</p>
+                                    <p class="kw-ideas-excerpt">{{ $homepagePostExcerpt($idea, 105) }}</p>
+                                    <span class="kw-card-arrow" aria-hidden="true">&rarr;</span>
                                 </div>
-                            </article>
-                            
-                            {{-- Iklan setelah artikel ke-3 --}}
-                            @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                <div class="col-12">
-                                    <div class="advertisement-card">
-                                        <div class="ad-content">
-                                            @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                            @if($imageAd)
-                                                <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                    <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
-                                                </a>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
+                            </a>
                         @endforeach
                     </div>
                 </div>
-                @if ($hikmahPosts->count() !== 0)
-                    <div class="main-post-wrap" style="margin-top: 50px;">
-                        {{-- Section Header --}}
-                        <div class="section-heading mb-4">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="m233-80 65-281L80-550l288-25 112-265 112 265 288 25-218 189 65 281-247-149L233-80Zm247-350Zm0 0Z"/>
-                                </svg>
-                                <span>Hikmah & Inspirasi</span>
-                            </h3>
-                            <p class="section-subtitle">Renungan dan pembelajaran untuk kehidupan</p>
-                        </div>
-                        <div class="row gy-4">
-                            @foreach($hikmahPosts->take(10) as $index => $article)
-                                <article class="col-lg-12 col-md-6">
-                                    <div class="post-card horizontal-card img-hover-move">
-                                        @if($article->image)
-                                            <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
-                                                </a>
-                                            </div>
-                                        @endif
-                                        <div class="post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
-                                                <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
-                                            @endif
-                                            <ul class="post-card-footer">
-                                                <li>
-                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q74-137 194-218.5T480-800q146 0 266 81.5T920-500q-74 137-194 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
-                                                        <span>{{ $article->counter }}</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
-                                @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                    <div class="col-12">
-                                        <div class="advertisement-card">
-                                            <div class="ad-content">
-                                                @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                                @if($imageAd)
-                                                    <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
+            @else
+                {{-- Placeholder shown until the first manual article is published. --}}
+                <div class="kw-ideas-grid">
+                    <div class="kw-ideas-featured">
+                        <div class="kw-card-media kw-card-media--idea-featured"></div>
+                        <div class="kw-card-copy">
+                            <span class="kw-ideas-badge">FEATURED IDEA</span>
+                            <p class="kw-ideas-title">A THOUGHT WORTH EXPLORING</p>
+                            <p class="kw-ideas-excerpt">A short summary of the idea appears here, giving just enough context to invite deeper reading.</p>
+                            <span class="kw-card-arrow" aria-hidden="true">&rarr;</span>
                         </div>
                     </div>
-                @endif
-                @if ($amazingPosts->count() !== 0)
-                    <div class="main-post-wrap" style="margin-top: 50px;">
-                        {{-- Section Header --}}
-                        <div class="section-heading mb-4">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M440-240h80v-120h120v-80H520v-120h-80v120H320v80h120v120ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h168q13-36 43.5-58t68.5-22q38 0 68.5 22t43.5 58h168q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm280-590q13 0 21.5-8.5T510-820q0-13-8.5-21.5T480-850q-13 0-21.5 8.5T450-820q0 13 8.5 21.5T480-790ZM200-200v-560 560Z"/>
-                                </svg>
-                                <span>AmAzing</span>
-                            </h3>
-                            <p class="section-subtitle">Kisah-kisah menakjubkan yang menginspirasi</p>
-                        </div>
-                        
-                        <div class="row gy-4">
-                            @foreach($amazingPosts->take(10) as $index => $article)
-                                <article class="col-lg-12 col-md-6">
-                                    <div class="post-card horizontal-card img-hover-move">
-                                        @if($article->image)
-                                            <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
-                                                </a>
-                                            </div>
-                                        @endif
-                                        <div class="post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
-                                                <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
-                                            @endif
-                                            <ul class="post-card-footer">
-                                                <li>
-                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q74-137 194-218.5T480-800q146 0 266 81.5T920-500q-74 137-194 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
-                                                        <span>{{ $article->counter }}</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
-                                @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                    <div class="col-12">
-                                        <div class="advertisement-card">
-                                            <div class="ad-content">
-                                                @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                                @if($imageAd)
-                                                    <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-                @if ($marketingPosts->count() !== 0)
-                    <div class="main-post-wrap" style="margin-top: 50px;">
-                        {{-- Section Header --}}
-                        <div class="section-heading mb-4">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H160v400Zm140-40h360v-80H300v80Zm0-120h360v-80H300v80ZM180-680h60v-60h-60v60Zm140 0h60v-60h-60v60Zm140 0h60v-60h-60v60Z"/>
-                                </svg>
-                                <span>Marketing & Bisnis</span>
-                            </h3>
-                            <p class="section-subtitle">Strategi dan tips mengembangkan bisnis Anda</p>
-                        </div>
-                        
-                        <div class="row gy-4">
-                            @foreach($marketingPosts->take(10) as $index => $article)
-                                <article class="col-lg-12 col-md-6">
-                                    <div class="post-card horizontal-card img-hover-move">
-                                        @if($article->image)
-                                            <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
-                                                </a>
-                                            </div>
-                                        @endif
-                                        <div class="post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
-                                                <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
-                                            @endif
-                                            <ul class="post-card-footer">
-                                                <li>
-                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q74-137 194-218.5T480-800q146 0 266 81.5T920-500q-74 137-194 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
-                                                        <span>{{ $article->counter }}</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
-                                @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                    <div class="col-12">
-                                        <div class="advertisement-card">
-                                            <div class="ad-content">
-                                                @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                                @if($imageAd)
-                                                    <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-                @if ($brandingPosts->count() !== 0)
-                    <div class="main-post-wrap" style="margin-top: 50px;">
-                        {{-- Section Header --}}
-                        <div class="section-heading mb-4">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M120-120v-80l80-80v160h-80Zm160 0v-240l80-80v320h-80Zm160 0v-320l80 81v239h-80Zm160 0v-239l80-80v319h-80Zm160 0v-400l80-80v480h-80ZM120-327v-113l280-280 160 160 280-280v113L560-447 400-607 120-327Z"/>
-                                </svg>
-                                <span>Branding & Kreativitas</span>
-                            </h3>
-                            <p class="section-subtitle">Membangun identitas brand yang kuat dan berkesan</p>
-                        </div>
-                        
-                        <div class="row gy-4">
-                            @foreach($brandingPosts->take(10) as $index => $article)
-                                <article class="col-lg-12 col-md-6">
-                                    <div class="post-card horizontal-card img-hover-move">
-                                        @if($article->image)
-                                            <div class="post-thumb media">
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}">
-                                                    <img src="{{ getFile($article->image) }}" alt="{{ $article->title }}" width="600" height="400" loading="lazy">
-                                                </a>
-                                            </div>
-                                        @endif
-                                        <div class="post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ route('category', $article->category?->slug ?? 'uncategorized') }}">{{ $article->category?->name ?? 'Uncategorized' }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="#" class="date">{{ $article->published_at?->format('d.m.Y') }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="text-hover">{{ $article->title }}</a>
-                                            </h3>
-                                            @if($article->content)
-                                                <p>{{ Str::limit(strip_tags($article->content), 120) }}</p>
-                                            @endif
-                                            <ul class="post-card-footer">
-                                                <li>
-                                                    <a href="{{ route('post_detail', [$article->category?->slug ?? 'uncategorized', $article->slug]) }}" class="read-more">Baca Selengkapnya</a>
-                                                </li>
-                                                <li>
-                                                    <a href="#" class="comment">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                                            <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q74-137 194-218.5T480-800q146 0 266 81.5T920-500q-74 137-194 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
-                                                        </svg>
-                                                        <span>{{ $article->counter }}</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </article>
-                                
-                                {{-- Iklan setelah artikel ke-3 --}}
-                                @if($index == 2 && isset($ads) && $ads->where('type', 'image')->count() > 0)
-                                    <div class="col-12">
-                                        <div class="advertisement-card">
-                                            <div class="ad-content">
-                                                @php $imageAd = $ads->where('type', 'image')->first(); @endphp
-                                                @if($imageAd)
-                                                    <a href="{{ $imageAd->link ?? '#' }}" target="_blank">
-                                                        <img src="{{ getFile($imageAd->image) }}" alt="{{ $imageAd->title ?? 'Advertisement' }}" class="img-fluid" width="600" height="400" loading="lazy">
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-            </div>
-            
-            {{-- Sidebar --}}
-            <div class="col-lg-4">
-                <div class="sidebar-area">
-                    {{-- Tags Widget --}}
-                    <div class="sidebar-widget widget">
-                        <div class="widget-heading">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M488.768-117.847Q470.922-100.001 446-100.001t-42.768-17.846l-286-286q-17.231-17.231-17.038-42.653.192-25.422 17.807-43.037l352-352.616q8.317-8.179 19.658-13.012 11.341-4.834 23.726-4.834h286q24.537 0 42.268 17.731 17.73 17.73 17.73 42.268v286q0 12.826-4.961 24.143-4.962 11.318-13.654 20.01l-352 352Zm210.571-532.154q20.815 0 35.43-14.57 14.615-14.57 14.615-35.384t-14.57-35.429q-14.57-14.615-35.384-14.615t-35.429 14.57q-14.616 14.57-14.616 35.384t14.57 35.429q14.57 14.615 35.384 14.615ZM446.172-160l353.213-354v-286H513.212L160-446l286.172 286Zm353.213-640Z"></path>
-                                </svg>
-                                <span>Tag Populer</span>
-                            </h3>
-                        </div>
-                        <div class="widget-tags">
-                            <ul class="tag-list">
-                                @foreach($tags->take(10) as $tag)
-                                    <li>
-                                        <a href="{{ route('tag', $tag?->slug ?? '#') }}" class="tag-item">
-                                            #{{ $tag?->name ?? 'Tag' }}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    {{-- Categories Widget --}}
-                    <div class="sidebar-widget widget">
-                        <div class="widget-heading">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M632.307-140.001q-24.538 0-42.268-17.731-17.73-17.73-17.73-42.268v-167.693q0-24.538 17.73-42.268t42.268-17.73H800q24.538 0 42.268 17.73 17.731 17.73 17.731 42.268V-200q0 24.538-17.731 42.268-17.73 17.731-42.268 17.731H632.307Zm0-59.999H800v-167.693H632.307V-200Zm-532.306-53.847v-59.999h344.615v59.999H100.001Zm532.306-278.462q-24.538 0-42.268-17.73t-17.73-42.268V-760q0-24.538 17.73-42.268 17.73-17.731 42.268-17.731H800q24.538 0 42.268 17.731 17.731 17.73 17.731 42.268v167.693q0 24.538-17.731 42.268-17.73 17.73-42.268 17.73H632.307Zm0-59.998H800V-760H632.307v167.693Zm-532.306-53.847v-59.999h344.615v59.999H100.001Zm616.153 362.308Zm0-392.308Z" />
-                                </svg>
-                                <span>Kategori</span>
-                            </h3>
-                            <ul class="widget-category-list">
-                                @foreach($categories->take(4) as $category)
-                                    <li class="img-hover-move">
-                                        <a href="{{ route('category', $category->slug) }}" class="media">
-                                            @if($category->posts->first() && $category->posts->first()->image)
-                                                <img src="{{ getFile($category->posts->first()->image) }}" alt="{{ $category->name }}" width="600" height="400" loading="lazy">
-                                            @endif
-                                            {{ $category->name }} 
-                                            <span>{{ $category->posts->count() }}</span>
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    {{-- Top Stories Widget --}}
-                    <div class="sidebar-widget widget">
-                        <div class="widget-heading">
-                            <h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                    <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
-                                </svg>
-                                <span>Artikel Populer</span>
-                            </h3>
-                        </div>
-                        <div class="widget-post-items">
-                            @foreach($mostPopular->take(5) as $popular)
-                                <div class="widget-post-item img-hover-move">
-                                    @if($popular->image)
-                                        <div class="widget-post-thumb media">
-                                            <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}">
-                                                <img src="{{ getFile($popular->image) }}" alt="{{ $popular->title }}" width="600" height="400" loading="lazy">
-                                            </a>
-                                        </div>
-                                    @else
-                                        <div class="widget-post-thumb media">
-                                            <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}">
-                                                <img src="{{ asset('assets/default.jpg') }}" alt="{{ $popular->title }}">
-                                            </a>
-                                        </div>
-                                    @endif
-                                    <div class="widget-post-content">
-                                        <h3>
-                                            <a href="{{ route('post_detail', [$popular->category->slug, $popular->slug]) }}" class="text-hover">{{ Str::limit($popular->title, 50) }}</a>
-                                        </h3>
-                                        @if(is_array($popular->tags) && count($popular->tags))
-                                            <div class="article-tags">
-                                                @foreach(array_slice($popular->tags, 0, 2) as $tag)
-                                                    <a href="{{ route('tag', Str::slug($tag)) }}" class="article-tags">#{{ $tag }}</a>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                        <ul class="post-meta">
-                                            <li>
-                                                <a href="{{ route('category', $popular->category->slug) }}">{{ $popular->category->name }}</a>
-                                            </li>
-                                            <li class="sep"></li>
-                                            <li>
-                                                <a href="#" class="date">{{ $popular->published_at->format('d.m.Y') }}</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <!--Sidebar Information-->
-                    @if ($information && $information->total() > 0)
-                        <div class="sidebar-widget widget">
-                            <div class="widget-heading">
-                                <h3>
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
-                                        <path d="M212.309-140.001q-30.308 0-51.308-21t-21-51.308v-535.382q0-30.308 21-51.308t51.308-21h419.229l188.461 188.461v419.229q0 30.308-21 51.308t-51.308 21H212.309Zm0-59.999h535.382q5.385 0 8.847-3.462 3.462-3.462 3.462-8.847V-600H600v-160H212.309q-5.385 0-8.847 3.462-3.462 3.462-3.462 8.847v535.382q0 5.385 3.462 8.847 3.462 3.462 8.847 3.462Zm77.692-100.001h379.998V-360H290.001v59.999Zm0-299.999H480v-59.999H290.001V-600Zm0 149.999h379.998v-59.998H290.001v59.998ZM200-760v160-160 560V-760Z" />
-                                    </svg>
-                                    <span>Information</span>
-                                </h3>
-                            </div>
-                            <div class="widget-post-items">
-                                @foreach ($information as $data)
-                                    <div class="widget-post-item img-hover-move information-post">
-                                        <div class="widget-post-content">
-                                            <ul class="post-meta">
-                                                <li>
-                                                    <a href="{{ $data->slug }}">#{{ $data->id }}</a>
-                                                </li>
-                                                <li class="sep"></li>
-                                                <li>
-                                                    <a href="{{ $data->slug }}" class="date">{{ $data->created_at }}</a>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="{{ $data->slug }}" class="text-hover">{{ $data->title }}</a>
-                                            </h3>
-                                        </div>
-                                    </div>
-                                @endforeach
+                    <div class="kw-ideas-list">
+                        <div class="kw-idea-card kw-idea-card--wide">
+                            <div class="kw-card-media kw-card-media--idea-discovery"></div>
+                            <div class="kw-card-copy">
+                                <span class="kw-idea-type">SELECTED IDEA</span>
+                                <p class="kw-idea-title">AI, BRANDS, AND A MORE INTELLIGENT DISCOVERY ERA</p>
+                                <p class="kw-ideas-excerpt">A short summary of the idea appears here, giving just enough context to invite deeper reading.</p>
+                                <span class="kw-card-arrow" aria-hidden="true">&rarr;</span>
                             </div>
                         </div>
-                    @endif
-                    
-                    {{-- Banner Widget --}}
-                    @if(isset($ads) && $ads->count() > 0)
-                        <div class="sidebar-widget widget">
-                            <div class="widget-banner">
-                                <a href="#">
-                                    <img src="{{ getFile($ads->first()->image) }}" alt="banner" width="1200" height="300" loading="lazy">
-                                </a>
+                        <div class="kw-idea-card">
+                            <div class="kw-card-media kw-card-media--idea-judgment"></div>
+                            <div class="kw-card-copy">
+                                <span class="kw-idea-type">SELECTED IDEA</span>
+                                <p class="kw-idea-title">HUMAN JUDGMENT IN AN AI-MEDIATED WORLD</p>
+                                <p class="kw-ideas-excerpt">A short summary of the idea appears here, giving just enough context to invite deeper reading.</p>
+                                <span class="kw-card-arrow" aria-hidden="true">&rarr;</span>
                             </div>
                         </div>
-                    @endif
+                        <div class="kw-idea-card">
+                            <div class="kw-card-media kw-card-media--idea-systems"></div>
+                            <div class="kw-card-copy">
+                                <span class="kw-idea-type">SELECTED IDEA</span>
+                                <p class="kw-idea-title">BUILDING INTELLIGENT BUSINESS SYSTEMS</p>
+                                <p class="kw-ideas-excerpt">A short summary of the idea appears here, giving just enough context to invite deeper reading.</p>
+                                <span class="kw-card-arrow" aria-hidden="true">&rarr;</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            @endif
+
+            <a href="{{ route('posts', ['source' => 'web']) }}" class="kw-btn kw-btn-outline">Explore All Ideas</a>
         </div>
-        <!--/.sidebar-area-->
+    </div>
+</section>
+
+{{-- ================================================================
+    S07 — SIGNATURE PRINCIPLE
+================================================================ --}}
+<section class="kw-section kw-section--dark kw-section--fullcenter" id="signature-principle" data-page="beranda" data-section="s07-signature-principle">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-7-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content kw-section-content--center">
+            <div class="kw-eyebrow">
+                <span class="kw-eyebrow-dash"></span>
+                <span>SIGNATURE PRINCIPLE</span>
+            </div>
+
+            <h2 class="kw-headline kw-headline--large">
+                UNDERSTAND<br><span class="kw-headline-accent">BEFORE</span> YOU BUILD.
+            </h2>
+
+            <p class="kw-body kw-body--center">
+                Before you build the brand, adopt the AI, design the system, or change the workflow—understand what actually needs to be built.
+            </p>
+
+            <div class="kw-underline-statement">
+                <span class="kw-eyebrow-dash"></span>
+                <p>Clarity before construction.<br>Human judgment before acceleration.</p>
             </div>
         </div>
     </div>
 </section>
 
-@endsection
+{{-- ================================================================
+    S08 — BOOKS & IP
+================================================================ --}}
+<section class="kw-section kw-section--light" id="books-ip" data-page="beranda" data-section="s08-books-ip">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-8-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content">
+            <div class="kw-eyebrow">
+                <span class="kw-eyebrow-dash"></span>
+                <span>BOOKS &amp; INTELLECTUAL PROPERTY</span>
+            </div>
 
-@push('styles')
-<style>
-    .hero-banner-slider {
-        width: 100vw;
-        margin-left: calc(-50vw + 50%);
-        margin-bottom: 40px;
-        position: relative;
-    }
+            <h2 class="kw-headline kw-headline--serif">
+                Ideas shouldn&rsquo;t always<br>
+                <span class="kw-headline-accent">end as content.</span>
+            </h2>
 
-    .hero-banner-swiper {
-        width: 100%;
-        height: 85vh;
-    }
+            <p class="kw-body">
+                Tidak semua gagasan seharusnya berakhir sebagai konten. Sebagian perlu dipikirkan lebih dalam, diuji, lalu dikodifikasi menjadi buku, framework, metode, dan karya intelektual yang bisa terus digunakan.
+            </p>
 
-    @media (max-width: 1200px) {
-        .hero-banner-swiper {
-            height: 70vh;
-        }
-    }
+            <a href="#" class="kw-btn kw-btn-outline">Explore Books &amp; IP</a>
+        </div>
+    </div>
+</section>
 
-    @media (max-width: 768px) {
-        .hero-banner-swiper {
-            height: 60vh;
-        }
-    }
+{{-- ================================================================
+    S09 — SIGNALS
+================================================================ --}}
+<section class="kw-section kw-section--dark" id="signals" data-page="beranda" data-section="s09-signals">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-9-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content kw-section-content--center">
+            <div class="kw-eyebrow">
+                <span class="kw-eyebrow-dash"></span>
+                <span>WHAT I&rsquo;M WATCHING</span>
+            </div>
 
-    @media (max-width: 576px) {
-        .hero-banner-swiper {
-            height: 50vh;
-        }
-    }
+            <h2 class="kw-headline">
+                The signal matters.<br>
+                <span class="kw-headline-accent">The interpretation matters more.</span>
+            </h2>
 
-    .banner-item {
-        width: 100%;
-        height: 100%;
-        position: relative;
-        overflow: hidden;
-    }
+            <p class="kw-body kw-body--dim">
+                Saya mengikuti perubahan di sekitar brand, AI, bisnis, dan teknologi—bukan sekadar untuk mengetahui apa yang terjadi, tetapi untuk memahami apa artinya dan apa yang mungkin berubah setelahnya.
+            </p>
 
-    .banner-item::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 30%, rgba(0,0,0,0.3) 60%, transparent 100%);
-        z-index: 1;
-    }
+            @if($signalPosts->isNotEmpty())
+                <div class="kw-signals-grid">
+                    @foreach($signalPosts as $signal)
+                        @php($sourceDomain = parse_url((string) $signal->source, PHP_URL_HOST) ?: 'AI SIGNAL')
+                        <a href="{{ $homepagePostUrl($signal) }}" class="kw-signal-card {{ $loop->first ? 'kw-signal-card--featured' : '' }}">
+                            <div class="kw-card-media" style="background-image:url('{{ $homepagePostImage($signal, 'assets/img/background/section-9-bg.png') }}')"></div>
+                            <div class="kw-card-copy">
+                                <span class="kw-signal-domain">{{ strtoupper(preg_replace('/^www\./', '', $sourceDomain)) }} &middot; {{ optional($signal->published_at)->format('d M Y') }}</span>
+                                <span class="kw-signal-badge">MY TAKE</span>
+                                <p class="kw-signal-title">{{ $signal->title }}</p>
+                                <p class="kw-signal-excerpt">{{ $homepagePostExcerpt($signal, $loop->first ? 170 : 100) }}</p>
+                                <span class="kw-card-arrow" aria-hidden="true">&rarr;</span>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            @else
+                <div class="kw-signals-grid">
+                    <div class="kw-signal-card kw-signal-card--featured">
+                        <div class="kw-card-media kw-card-media--signal-featured"></div>
+                        <div class="kw-card-copy">
+                            <span class="kw-signal-domain">AI PIPELINE</span><span class="kw-signal-badge">MY TAKE</span>
+                            <p class="kw-signal-title">SIGNAL TERBARU AKAN TAMPIL DI SINI</p>
+                            <p class="kw-signal-excerpt">Artikel hasil scraping dan parafrase AI akan muncul otomatis setelah dipublikasikan.</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
-    .banner-link {
-        display: block;
-        width: 100%;
-        height: 100%;
-        position: relative;
-    }
+            <a href="{{ route('posts', ['source' => 'ai']) }}" class="kw-btn kw-btn-outline">Explore What I&rsquo;m Watching</a>
+        </div>
+    </div>
+</section>
 
-    .banner-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
+{{-- ================================================================
+    S10 — WATCH
+================================================================ --}}
+<section class="kw-section kw-section--light" id="watch" data-page="beranda" data-section="s10-watch">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-10-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content kw-section-content--center">
+            <div class="kw-eyebrow">
+                <img src="{{ asset('assets/img/kw-personal-social_yt-transparent.png') }}" alt="" class="kw-youtube-icon kw-youtube-icon--eyebrow">
+                <span>WATCH</span>
+                <span class="kw-eyebrow-dash"></span>
+            </div>
 
-    .banner-content {
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        transform: translateY(-50%);
-        padding: 60px 0;
-        color: white;
-        z-index: 2;
-    }
+            <h2 class="kw-headline kw-headline--serif">
+                Some ideas are better<br>
+                <span class="kw-headline-accent">seen, heard, and explored.</span>
+            </h2>
 
-    .banner-content-inner {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 20px;
-        text-align: left;
-    }
+            <p class="kw-body kw-body--dim kw-body--center">
+                Percakapan, penjelasan, dan eksplorasi visual tentang brand, AI, bisnis, dan berbagai gagasan yang sedang saya pikirkan.
+            </p>
 
-    .banner-title {
-        font-size: 56px;
-        font-weight: 700;
-        margin: 0 0 20px 0;
-        color: white;
-        text-shadow: 3px 3px 12px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.8);
-        line-height: 1.2;
-        max-width: 900px;
-        word-wrap: break-word;
-    }
+            @if($homeVideos->isNotEmpty())
+                @php($featuredVideo = $homeVideos->first())
+                <div class="kw-watch-grid">
+                    <a href="{{ $featuredVideo->link_yt }}" target="_blank" rel="noopener" class="kw-watch-card kw-watch-card--featured">
+                        <div class="kw-card-media" style="background-image:url('{{ getFile($featuredVideo->image) }}')"></div>
+                        <div class="kw-watch-play">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                        <div class="kw-card-copy">
+                            <span class="kw-watch-badge">LATEST FROM WINWITHWEN</span>
+                            <p class="kw-watch-title">{{ $featuredVideo->title }}</p>
+                            <p class="kw-watch-duration">{{ optional($featuredVideo->youtube_published_at)->format('d M Y') }}</p>
+                            <span class="kw-card-arrow" aria-hidden="true">&rarr;</span>
+                        </div>
+                    </a>
+                    <div class="kw-watch-list">
+                        @foreach($homeVideos->slice(1, 2) as $video)
+                            <a href="{{ $video->link_yt }}" target="_blank" rel="noopener" class="kw-watch-thumb">
+                                <div class="kw-card-media" style="background-image:url('{{ getFile($video->image) }}')"></div>
+                                <div class="kw-watch-play-sm">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                                <div class="kw-card-copy">
+                                    <span class="kw-watch-badge">WINWITHWEN</span>
+                                    <p class="kw-watch-thumb-title">{{ $video->title }}</p>
+                                    <span class="kw-watch-thumb-dur">{{ optional($video->youtube_published_at)->format('d M Y') }}</span>
+                                    <span class="kw-card-arrow" aria-hidden="true">&rarr;</span>
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @else
+                <p class="kw-body">Video terbaru sedang disinkronkan dari kanal WINwithWEN.</p>
+            @endif
 
-    .banner-description {
-        font-size: 20px;
-        margin: 0;
-        color: white;
-        text-shadow: 2px 2px 8px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.8);
-        line-height: 1.6;
-        max-width: 800px;
-        word-wrap: break-word;
-    }
-    }
+            <a href="{{ config('services.youtube.kang_wendra_channel_url') }}" target="_blank" rel="noopener" class="kw-btn kw-btn-outline kw-youtube-link"><img src="{{ asset('assets/img/kw-personal-social_yt-transparent.png') }}" alt="" class="kw-youtube-icon">Explore on YouTube</a>
+        </div>
+    </div>
+</section>
 
-    @media (max-width: 1200px) {
-        .banner-title {
-            font-size: 48px;
-        }
-        .banner-description {
-            font-size: 18px;
-        }
-        .banner-content {
-            padding: 50px 0;
-        }
-    }
+{{-- ================================================================
+    S11 — raymAIzing / AI ECOSYSTEM
+================================================================ --}}
+<section class="kw-section kw-section--dark" id="raymaizing" data-page="beranda" data-section="s11-raymaizing">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-11-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content kw-section-content--center">
+            <div class="kw-eyebrow">
+                <span class="kw-eyebrow-dash"></span>
+                <span>AI ECOSYSTEM &times; ARAY</span>
+            </div>
 
-    @media (max-width: 768px) {
-        .banner-title {
-            font-size: 36px;
-        }
-        .banner-description {
-            font-size: 16px;
-        }
-        .banner-content {
-            padding: 40px 0;
-        }
-    }
+            <h2 class="kw-headline">
+                From thinking<br>
+                to <span class="kw-headline-accent">real intelligent</span><br>
+                systems.
+            </h2>
 
-    @media (max-width: 576px) {
-        .banner-title {
-            font-size: 28px;
-        }
-        .banner-description {
-            font-size: 15px;
-        }
-        .banner-content {
-            padding: 30px 0;
-        }
-    }
+            <p class="kw-body kw-body--center">
+                Gagasan tentang AI saya wujudkan dalam berbagai sistem yang saling terhubung—dan ARAY hadir sebagai AI Smart Assistant yang bisa Anda gunakan langsung di sini.
+            </p>
 
-    .hero-banner-swiper .swiper-button-next,
-    .hero-banner-swiper .swiper-button-prev {
-        color: white;
-        background: rgba(0,0,0,0.5);
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        transition: all 0.3s ease;
-    }
+            <div class="kw-action-row">
+                <a href="#" class="kw-btn kw-btn-primary kw-btn-stack"><strong>Meet ARAY</strong><small>AI SMART ASSISTANT</small><span>&rarr;</span></a>
+                <a href="#" class="kw-btn kw-btn-outline kw-btn-stack"><strong>Explore Our<br>AI Ecosystem</strong><span>&rarr;</span></a>
+            </div>
+        </div>
+    </div>
+</section>
 
-    .hero-banner-swiper .swiper-button-next:after,
-    .hero-banner-swiper .swiper-button-prev:after {
-        font-size: 22px;
-        font-weight: bold;
-    }
+{{-- ================================================================
+    S12 — WHERE THINKING MEETS REALITY
+================================================================ --}}
+<section class="kw-section kw-section--dark" id="where-thinking" data-page="beranda" data-section="s12-where-thinking">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-12-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content">
+            <div class="kw-eyebrow">
+                <span class="kw-eyebrow-dash"></span>
+                <span>WHERE THINKING BECOMES PRACTICE</span>
+            </div>
 
-    .hero-banner-swiper .swiper-button-next:hover,
-    .hero-banner-swiper .swiper-button-prev:hover {
-        background: rgba(0,0,0,0.8);
-        transform: scale(1.1);
-    }
+            <h2 class="kw-headline">
+                From ideas<br>
+                to <span class="kw-headline-accent">real impact.</span>
+            </h2>
 
-    @media (max-width: 768px) {
-        .hero-banner-swiper .swiper-button-next,
-        .hero-banner-swiper .swiper-button-prev {
-            width: 40px;
-            height: 40px;
-        }
-        .hero-banner-swiper .swiper-button-next:after,
-        .hero-banner-swiper .swiper-button-prev:after {
-            font-size: 18px;
-        }
-    }
+            <p class="kw-body">
+                Gagasan perlu diwujudkan. Saya bekerja di berbagai konteks—mulai dari brand, AI, hingga pengembangan sistem—untuk membantu ide menjadi solusi yang relevan dan berdampak nyata.
+            </p>
 
-    .hero-banner-swiper .swiper-pagination {
-        bottom: 20px;
-    }
+            <a href="#" class="kw-text-link">Explore Collaboration <span>&rarr;</span></a>
+        </div>
+    </div>
+</section>
 
-    .hero-banner-swiper .swiper-pagination-bullet {
-        width: 10px;
-        height: 10px;
-        background: white;
-        opacity: 0.6;
-        transition: all 0.3s ease;
-    }
+{{-- ================================================================
+    S13 — PERSONAL CLOSING
+================================================================ --}}
+<section class="kw-section kw-section--dark kw-section--fullcenter" id="personal-note" data-page="beranda" data-section="s13-personal-note">
+    <div class="kw-section-bg">
+        <img src="{{ asset('assets/img/background/section-13-bg.png') }}" alt="" loading="lazy" class="kw-section-bg-img">
+        <div class="kw-section-overlay"></div>
+    </div>
+    <div class="kw-section-inner">
+        <div class="kw-section-content kw-section-content--center">
+            <div class="kw-eyebrow">
+                <span>A NOTE FROM ME</span>
+                <span class="kw-eyebrow-dash"></span>
+            </div>
 
-    .hero-banner-swiper .swiper-pagination-bullet-active {
-        opacity: 1;
-        background: white;
-        transform: scale(1.2);
-    }
+            <p class="kw-personal-opening">
+                Semakin cepat dunia bergerak, semakin penting bagi saya untuk tahu kapan harus berhenti, melihat lebih jernih, dan memahami apa yang benar-benar penting.
+            </p>
 
-    .widget-tags .tag-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .widget-tags .tag-item {
-        display: inline-block;
-        padding: 6px 12px;
-        background-color: #f8f9fa;
-        color: #495057;
-        text-decoration: none;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
-    }
-    
-    .widget-tags .tag-item:hover {
-        background-color: #007bff;
-        color: white;
-        text-decoration: none;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,123,255,0.3);
-    }
-    
-    .advertisement-card {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 20px;
-        text-align: center;
-        border: 1px solid #e9ecef;
-    }
-    
-    .advertisement-card img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 4px;
-    }
-    
-    .section-heading h3 {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 0;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #007bff;
-    }
-    
-    .section-heading h3 svg {
-        color: #007bff;
-    }
+            <div class="kw-personal-turn">
+                <p class="kw-body">
+                    AI akan semakin pintar.<br>Sistem akan semakin cepat.<br>Dan selalu akan ada hal baru yang bisa kita bangun.
+                </p>
+                <p class="kw-body kw-turn-accent">
+                    Tapi teknologi hanya membantu kita bergerak lebih cepat.<br>Manusia tetap harus menentukan ke mana kita akan pergi.
+                </p>
+            </div>
 
-    .post-layout-2 {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
+            <div class="kw-personal-principle">
+                <div class="kw-eyebrow-dash"></div>
+                <p class="kw-principle-text">UNDERSTAND BEFORE YOU BUILD.</p>
+            </div>
 
-    .post-layout-item {
-        flex: 1;
-        min-width: 300px;
-    }
+            <div class="kw-personal-about-row">
+                <div class="kw-personal-identity">
+                    <img src="{{ asset('assets/img/kw-signature-transparent.png') }}" alt="Tanda tangan Kang Wendra" class="kw-signature">
+                    <span class="kw-identity-name">Kang Wendra</span>
+                    <span class="kw-identity-role">Brand &amp; AI Architect</span>
+                </div>
 
-    .post-layout-item:first-child {
-        flex: 1.5;
-    }
+                <a href="#" class="kw-btn kw-btn-outline">About Kang Wendra <b>&rarr;</b></a>
+            </div>
 
-    .post-layout-item:nth-child(2) {
-        flex: 1;
-    }
+            <div class="kw-personal-connect">
+                <span>LET&rsquo;S STAY CONNECTED</span>
+                <div class="kw-personal-connect-row">
+                    <a href="#" class="kw-btn kw-btn-outline kw-youtube-link"><img src="{{ asset('assets/img/kw-personal-social_yt-transparent.png') }}" alt="" class="kw-youtube-icon">Join My Channel <b>&rarr;</b></a>
+                    <div class="kw-personal-social" aria-label="Social channels">
+                        <a href="#" aria-label="YouTube"><img src="{{ asset('assets/img/kw-personal-social_yt-transparent.png') }}" alt=""></a>
+                        <a href="#" aria-label="LinkedIn"><img src="{{ asset('assets/img/kw-personal-social_in-transparent.png') }}" alt=""></a>
+                        <a href="#" aria-label="Instagram"><img src="{{ asset('assets/img/kw-personal-social_ig-transparent.png') }}" alt=""></a>
+                        <a href="#" aria-label="TikTok"><img src="{{ asset('assets/img/kw-personal-social_tt-transparent.png') }}" alt=""></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-    .post-layout-item:nth-child(3) {
-        flex: 1;
-    }
+{{-- ================================================================
+    S14 — FOOTER
+================================================================ --}}
 
-    .vartical-post-carousel {
-        overflow: hidden;
-    }
-
-    .vertical-post-list {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .vertical-post-list .post-layout-item {
-        min-width: 0;
-        flex: unset;
-    }
-
-    .information-post .widget-post-content {
-        padding: 12px 0;
-    }
-
-    .information-post .widget-post-content h3 {
-        font-size: 1rem;
-        margin: 0;
-    }
-
-    @media (max-width: 768px) {
-        .post-layout-2 {
-            flex-direction: column;
-        }
-        .post-layout-item,
-        .post-layout-item:first-child,
-        .post-layout-item:nth-child(2),
-        .post-layout-item:nth-child(3) {
-            flex: unset;
-            min-width: 0;
-        }
-    }
-</style>
-@endpush
-
+{{-- ================================================================
+    SCRIPTS
+================================================================ --}}
 @push('scripts')
 <script>
-    var heroBannerSwiper = new Swiper('.hero-banner-swiper', {
-        slidesPerView: 1,
-        spaceBetween: 0,
-        loop: true,
-        autoplay: {
-            delay: 5000,
-            disableOnInteraction: false,
-        },
-        pagination: {
-            el: '.swiper-pagination',
-            clickable: true,
-        },
-        navigation: {
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev',
-        },
-        effect: 'fade',
-        fadeEffect: {
-            crossFade: true
-        },
-    });
+(function() {
+    // Header scroll
+    var header = document.getElementById('site-header');
+    if (header) {
+        window.addEventListener('scroll', function() {
+            header.classList.toggle('is-scrolled', window.scrollY > 40);
+        }, { passive: true });
+    }
 
-    </script>
+    // Mobile nav
+    var mobileToggle = document.querySelector('.kw-mobile-toggle');
+    var mobileNav = document.getElementById('kw-mobile-nav');
+    if (mobileToggle && mobileNav) {
+        mobileToggle.addEventListener('click', function() {
+            var expanded = mobileToggle.getAttribute('aria-expanded') === 'true';
+            mobileToggle.setAttribute('aria-expanded', String(!expanded));
+            mobileNav.setAttribute('aria-hidden', String(expanded));
+        });
+    }
+
+    // Swiper hero init
+    if (typeof Swiper !== 'undefined' && document.getElementById('kwHeroSwiper')) {
+        new Swiper('#kwHeroSwiper', {
+            effect: 'fade',
+            loop: true,
+            autoplay: { delay: 6000, disableOnInteraction: true },
+            pagination: { el: '.kw-hero-pagination', clickable: true },
+            navigation: { nextEl: '.kw-hero-next', prevEl: '.kw-hero-prev' },
+            speed: 900,
+            fadeEffect: { crossFade: true },
+        });
+    }
+})();
+</script>
 @endpush
-
-
-

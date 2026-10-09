@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\RssController;
 use App\Http\Controllers\Admin\PublishScheduleController;
 use App\Http\Controllers\Admin\ScrapingController;
 use App\Http\Controllers\Admin\ScrapeResultController;
+use App\Http\Controllers\Client\ArayChatController;
 
 # Auth
 Route::group(['prefix' => 'portal', 'controller' => LoginController::class], function () {
@@ -255,6 +256,10 @@ Route::get('/robots.txt', [\App\Http\Controllers\SeoController::class, 'robots']
 Route::get('/llms.txt', [\App\Http\Controllers\SeoController::class, 'llms'])->name('llms');
 Route::get('/opensearch.xml', [\App\Http\Controllers\SeoController::class, 'opensearch'])->name('opensearch');
 Route::get('/sitemap.xml', [\App\Http\Controllers\SeoController::class, 'sitemapIndex'])->name('sitemap.index');
+Route::post('/aray/chat', [ArayChatController::class, 'chat'])
+    ->middleware('throttle:12,1')
+    ->name('aray.chat');
+
 Route::get('/sitemap-news.xml', [\App\Http\Controllers\SeoController::class, 'sitemapNews'])->name('sitemap.news');
 Route::get('/feed.xml', [\App\Http\Controllers\SeoController::class, 'feed'])->name('feed');
 Route::group(['prefix' => 'sitemap'], function () {

@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\Data\RegularCapabilities;
+use App\Data\BeyondCosmetics;
+use App\Data\PackagingCapabilities;
+use App\Data\SpecialtyCapabilities;
 use App\Models\Posts;
 use App\Models\PostCategory;
 use Illuminate\Http\Request;
@@ -28,6 +32,9 @@ class InterfaceController extends Controller
     public function beranda()
     {
         $data = [
+            'ideaPosts'     => Posts::published()->webSource()->with('category')->latest('published_at')->limit(4)->get(),
+            'signalPosts'   => Posts::published()->aiSource()->with('category')->latest('published_at')->limit(3)->get(),
+            'homeVideos'    => Video::query()->orderByDesc('youtube_published_at')->orderByDesc('created_at')->limit(3)->get(),
             'slide'         => $this->datas->latestPublished(3),
             'latestNews'   => $this->datas->latestNews(7),
             'hikmahPosts'  => $this->datas->postsCategory(2, 'Hikmah'),
@@ -149,11 +156,18 @@ class InterfaceController extends Controller
     #posts
     public function posts(Request $request) {
         $type = $request->query('type', 'terbaru');
+        $source = $request->query('source');
         $searchQuery = $request->input('qr'); 
         $posts = Posts::where('status', 'active')
                 ->whereNotNull('published_at')
                 ->where('published_at', '<=', Carbon::now())
                 ->with(['category', 'createdBy']); 
+
+        if ($source === 'ai') {
+            $posts->aiSource();
+        } elseif (in_array($source, ['web', 'manual'], true)) {
+            $posts->webSource();
+        }
     
         switch ($type) {
             case 'populer':
@@ -179,6 +193,7 @@ class InterfaceController extends Controller
             'type' => $type,
             'posts' => $posts,
             'searchQuery' => $searchQuery,
+            'source' => $source,
             'mostPopular' => $this->datas->mostPopular(6),
             'banner_1' => $this->datas->information('banner', 1, true),
         ];
