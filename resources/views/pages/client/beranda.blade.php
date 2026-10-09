@@ -6,6 +6,9 @@
 @extends('layouts.client.app')
 
 @section('title', 'KANG WENDRA — Brand & AI Architect · Understand Before You Build')
+@section('seo_image', asset('assets/img/background/section-1-hero-1-bg.png'))
+@section('seo_title', 'Kang Wendra — Brand & AI Architect | Understand Before You Build')
+@section('seo_description', 'Kang Wendra (Wendra Wilendra, M.MT.) adalah Brand & AI Architect: merancang brand architecture, AI understanding & discovery, dan intelligent business systems agar brand, manusia, dan AI bekerja sebagai satu sistem.')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('client/assets/css/lunaray-beranda.css') }}?v={{ @filemtime(public_path('client/assets/css/lunaray-beranda.css')) }}">
@@ -108,12 +111,12 @@ $heroSlides = [
                         <p class="kw-hero-opening">{{ $slide['opening'] }}</p>
                         @endif
 
-                        <h1 class="kw-hero-headline">
+                        <{{ $i === 0 ? 'h1' : 'h2' }} class="kw-hero-headline">
                             <span class="kw-hero-headline-main">@if ($slide['variant'] === 'brand')@foreach (mb_str_split($slide['headline']) as $k => $ch)<span class="kw-brand-letter {{ in_array($k, [2, 4]) ? 'is-gold' : '' }}">{{ $ch }}</span>@endforeach @else{{ $slide['headline'] }}@endif</span>
                             @if (isset($slide['headline_accent']))
                                 <span class="kw-hero-headline-accent">{{ $slide['headline_accent'] }}</span>
                             @endif
-                        </h1>
+                        </{{ $i === 0 ? 'h1' : 'h2' }}>
 
                         @if (isset($slide['category']))
                         <p class="kw-hero-category">@if (isset($slide['category_lead']))<span class="kw-hero-category-lead">{{ $slide['category_lead'] }}</span> @endif{{ $slide['category'] }}</p>
